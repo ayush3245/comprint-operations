@@ -292,7 +292,7 @@ export async function submitQC(deviceId: string, data: {
   finalGrade: 'A' | 'B' | null
   status: 'PASSED' | 'FAILED_REWORK'
 }) {
-  await prisma.qcRecord.create({
+  await prisma.qCRecord.create({
     data: {
       deviceId,
       qcEngId: data.qcEngId,
