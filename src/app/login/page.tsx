@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db'
-import { login } from '@/lib/auth'
+import { login } from '@/lib/auth-actions'
 import { redirect } from 'next/navigation'
 
 export default async function LoginPage() {

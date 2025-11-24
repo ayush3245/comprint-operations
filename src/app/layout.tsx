@@ -23,8 +23,8 @@ export default async function RootLayout({
       <body className={`${inter.className} bg-gray-50 text-gray-900`}>
         {user ? (
           <div className="flex">
-            <Sidebar />
-            <main className="flex-1 ml-64 min-h-screen p-8">
+            <Sidebar user={user} />
+            <main className="flex-1 ml-72 min-h-screen p-8">
               {children}
             </main>
           </div>
