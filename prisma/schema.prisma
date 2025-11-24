@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MIS_WAREHOUSE_EXECUTIVE
+  WAREHOUSE_MANAGER
+  INSPECTION_ENGINEER
+  REPAIR_ENGINEER
+  PAINT_SHOP_TECHNICIAN
+  QC_ENGINEER
+}
+
+enum DeviceCategory {
+  LAPTOP
+  DESKTOP
+  WORKSTATION
+}
+
+enum Ownership {
+  REFURB_STOCK
+  RENTAL_RETURN
+}
+
+enum DeviceStatus {
+  RECEIVED
+  PENDING_INSPECTION
+  WAITING_FOR_SPARES
+  READY_FOR_REPAIR
+  UNDER_REPAIR
+  IN_PAINT_SHOP
+  AWAITING_QC
+  QC_PASSED
+  QC_FAILED_REWORK
+  READY_FOR_STOCK
+  STOCK_OUT_SOLD
+  STOCK_OUT_RENTAL
+  SCRAPPED
+}
+
+enum InwardType {
+  REFURB_PURCHASE
+  RENTAL_RETURN
+}
+
+enum RepairStatus {
+  PENDING_INSPECTION
+  WAITING_FOR_SPARES
+  READY_FOR_REPAIR
+  UNDER_REPAIR
+  IN_PAINT_SHOP
+  AWAITING_QC
+  REPAIR_CLOSED
+}
+
+enum PaintStatus {
+  AWAITING_PAINT
+  IN_PAINT
+  READY_FOR_COLLECTION
+  FITTED
+}
+
+enum QCStatus {
+  PASSED
+  FAILED_REWORK
+}
+
+enum Grade {
+  A
+  B
+}
+
+enum MovementType {
+  INWARD
+  MOVE
+  SALES_OUTWARD
+  RENTAL_OUTWARD
+  RETURN_TO_VENDOR
+  SCRAP
+}
+
+enum OutwardType {
+  SALES
+  RENTAL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  role      Role
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdBatches    InwardBatch[]
+  inspections       RepairJob[]      @relation("InspectionEngineer")
+  repairs           RepairJob[]      @relation("RepairEngineer")
+  paintWork         PaintPanel[]
+  qcInspections     QCRecord[]       @relation("QCEngineer")
+  movements         StockMovement[]
+  packedOutwards    OutwardRecord[]  @relation("PackedBy")
+  checkedOutwards   OutwardRecord[]  @relation("CheckedBy")
+}
+
+model Device {
+  id              String         @id @default(cuid())
+  barcode         String         @unique
+  category        DeviceCategory
+  brand           String
+  model           String
+  config          String?        // CPU, RAM, Storage, GPU
+  serial          String?
+  conditionNotes  String?
+  ownership       Ownership
+  status          DeviceStatus   @default(RECEIVED)
+  location        String?        // Rack/Bin
+  grade           Grade?         // Only set after QC Passed
+  
+  // References
+  poInvoiceNo     String?        // For Refurb
+  rentalRef       String?        // For Rental Return
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  inwardBatchId   String
+  inwardBatch     InwardBatch    @relation(fields: [inwardBatchId], references: [id])
+  repairJobs      RepairJob[]
+  paintPanels     PaintPanel[]
+  qcRecords       QCRecord[]
+  movements       StockMovement[]
+  outwardRecordId String?
+  outwardRecord   OutwardRecord? @relation(fields: [outwardRecordId], references: [id])
+}
+
+model InwardBatch {
+  id              String      @id @default(cuid())
+  batchId         String      @unique // Human readable ID
+  type            InwardType
+  date            DateTime    @default(now())
+  
+  // Refurb fields
+  poInvoiceNo     String?
+  supplier        String?
+  
+  // Rental fields
+  customer        String?
+  rentalRef       String?
+  emailSubject    String?
+  emailThreadId   String?
+  
+  createdById     String
+  createdBy       User        @relation(fields: [createdById], references: [id])
+  
+  devices         Device[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model SparePart {
+  id              String      @id @default(cuid())
+  partCode        String      @unique
+  description     String
+  category        String
+  compatibleModels String?    // Comma separated or JSON
+  minStock        Int         @default(0)
+  maxStock        Int         @default(100)
+  currentStock    Int         @default(0)
+  binLocation     String?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model RepairJob {
+  id              String       @id @default(cuid())
+  jobId           String       @unique
+  deviceId        String
+  device          Device       @relation(fields: [deviceId], references: [id])
+  
+  inspectionEngId String?
+  inspectionEng   User?        @relation("InspectionEngineer", fields: [inspectionEngId], references: [id])
+  
+  repairEngId     String?
+  repairEng       User?        @relation("RepairEngineer", fields: [repairEngId], references: [id])
+  
+  reportedIssues  String?      // JSON or text
+  rootCause       String?
+  sparesRequired  String?      // JSON list of part codes
+  sparesIssued    String?      // JSON list
+  
+  station         String?
+  
+  repairStartDate DateTime?
+  repairEndDate   DateTime?
+  tatDueDate      DateTime?
+  
+  status          RepairStatus @default(PENDING_INSPECTION)
+  notes           String?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model PaintPanel {
+  id              String      @id @default(cuid())
+  deviceId        String
+  device          Device      @relation(fields: [deviceId], references: [id])
+  
+  panelType       String      // Top Cover, Bottom Cover, etc.
+  status          PaintStatus @default(AWAITING_PAINT)
+  
+  technicianId    String?
+  technician      User?       @relation(fields: [technicianId], references: [id])
+  
+  startedAt       DateTime?
+  completedAt     DateTime?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model QCRecord {
+  id              String      @id @default(cuid())
+  deviceId        String
+  device          Device      @relation(fields: [deviceId], references: [id])
+  
+  qcEngId         String
+  qcEng           User        @relation("QCEngineer", fields: [qcEngId], references: [id])
+  
+  // Snapshot of who did what
+  inspectionEngName String?
+  repairEngName     String?
+  
+  checklistResults String?    // JSON: { functional: {}, cosmetic: {} }
+  attachments      String?    // JSON: URLs
+  remarks          String?
+  
+  finalGrade       Grade
+  status           QCStatus
+  
+  completedAt      DateTime   @default(now())
+}
+
+model StockMovement {
+  id              String       @id @default(cuid())
+  deviceId        String
+  device          Device       @relation(fields: [deviceId], references: [id])
+  
+  type            MovementType
+  fromLocation    String?
+  toLocation      String?
+  reference       String?      // Batch ID, Invoice No, etc.
+  
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  
+  date            DateTime     @default(now())
+}
+
+model OutwardRecord {
+  id              String      @id @default(cuid())
+  outwardId       String      @unique
+  type            OutwardType
+  
+  customer        String
+  reference       String      // Invoice No or Rental Ref
+  date            DateTime    @default(now())
+  
+  shippingDetails String?
+  
+  packedById      String?
+  packedBy        User?       @relation("PackedBy", fields: [packedById], references: [id])
+  
+  checkedById     String?
+  checkedBy       User?       @relation("CheckedBy", fields: [checkedById], references: [id])
+  
+  devices         Device[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
