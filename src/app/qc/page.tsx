@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ClipboardCheck } from 'lucide-react'
 
+import { Suspense } from 'react'
+import ConfettiTrigger from '@/components/ui/ConfettiTrigger'
+
 export default function QCSearchPage() {
     const router = useRouter()
     const [barcode, setBarcode] = useState('')
@@ -17,6 +20,9 @@ export default function QCSearchPage() {
 
     return (
         <div className="max-w-md mx-auto mt-20">
+            <Suspense fallback={null}>
+                <ConfettiTrigger />
+            </Suspense>
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-800">Quality Control</h1>
                 <p className="text-gray-500 mt-2">Scan device barcode for final QC</p>

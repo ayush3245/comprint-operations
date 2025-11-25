@@ -24,7 +24,7 @@ export default async function RootLayout({
         {user ? (
           <div className="flex">
             <Sidebar user={user} />
-            <main className="flex-1 ml-72 min-h-screen p-8">
+            <main className="flex-1 md:ml-72 min-h-screen p-4 md:p-8 pt-20 md:pt-8">
               {children}
             </main>
           </div>
