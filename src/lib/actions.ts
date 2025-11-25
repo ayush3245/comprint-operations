@@ -181,7 +181,11 @@ export async function getRepairJobs(userId: string) {
       ]
     },
     include: {
-      device: true
+      device: {
+        include: {
+          paintPanels: true
+        }
+      }
     },
     orderBy: { status: 'asc' }
   })
@@ -257,6 +261,34 @@ export async function sendToPaint(jobId: string) {
       data: { status: 'IN_PAINT_SHOP' }
     })
   }
+
+  revalidatePath('/repair')
+}
+
+export async function collectFromPaint(jobId: string) {
+  const job = await prisma.repairJob.findUnique({
+    where: { id: jobId },
+    include: { device: { include: { paintPanels: true } } }
+  })
+
+  if (!job) return
+
+  // Update all panels to FITTED
+  await prisma.paintPanel.updateMany({
+    where: { deviceId: job.deviceId },
+    data: { status: 'FITTED' }
+  })
+
+  // Move job back to UNDER_REPAIR
+  await prisma.repairJob.update({
+    where: { id: jobId },
+    data: { status: 'UNDER_REPAIR' }
+  })
+
+  await prisma.device.update({
+    where: { id: job.deviceId },
+    data: { status: 'UNDER_REPAIR' }
+  })
 
   revalidatePath('/repair')
 }
