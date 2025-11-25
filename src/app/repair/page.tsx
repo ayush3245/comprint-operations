@@ -1,11 +1,10 @@
 import { getRepairJobs, startRepair, completeRepair, sendToPaint } from '@/lib/actions'
-import { getCurrentUser } from '@/lib/auth'
+import { requireUser } from '@/lib/auth'
 import { formatDate } from '@/lib/utils'
 import { Play, CheckCircle, PaintBucket } from 'lucide-react'
 
 export default async function RepairPage() {
-    const user = await getCurrentUser()
-    if (!user) return null
+    const user = await requireUser()
 
     const jobs = await getRepairJobs(user.id)
 
@@ -47,8 +46,8 @@ export default async function RepairPage() {
                                 <p className="text-sm text-gray-500">{job.device.model}</p>
                             </div>
                             <span className={`px-2 py-1 rounded text-xs font-semibold ${job.status === 'UNDER_REPAIR' ? 'bg-orange-100 text-orange-800' :
-                                    job.status === 'READY_FOR_REPAIR' ? 'bg-green-100 text-green-800' :
-                                        'bg-gray-100 text-gray-800'
+                                job.status === 'READY_FOR_REPAIR' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
                                 }`}>
                                 {job.status.replace('_', ' ')}
                             </span>

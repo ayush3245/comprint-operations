@@ -1,9 +1,9 @@
-import { getCurrentUser } from '@/lib/auth'
+import { requireUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import DashboardClient from './DashboardClient'
 
 export default async function DashboardPage() {
-    const user = await getCurrentUser()
+    const user = await requireUser()
 
     // Fetch counts
     const pendingInspection = await prisma.device.count({ where: { status: 'PENDING_INSPECTION' } })
