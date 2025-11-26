@@ -1,12 +1,12 @@
 import { getDeviceByBarcode, submitInspection } from '@/lib/actions'
-import { getCurrentUser } from '@/lib/auth'
+import { checkRole } from '@/lib/auth'
 import { notFound, redirect } from 'next/navigation'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
 export default async function InspectionFormPage({ params }: { params: Promise<{ barcode: string }> }) {
     const { barcode } = await params
     const device = await getDeviceByBarcode(barcode)
-    const user = await getCurrentUser()
+    const user = await checkRole(['INSPECTION_ENGINEER', 'ADMIN'])
 
     if (!device) return <div className="p-8 text-center text-red-600">Device not found</div>
 

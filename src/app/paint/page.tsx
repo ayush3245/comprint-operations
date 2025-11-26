@@ -1,8 +1,10 @@
 import { getPaintPanels, updatePanelStatus } from '@/lib/actions'
+import { checkRole } from '@/lib/auth'
 import { formatDate } from '@/lib/utils'
 import { PaintBucket, CheckCircle, ArrowRight } from 'lucide-react'
 
 export default async function PaintPage() {
+    await checkRole(['PAINT_SHOP_TECHNICIAN', 'ADMIN'])
     const panels = await getPaintPanels()
 
     async function handleStatusUpdate(formData: FormData) {
@@ -45,8 +47,8 @@ export default async function PaintPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${panel.status === 'AWAITING_PAINT' ? 'bg-red-100 text-red-800' :
-                                                panel.status === 'IN_PAINT' ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-green-100 text-green-800'
+                                            panel.status === 'IN_PAINT' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-green-100 text-green-800'
                                             }`}>
                                             {panel.status.replace('_', ' ')}
                                         </span>

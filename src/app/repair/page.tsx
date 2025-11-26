@@ -1,10 +1,10 @@
 import { getRepairJobs, startRepair, completeRepair, sendToPaint, collectFromPaint } from '@/lib/actions'
-import { requireUser } from '@/lib/auth'
+import { checkRole } from '@/lib/auth'
 import { formatDate } from '@/lib/utils'
 import { Play, CheckCircle, PaintBucket, Download } from 'lucide-react'
 
 export default async function RepairPage() {
-    const user = await requireUser()
+    const user = await checkRole(['REPAIR_ENGINEER', 'ADMIN'])
 
     const jobs = await getRepairJobs(user.id)
 

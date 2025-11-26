@@ -1,9 +1,9 @@
 import { getInventory } from '@/lib/actions'
 import { formatDate } from '@/lib/utils'
-import { requireUser } from '@/lib/auth'
+import { checkRole } from '@/lib/auth'
 
 export default async function InventoryPage() {
-    await requireUser()
+    await checkRole(['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN'])
     const inventory = await getInventory()
 
     return (

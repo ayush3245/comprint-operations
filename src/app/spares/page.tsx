@@ -1,8 +1,10 @@
 import { getSparesRequests, issueSpares } from '@/lib/actions'
 import { formatDate } from '@/lib/utils'
 import { PackageCheck } from 'lucide-react'
+import { checkRole } from '@/lib/auth'
 
 export default async function SparesPage() {
+    await checkRole(['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN'])
     const requests = await getSparesRequests()
 
     async function handleIssue(formData: FormData) {

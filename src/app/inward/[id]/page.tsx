@@ -3,8 +3,10 @@ import { addDeviceToBatch } from '@/lib/actions'
 import { notFound } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 import { DeviceCategory, Ownership } from '@prisma/client'
+import { checkRole } from '@/lib/auth'
 
 export default async function BatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    await checkRole(['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'])
     const { id } = await params
     const batch = await prisma.inwardBatch.findUnique({
         where: { batchId: id },

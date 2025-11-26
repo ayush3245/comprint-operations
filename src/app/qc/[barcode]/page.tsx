@@ -1,12 +1,12 @@
 import { getDeviceByBarcode, submitQC } from '@/lib/actions'
-import { getCurrentUser } from '@/lib/auth'
+import { checkRole } from '@/lib/auth'
 import { notFound, redirect } from 'next/navigation'
 import { AlertCircle, CheckCircle, XCircle } from 'lucide-react'
 
 export default async function QCFormPage({ params }: { params: Promise<{ barcode: string }> }) {
     const { barcode } = await params
     const device = await getDeviceByBarcode(barcode)
-    const user = await getCurrentUser()
+    const user = await checkRole(['QC_ENGINEER', 'ADMIN'])
 
     if (!device) return <div className="p-8 text-center text-red-600">Device not found</div>
 

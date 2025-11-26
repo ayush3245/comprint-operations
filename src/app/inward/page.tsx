@@ -2,10 +2,10 @@ import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { Plus } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { requireUser } from '@/lib/auth'
+import { checkRole } from '@/lib/auth'
 
 export default async function InwardPage() {
-    await requireUser()
+    await checkRole(['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'])
     const batches = await prisma.inwardBatch.findMany({
         include: {
             createdBy: true,

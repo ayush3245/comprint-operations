@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/db'
 import { formatDate } from '@/lib/utils'
+import { checkRole } from '@/lib/auth'
 
 export default async function RentalReturnsReportPage() {
+    await checkRole(['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'])
     const returns = await prisma.inwardBatch.findMany({
         where: {
             type: 'RENTAL_RETURN'
