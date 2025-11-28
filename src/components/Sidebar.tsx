@@ -16,7 +16,8 @@ import {
     LogOut,
     ChevronRight,
     Menu,
-    X
+    X,
+    Users
 } from 'lucide-react'
 import { logout } from '@/lib/auth-actions'
 import { cn } from '@/lib/utils'
@@ -37,17 +38,28 @@ export default function Sidebar({ user }: SidebarProps) {
         setIsOpen(false)
     }, [pathname])
 
-    const links = [
-        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: [] },
-        { href: '/inward', label: 'Inward', icon: PackagePlus, roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'] },
-        { href: '/inspection', label: 'Inspection', icon: Search, roles: ['INSPECTION_ENGINEER', 'ADMIN'] },
-        { href: '/repair', label: 'Repair Station', icon: Wrench, roles: ['REPAIR_ENGINEER', 'ADMIN'] },
-        { href: '/paint', label: 'Paint Shop', icon: PaintBucket, roles: ['PAINT_SHOP_TECHNICIAN', 'ADMIN'] },
-        { href: '/qc', label: 'QC', icon: ClipboardCheck, roles: ['QC_ENGINEER', 'ADMIN'] },
-        { href: '/inventory', label: 'Inventory', icon: Warehouse, roles: ['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN'] },
-    ]
+    // Build links based on user role
+    const baseLinks = user.role === 'SUPERADMIN'
+        ? [
+            { href: '/admin/users', label: 'User Management', icon: Users, roles: ['SUPERADMIN'] },
+            { href: '/inward', label: 'Inward', icon: PackagePlus, roles: ['SUPERADMIN'] },
+            { href: '/inspection', label: 'Inspection', icon: Search, roles: ['SUPERADMIN'] },
+            { href: '/repair', label: 'Repair Station', icon: Wrench, roles: ['SUPERADMIN'] },
+            { href: '/paint', label: 'Paint Shop', icon: PaintBucket, roles: ['SUPERADMIN'] },
+            { href: '/qc', label: 'QC', icon: ClipboardCheck, roles: ['SUPERADMIN'] },
+            { href: '/inventory', label: 'Inventory', icon: Warehouse, roles: ['SUPERADMIN'] },
+        ]
+        : [
+            { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: [] },
+            { href: '/inward', label: 'Inward', icon: PackagePlus, roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'] },
+            { href: '/inspection', label: 'Inspection', icon: Search, roles: ['INSPECTION_ENGINEER', 'ADMIN'] },
+            { href: '/repair', label: 'Repair Station', icon: Wrench, roles: ['REPAIR_ENGINEER', 'ADMIN'] },
+            { href: '/paint', label: 'Paint Shop', icon: PaintBucket, roles: ['PAINT_SHOP_TECHNICIAN', 'ADMIN'] },
+            { href: '/qc', label: 'QC', icon: ClipboardCheck, roles: ['QC_ENGINEER', 'ADMIN'] },
+            { href: '/inventory', label: 'Inventory', icon: Warehouse, roles: ['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN'] },
+        ]
 
-    const filteredLinks = links.filter(link =>
+    const filteredLinks = baseLinks.filter(link =>
         link.roles.length === 0 || link.roles.includes(user.role)
     )
 

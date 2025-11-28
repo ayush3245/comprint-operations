@@ -26,6 +26,10 @@ export async function requireUser() {
 
 export async function checkRole(allowedRoles: Role[]) {
     const user = await requireUser()
+    // SUPERADMIN has access to everything
+    if (user.role === 'SUPERADMIN') {
+        return user
+    }
     if (!allowedRoles.includes(user.role)) {
         redirect('/dashboard?error=unauthorized')
     }

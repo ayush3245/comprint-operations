@@ -1,9 +1,15 @@
 import { requireUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
 
 export default async function DashboardPage() {
     const user = await requireUser()
+
+    // Redirect superadmin to user management
+    if (user.role === 'SUPERADMIN') {
+        redirect('/admin/users')
+    }
 
     // Fetch counts
     const pendingInspection = await prisma.device.count({ where: { status: 'PENDING_INSPECTION' } })
