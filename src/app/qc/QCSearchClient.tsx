@@ -2,20 +2,28 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ClipboardCheck } from 'lucide-react'
+import { ClipboardCheck, ScanLine } from 'lucide-react'
 
 import { Suspense } from 'react'
 import ConfettiTrigger from '@/components/ui/ConfettiTrigger'
+import BarcodeScanner from '@/components/BarcodeScanner'
 
 export default function QCSearchClient() {
     const router = useRouter()
     const [barcode, setBarcode] = useState('')
+    const [showScanner, setShowScanner] = useState(false)
 
     function handleSearch(e: React.FormEvent) {
         e.preventDefault()
         if (barcode.trim()) {
             router.push(`/qc/${barcode.trim()}`)
         }
+    }
+
+    function handleBarcodeDetected(detectedBarcode: string) {
+        setBarcode(detectedBarcode)
+        setShowScanner(false)
+        router.push(`/qc/${detectedBarcode}`)
     }
 
     return (
@@ -46,8 +54,26 @@ export default function QCSearchClient() {
                     >
                         Start QC
                     </button>
+
+                    <div className="mt-4 text-center">
+                        <button
+                            type="button"
+                            onClick={() => setShowScanner(true)}
+                            className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+                        >
+                            <ScanLine size={20} />
+                            Scan Barcode from Image/PDF
+                        </button>
+                    </div>
                 </form>
             </div>
+
+            {showScanner && (
+                <BarcodeScanner
+                    onBarcodeDetected={handleBarcodeDetected}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
         </div>
     )
 }

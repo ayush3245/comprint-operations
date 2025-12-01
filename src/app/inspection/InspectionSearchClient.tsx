@@ -2,17 +2,25 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { Search, ScanLine } from 'lucide-react'
+import BarcodeScanner from '@/components/BarcodeScanner'
 
 export default function InspectionSearchPage() {
     const router = useRouter()
     const [barcode, setBarcode] = useState('')
+    const [showScanner, setShowScanner] = useState(false)
 
     function handleSearch(e: React.FormEvent) {
         e.preventDefault()
         if (barcode.trim()) {
             router.push(`/inspection/${barcode.trim()}`)
         }
+    }
+
+    function handleBarcodeDetected(detectedBarcode: string) {
+        setBarcode(detectedBarcode)
+        setShowScanner(false)
+        router.push(`/inspection/${detectedBarcode}`)
     }
 
     return (
@@ -42,8 +50,26 @@ export default function InspectionSearchPage() {
                     >
                         Start Inspection
                     </button>
+
+                    <div className="mt-4 text-center">
+                        <button
+                            type="button"
+                            onClick={() => setShowScanner(true)}
+                            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                            <ScanLine size={20} />
+                            Scan Barcode from Image/PDF
+                        </button>
+                    </div>
                 </form>
             </div>
+
+            {showScanner && (
+                <BarcodeScanner
+                    onBarcodeDetected={handleBarcodeDetected}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
         </div>
     )
 }

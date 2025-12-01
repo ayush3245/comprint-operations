@@ -24,20 +24,21 @@ export function generateDeviceLabel(device: DeviceData): jsPDF {
     format: [50, 100]
   })
 
-  // Generate barcode as SVG
+  // Generate barcode with high quality for scanning
   const canvas = document.createElement('canvas')
   JsBarcode(canvas, device.barcode, {
     format: 'CODE128',
-    width: 2,
-    height: 40,
+    width: 6,        // Further increased for maximum quality
+    height: 120,     // Further increased for maximum quality
     displayValue: true,
-    fontSize: 14,
-    margin: 5
+    fontSize: 24,
+    margin: 10
   })
 
-  // Add barcode image to PDF
+  // Add barcode image to PDF at higher resolution
   const barcodeImage = canvas.toDataURL('image/png')
-  pdf.addImage(barcodeImage, 'PNG', 10, 5, 80, 20)
+  // Increased PDF dimensions to match higher resolution
+  pdf.addImage(barcodeImage, 'PNG', 5, 5, 90, 30)
 
   // Add device information
   pdf.setFontSize(10)
@@ -94,15 +95,15 @@ export function generateBatchLabels(devices: DeviceData[]): jsPDF {
     // Calculate position (top or bottom half of page)
     const yOffset = labelPosition === 0 ? 20 : 150
 
-    // Generate barcode
+    // Generate barcode with high quality for scanning
     const canvas = document.createElement('canvas')
     JsBarcode(canvas, device.barcode, {
       format: 'CODE128',
-      width: 2,
-      height: 40,
+      width: 6,        // Further increased for maximum quality
+      height: 120,     // Further increased for maximum quality
       displayValue: true,
-      fontSize: 14,
-      margin: 5
+      fontSize: 24,
+      margin: 10
     })
 
     const barcodeImage = canvas.toDataURL('image/png')
@@ -111,8 +112,8 @@ export function generateBatchLabels(devices: DeviceData[]): jsPDF {
     pdf.setDrawColor(200)
     pdf.rect(15, yOffset - 5, 180, 60)
 
-    // Add barcode
-    pdf.addImage(barcodeImage, 'PNG', 25, yOffset, 160, 25)
+    // Add barcode at higher resolution
+    pdf.addImage(barcodeImage, 'PNG', 20, yOffset, 170, 30)
 
     // Add device information
     pdf.setFontSize(12)
