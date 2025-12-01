@@ -86,6 +86,76 @@ export async function addDeviceToBatch(batchId: string, data: {
   return device
 }
 
+export async function bulkUploadDevices(batchId: string, devices: Array<{
+  category: string
+  brand: string
+  model: string
+  cpu?: string
+  ram?: string
+  ssd?: string
+  gpu?: string
+  screenSize?: string
+  serial?: string
+}>) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Get batch to determine ownership
+  const batch = await prisma.inwardBatch.findUnique({
+    where: { id: batchId }
+  })
+  if (!batch) throw new Error('Batch not found')
+
+  const ownership = batch.type === 'REFURB_PURCHASE' ? Ownership.REFURB_STOCK : Ownership.RENTAL_RETURN
+
+  const results = {
+    success: 0,
+    failed: 0,
+    errors: [] as Array<{ row: number; error: string; data: any }>
+  }
+
+  for (let i = 0; i < devices.length; i++) {
+    const deviceData = devices[i]
+    try {
+      // Validate category
+      const category = deviceData.category.toUpperCase()
+      if (!['LAPTOP', 'DESKTOP', 'WORKSTATION'].includes(category)) {
+        throw new Error(`Invalid category: ${deviceData.category}`)
+      }
+
+      // Validate required fields
+      if (!deviceData.brand || !deviceData.model) {
+        throw new Error('Brand and Model are required')
+      }
+
+      await addDeviceToBatch(batchId, {
+        category: category as 'LAPTOP' | 'DESKTOP' | 'WORKSTATION',
+        brand: deviceData.brand.trim(),
+        model: deviceData.model.trim(),
+        cpu: deviceData.cpu?.trim(),
+        ram: deviceData.ram?.trim(),
+        ssd: deviceData.ssd?.trim(),
+        gpu: deviceData.gpu?.trim(),
+        screenSize: deviceData.screenSize?.trim(),
+        serial: deviceData.serial?.trim(),
+        ownership
+      })
+
+      results.success++
+    } catch (error) {
+      results.failed++
+      results.errors.push({
+        row: i + 2, // +2 because Excel is 1-indexed and has header row
+        error: error instanceof Error ? error.message : 'Unknown error',
+        data: deviceData
+      })
+    }
+  }
+
+  revalidatePath(`/inward/${batchId}`)
+  return results
+}
+
 // --- Inspection Actions ---
 
 export async function submitInspection(deviceId: string, data: {

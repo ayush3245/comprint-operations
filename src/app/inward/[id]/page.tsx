@@ -1,9 +1,10 @@
 import { prisma } from '@/lib/db'
-import { addDeviceToBatch } from '@/lib/actions'
+import { addDeviceToBatch, bulkUploadDevices } from '@/lib/actions'
 import { notFound } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 import { DeviceCategory, Ownership } from '@prisma/client'
 import { checkRole } from '@/lib/auth'
+import BulkUploadForm from './BulkUploadForm'
 
 export default async function BatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     await checkRole(['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'])
@@ -49,6 +50,12 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
         }
     }
 
+    async function handleBulkUpload(devices: any[]) {
+        'use server'
+        if (!batch) throw new Error('Batch not found')
+        return await bulkUploadDevices(batch.id, devices)
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
@@ -65,8 +72,11 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
                         )}
                     </div>
                 </div>
-                <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium">
-                    {batch.devices.length} Devices
+                <div className="flex items-center gap-3">
+                    <BulkUploadForm batchId={batch.id} onUpload={handleBulkUpload} />
+                    <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium">
+                        {batch.devices.length} Devices
+                    </div>
                 </div>
             </div>
 
