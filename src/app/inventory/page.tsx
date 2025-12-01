@@ -32,7 +32,7 @@ export default async function InventoryPage() {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Device</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Config</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specifications</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ownership</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stage</th>
@@ -48,6 +48,14 @@ export default async function InventoryPage() {
                             ) : (
                                 inventory.map((device) => {
                                     const statusInfo = getStatusDisplay(device.status)
+                                    const specs = [
+                                        device.cpu,
+                                        device.ram,
+                                        device.ssd,
+                                        device.gpu,
+                                        device.screenSize
+                                    ].filter(Boolean).join(' • ')
+
                                     return (
                                         <tr key={device.id}>
                                             <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600">
@@ -57,8 +65,8 @@ export default async function InventoryPage() {
                                                 <div className="font-medium">{device.brand} {device.model}</div>
                                                 <div className="text-xs text-gray-500">{device.category}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {device.config || '-'}
+                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                                {specs || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {device.grade ? (

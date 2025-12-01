@@ -48,7 +48,11 @@ export async function addDeviceToBatch(batchId: string, data: {
   category: 'LAPTOP' | 'DESKTOP' | 'WORKSTATION'
   brand: string
   model: string
-  config?: string
+  cpu?: string
+  ram?: string
+  ssd?: string
+  gpu?: string
+  screenSize?: string
   serial?: string
   ownership: Ownership
 }) {

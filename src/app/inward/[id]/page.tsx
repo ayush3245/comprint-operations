@@ -23,7 +23,11 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
         const category = formData.get('category') as DeviceCategory
         const brand = formData.get('brand') as string
         const model = formData.get('model') as string
-        const config = formData.get('config') as string
+        const cpu = formData.get('cpu') as string
+        const ram = formData.get('ram') as string
+        const ssd = formData.get('ssd') as string
+        const gpu = formData.get('gpu') as string
+        const screenSize = formData.get('screenSize') as string
         const serial = formData.get('serial') as string
 
         // Determine ownership based on batch type
@@ -34,7 +38,11 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
                 category,
                 brand,
                 model,
-                config,
+                cpu,
+                ram,
+                ssd,
+                gpu,
+                screenSize,
                 serial,
                 ownership
             })
@@ -85,8 +93,24 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
                                 <input type="text" name="model" required className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g. Latitude 7490" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Config (CPU/RAM/SSD)</label>
-                                <input type="text" name="config" className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g. i5-8350U/16GB/256GB" />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">CPU</label>
+                                <input type="text" name="cpu" className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g. i5-8350U" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">RAM</label>
+                                <input type="text" name="ram" className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g. 16GB" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">SSD</label>
+                                <input type="text" name="ssd" className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g. 256GB" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">GPU</label>
+                                <input type="text" name="gpu" className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g. Intel UHD 620" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Screen Size</label>
+                                <input type="text" name="screenSize" className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="e.g. 14 inch" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Serial Number</label>
@@ -110,7 +134,7 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Config</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specifications</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 </tr>
                             </thead>
@@ -122,25 +146,35 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
                                         </td>
                                     </tr>
                                 ) : (
-                                    batch.devices.map((device) => (
-                                        <tr key={device.id}>
-                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600">
-                                                {device.barcode}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                <div className="font-medium">{device.brand} {device.model}</div>
-                                                <div className="text-xs text-gray-500">{device.category}</div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {device.config || '-'}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                    {device.status.replace('_', ' ')}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))
+                                    batch.devices.map((device) => {
+                                        const specs = [
+                                            device.cpu,
+                                            device.ram,
+                                            device.ssd,
+                                            device.gpu,
+                                            device.screenSize
+                                        ].filter(Boolean).join(' • ')
+
+                                        return (
+                                            <tr key={device.id}>
+                                                <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600">
+                                                    {device.barcode}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    <div className="font-medium">{device.brand} {device.model}</div>
+                                                    <div className="text-xs text-gray-500">{device.category}</div>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-500">
+                                                    {specs || '-'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                        {device.status.replace('_', ' ')}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })
                                 )}
                             </tbody>
                         </table>

@@ -118,7 +118,14 @@ model Device {
   category        DeviceCategory
   brand           String
   model           String
-  config          String?        // CPU, RAM, Storage, GPU
+
+  // Hardware specifications
+  cpu             String?
+  ram             String?
+  ssd             String?
+  gpu             String?
+  screenSize      String?
+
   serial          String?
   conditionNotes  String?
   ownership       Ownership
