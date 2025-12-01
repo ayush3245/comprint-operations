@@ -34,5 +34,11 @@ export default async function DashboardPage() {
         tatBreaches
     }
 
-    return <DashboardClient user={user} stats={stats} />
+    const activityFeed = await prisma.activityLog.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { name: true, role: true } } }
+    })
+
+    return <DashboardClient user={user} stats={stats} activityFeed={activityFeed} />
 }

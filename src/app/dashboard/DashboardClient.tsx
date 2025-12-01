@@ -12,6 +12,18 @@ import {
     ArrowRight
 } from 'lucide-react'
 import Link from 'next/link'
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    LineChart,
+    Line
+} from 'recharts'
+import { formatDistanceToNow } from 'date-fns'
 
 interface DashboardClientProps {
     user: { name: string; role: string } | null
@@ -23,9 +35,16 @@ interface DashboardClientProps {
         readyForStock: number
         tatBreaches: number
     }
+    activityFeed: Array<{
+        id: string
+        action: string
+        details: string | null
+        createdAt: Date
+        user: { name: string; role: string }
+    }>
 }
 
-export default function DashboardClient({ user, stats }: DashboardClientProps) {
+export default function DashboardClient({ user, stats, activityFeed }: DashboardClientProps) {
     if (!user) return null
 
     const statItems = [
@@ -75,7 +94,7 @@ export default function DashboardClient({ user, stats }: DashboardClientProps) {
             icon: AlertTriangle,
             color: 'text-red-500',
             gradient: 'from-red-500/20 to-red-600/5',
-            roles: ['ADMIN', 'REPAIR_ENGINEER'] // Assuming Repair Engineers care about their TAT
+            roles: ['ADMIN', 'REPAIR_ENGINEER']
         },
     ]
 
@@ -124,6 +143,14 @@ export default function DashboardClient({ user, stats }: DashboardClientProps) {
         show: { opacity: 1, y: 0 }
     }
 
+    // Chart Data Preparation
+    const repairVolumeData = [
+        { name: 'Pending', value: stats.pendingInspection },
+        { name: 'Repair', value: stats.underRepair },
+        { name: 'Paint', value: stats.inPaint },
+        { name: 'QC', value: stats.awaitingQC },
+    ]
+
     return (
         <div className="space-y-8">
             <motion.div
@@ -163,23 +190,67 @@ export default function DashboardClient({ user, stats }: DashboardClientProps) {
                 ))}
             </motion.div>
 
+            {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <GlassCard className="p-8">
+                    <h3 className="text-xl font-bold text-gray-800 mb-6">Repair Volume</h3>
+                    <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={repairVolumeData}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                                <Tooltip
+                                    cursor={{ fill: '#F3F4F6' }}
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={40} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </GlassCard>
+
                 <GlassCard className="p-8">
                     <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                         <div className="w-2 h-8 bg-blue-500 rounded-full" />
                         Recent Activity
                     </h3>
-                    <div className="h-48 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                        <p className="text-gray-400 font-medium">Activity feed coming soon...</p>
+                    <div className="space-y-4">
+                        {activityFeed.length === 0 ? (
+                            <div className="h-48 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                                <p className="text-gray-400 font-medium">No recent activity</p>
+                            </div>
+                        ) : (
+                            activityFeed.map((activity) => (
+                                <div key={activity.id} className="flex items-start gap-4 p-4 rounded-xl bg-white/50 border border-white/60 shadow-sm hover:shadow-md transition-all">
+                                    <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                                        <ClipboardList size={16} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-gray-800">
+                                            {activity.user.name} <span className="font-normal text-gray-500">performed</span> {activity.action.replace('_', ' ')}
+                                        </p>
+                                        {activity.details && (
+                                            <p className="text-xs text-gray-500 mt-1">{activity.details}</p>
+                                        )}
+                                        <p className="text-[10px] text-gray-400 mt-2">
+                                            {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </GlassCard>
+            </div>
 
+            <div className="grid grid-cols-1 gap-8">
                 <GlassCard className="p-8" gradient>
                     <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                         <div className="w-2 h-8 bg-purple-500 rounded-full" />
                         Quick Actions
                     </h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {filteredActions.map((action) => (
                             <Link
                                 key={action.href}
@@ -191,7 +262,7 @@ export default function DashboardClient({ user, stats }: DashboardClientProps) {
                             </Link>
                         ))}
                         {filteredActions.length === 0 && (
-                            <div className="col-span-2 flex items-center justify-center h-24 text-gray-400 text-sm font-medium">
+                            <div className="col-span-4 flex items-center justify-center h-24 text-gray-400 text-sm font-medium">
                                 No quick actions available for your role.
                             </div>
                         )}

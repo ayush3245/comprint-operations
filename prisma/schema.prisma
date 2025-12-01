@@ -109,6 +109,7 @@ model User {
   movements         StockMovement[]
   packedOutwards    OutwardRecord[]  @relation("PackedBy")
   checkedOutwards   OutwardRecord[]  @relation("CheckedBy")
+  activityLogs      ActivityLog[]
 }
 
 model Device {
@@ -124,11 +125,17 @@ model Device {
   status          DeviceStatus   @default(RECEIVED)
   location        String?        // Rack/Bin
   grade           Grade?         // Only set after QC Passed
-  
+
+  // Workflow flags - set during inspection
+  repairRequired  Boolean        @default(false)
+  paintRequired   Boolean        @default(false)
+  repairCompleted Boolean        @default(false)
+  paintCompleted  Boolean        @default(false)
+
   // References
   poInvoiceNo     String?        // For Refurb
   rentalRef       String?        // For Rental Return
-  
+
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -290,4 +297,17 @@ model OutwardRecord {
   
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String   // e.g., "CREATED_INWARD", "UPDATED_REPAIR"
+  details   String?  // Human readable description
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  metadata  String?  // JSON for extra data (e.g., deviceId, batchId)
+  
+  createdAt DateTime @default(now())
 }

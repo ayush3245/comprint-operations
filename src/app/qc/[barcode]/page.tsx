@@ -41,7 +41,12 @@ export default async function QCFormPage({ params }: { params: Promise<{ barcode
             status: decision === 'PASSED' ? 'PASSED' : 'FAILED_REWORK'
         })
 
-        redirect('/qc?success=true')
+        // Only show success (confetti) if QC passed
+        if (decision === 'PASSED') {
+            redirect('/qc?success=true')
+        } else {
+            redirect('/qc?failed=true')
+        }
     }
 
     return (
