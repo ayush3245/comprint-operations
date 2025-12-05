@@ -43,6 +43,7 @@ export default function Sidebar({ user }: SidebarProps) {
     // Build links based on user role
     const baseLinks = user.role === 'SUPERADMIN'
         ? [
+            { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['SUPERADMIN'] },
             { href: '/admin/users', label: 'User Management', icon: Users, roles: ['SUPERADMIN'] },
             { href: '/admin/spares', label: 'Spare Parts', icon: Cog, roles: ['SUPERADMIN'] },
             { href: '/inward', label: 'Inward', icon: PackagePlus, roles: ['SUPERADMIN'] },
