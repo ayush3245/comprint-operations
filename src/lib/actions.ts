@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from './db'
-import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus } from '@prisma/client'
+import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from './auth'
 import { logActivity } from './activity'
@@ -299,14 +299,24 @@ export async function getRepairJobs(userId: string) {
   return await prisma.repairJob.findMany({
     where: {
       OR: [
-        { repairEngId: userId },
-        { status: 'READY_FOR_REPAIR', repairEngId: null }
+        {
+          repairEngId: userId,
+          status: { in: ['READY_FOR_REPAIR', 'WAITING_FOR_SPARES', 'UNDER_REPAIR', 'IN_PAINT_SHOP'] }
+        },
+        {
+          status: { in: ['READY_FOR_REPAIR', 'WAITING_FOR_SPARES'] },
+          repairEngId: null
+        }
       ]
     },
     include: {
       device: {
         include: {
-          paintPanels: true
+          paintPanels: true,
+          qcRecords: {
+            orderBy: { completedAt: 'desc' },
+            take: 1
+          }
         }
       }
     },
@@ -438,18 +448,38 @@ export async function collectFromPaint(jobId: string) {
     data: { status: 'FITTED' }
   })
 
-  // Mark paint as completed and send to QC
+  // Mark paint as completed
   await prisma.device.update({
     where: { id: job.deviceId },
-    data: {
-      paintCompleted: true,
-      status: DeviceStatus.AWAITING_QC
-    }
+    data: { paintCompleted: true }
+  })
+
+  // Determine next status based on repair completion
+  const device = job.device
+  let nextDeviceStatus: DeviceStatus
+  let nextJobStatus: RepairStatus
+  let destination: string
+
+  if (device.repairRequired && !device.repairCompleted) {
+    // Repair is required but not completed, send back to repair
+    nextDeviceStatus = DeviceStatus.UNDER_REPAIR
+    nextJobStatus = RepairStatus.UNDER_REPAIR
+    destination = 'repair station'
+  } else {
+    // Repair completed or not required, go to QC
+    nextDeviceStatus = DeviceStatus.AWAITING_QC
+    nextJobStatus = RepairStatus.AWAITING_QC
+    destination = 'QC'
+  }
+
+  await prisma.device.update({
+    where: { id: job.deviceId },
+    data: { status: nextDeviceStatus }
   })
 
   await prisma.repairJob.update({
     where: { id: jobId },
-    data: { status: 'AWAITING_QC' }
+    data: { status: nextJobStatus }
   })
 
   revalidatePath('/repair')
@@ -459,9 +489,9 @@ export async function collectFromPaint(jobId: string) {
   if (user) {
     await logActivity({
       action: 'COLLECTED_FROM_PAINT',
-      details: `Collected device from paint shop, sent to QC`,
+      details: `Collected device from paint shop, sent to ${destination}`,
       userId: user.id,
-      metadata: { jobId, deviceId: job.deviceId }
+      metadata: { jobId, deviceId: job.deviceId, nextStatus: nextDeviceStatus }
     })
   }
 }
@@ -469,14 +499,23 @@ export async function collectFromPaint(jobId: string) {
 // --- Paint Actions ---
 
 export async function getPaintPanels() {
-  return await prisma.paintPanel.findMany({
+  const panels = await prisma.paintPanel.findMany({
     where: {
-      status: { not: 'FITTED' }
+      status: { in: ['AWAITING_PAINT', 'IN_PAINT'] }
     },
     include: {
       device: true
     },
     orderBy: { createdAt: 'asc' }
+  })
+
+  // Filter out panels where device requires repair but repair is not yet completed
+  return panels.filter(panel => {
+    const device = panel.device
+    // Only show in paint shop if:
+    // 1. Repair is NOT required, OR
+    // 2. Repair IS required AND repair is completed
+    return !device.repairRequired || device.repairCompleted
   })
 }
 
@@ -496,18 +535,48 @@ export async function updatePanelStatus(panelId: string, status: 'IN_PAINT' | 'R
   )
 
   if (allPanelsComplete) {
-    // Mark all panels as FITTED and move device to QC
-    await prisma.paintPanel.updateMany({
-      where: { deviceId: panel.deviceId },
-      data: { status: 'FITTED' }
+    // Mark paint as completed
+    await prisma.device.update({
+      where: { id: panel.deviceId },
+      data: { paintCompleted: true }
     })
+
+    // Get device to check repair status
+    const device = await prisma.device.findUnique({
+      where: { id: panel.deviceId }
+    })
+
+    if (!device) return
+
+    // Determine next status based on repair completion
+    let nextDeviceStatus: DeviceStatus
+    let nextJobStatus: RepairStatus
+    let destination: string
+
+    if (device.repairRequired && !device.repairCompleted) {
+      // Repair required but not completed - mark panels as ready for collection
+      // Don't move to QC yet, wait for repair engineer to collect
+      await prisma.paintPanel.updateMany({
+        where: { deviceId: panel.deviceId },
+        data: { status: 'READY_FOR_COLLECTION' }
+      })
+      return // Exit early - repair engineer will collect and complete repair
+    } else {
+      // Repair completed or not required, go to QC
+      nextDeviceStatus = DeviceStatus.AWAITING_QC
+      nextJobStatus = RepairStatus.AWAITING_QC
+      destination = 'QC'
+
+      // Mark all panels as FITTED since we're moving to QC
+      await prisma.paintPanel.updateMany({
+        where: { deviceId: panel.deviceId },
+        data: { status: 'FITTED' }
+      })
+    }
 
     await prisma.device.update({
       where: { id: panel.deviceId },
-      data: {
-        paintCompleted: true,
-        status: DeviceStatus.AWAITING_QC
-      }
+      data: { status: nextDeviceStatus }
     })
 
     // Update associated repair job if exists
@@ -519,7 +588,7 @@ export async function updatePanelStatus(panelId: string, status: 'IN_PAINT' | 'R
     if (repairJob) {
       await prisma.repairJob.update({
         where: { id: repairJob.id },
-        data: { status: 'AWAITING_QC' }
+        data: { status: nextJobStatus }
       })
     }
 
@@ -527,9 +596,9 @@ export async function updatePanelStatus(panelId: string, status: 'IN_PAINT' | 'R
     if (user) {
       await logActivity({
         action: 'COMPLETED_PAINT',
-        details: `All paint panels completed, sent to QC`,
+        details: `All paint panels completed, sent to ${destination}`,
         userId: user.id,
-        metadata: { deviceId: panel.deviceId }
+        metadata: { deviceId: panel.deviceId, nextStatus: nextDeviceStatus }
       })
     }
   }
@@ -590,6 +659,19 @@ export async function submitQC(deviceId: string, data: {
         grade: data.finalGrade === 'A' ? Grade.A : Grade.B
       }
     })
+
+    // Close the repair job
+    const repairJob = await prisma.repairJob.findFirst({
+      where: { deviceId },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    if (repairJob) {
+      await prisma.repairJob.update({
+        where: { id: repairJob.id },
+        data: { status: RepairStatus.REPAIR_CLOSED }
+      })
+    }
   } else {
     // QC Failed - reset workflow flags and send back to inspection/repair
     await prisma.device.update({
@@ -601,22 +683,29 @@ export async function submitQC(deviceId: string, data: {
       }
     })
 
-    // Re-open the last repair job
+    // Re-open the last repair job with QC failure notes
     const lastJob = await prisma.repairJob.findFirst({
       where: { deviceId },
       orderBy: { createdAt: 'desc' }
     })
 
     if (lastJob) {
+      const qcFailureNotes = `QC FAILED - REWORK REQUIRED\nQC Remarks: ${data.remarks || 'None'}\nChecklist: ${data.checklistResults || 'N/A'}`
+      const existingNotes = lastJob.notes || ''
+
       await prisma.repairJob.update({
         where: { id: lastJob.id },
-        data: { status: 'READY_FOR_REPAIR' }
+        data: {
+          status: RepairStatus.READY_FOR_REPAIR,
+          notes: existingNotes ? `${existingNotes}\n\n${qcFailureNotes}` : qcFailureNotes
+        }
       })
     }
   }
 
   revalidatePath('/qc')
   revalidatePath('/inventory')
+  revalidatePath('/repair')
 
   const user = await getCurrentUser()
   if (user) {

@@ -1,7 +1,7 @@
-import { getRepairJobs, startRepair, completeRepair, sendToPaint, collectFromPaint } from '@/lib/actions'
+import { getRepairJobs, startRepair, completeRepair, collectFromPaint } from '@/lib/actions'
 import { checkRole } from '@/lib/auth'
 import { formatDate } from '@/lib/utils'
-import { Play, CheckCircle, PaintBucket, Download } from 'lucide-react'
+import { Play, CheckCircle, Download } from 'lucide-react'
 
 export default async function RepairPage() {
     const user = await checkRole(['REPAIR_ENGINEER', 'ADMIN'])
@@ -27,12 +27,6 @@ export default async function RepairPage() {
         await completeRepair(jobId, notes)
     }
 
-    async function handlePaint(formData: FormData) {
-        'use server'
-        const jobId = formData.get('jobId') as string
-        await sendToPaint(jobId)
-    }
-
     async function handleCollect(formData: FormData) {
         'use server'
         const jobId = formData.get('jobId') as string
@@ -47,9 +41,11 @@ export default async function RepairPage() {
                 {jobs.map((job) => {
                     const paintPanels = job.device.paintPanels || []
                     const allPanelsReady = paintPanels.length > 0 && paintPanels.every(p => p.status === 'READY_FOR_COLLECTION' || p.status === 'FITTED')
+                    const latestQC = job.device.qcRecords?.[0]
+                    const isQCRework = latestQC?.status === 'FAILED_REWORK'
 
                     return (
-                        <div key={job.id} className="bg-white rounded-lg shadow p-6 border-t-4 border-blue-500">
+                        <div key={job.id} className={`bg-white rounded-lg shadow p-6 border-t-4 ${isQCRework ? 'border-red-500' : 'border-blue-500'}`}>
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <h3 className="font-bold text-lg">{job.device.barcode}</h3>
@@ -64,9 +60,22 @@ export default async function RepairPage() {
                                 </span>
                             </div>
 
+                            {isQCRework && (
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-xs">
+                                    <p className="font-bold text-red-800 mb-1">⚠️ QC FAILED - REWORK REQUIRED</p>
+                                    <p className="text-red-700"><strong>QC Remarks:</strong> {latestQC.remarks || 'None'}</p>
+                                </div>
+                            )}
+
                             <div className="mb-4 text-sm text-gray-600">
                                 <p><strong>Issues:</strong> {JSON.parse(job.reportedIssues || '{}').functional || 'None'}</p>
                                 {job.sparesIssued && <p><strong>Spares:</strong> {job.sparesIssued}</p>}
+                                {job.notes && (
+                                    <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                                        <strong>Notes:</strong>
+                                        <pre className="whitespace-pre-wrap mt-1">{job.notes}</pre>
+                                    </div>
+                                )}
                                 {job.status === 'IN_PAINT_SHOP' && (
                                     <div className="mt-2 p-2 bg-purple-50 rounded text-xs">
                                         <strong>Paint Status:</strong>
@@ -95,22 +104,13 @@ export default async function RepairPage() {
                                 )}
 
                                 {job.status === 'UNDER_REPAIR' && (
-                                    <div className="w-full space-y-2">
-                                        <form action={handlePaint} className="w-full">
-                                            <input type="hidden" name="jobId" value={job.id} />
-                                            <button type="submit" className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 flex justify-center items-center gap-2">
-                                                <PaintBucket size={16} /> Send to Paint
-                                            </button>
-                                        </form>
-
-                                        <form action={handleComplete} className="w-full">
-                                            <input type="hidden" name="jobId" value={job.id} />
-                                            <input type="text" name="notes" placeholder="Repair Notes" className="w-full mb-2 px-2 py-1 border rounded text-sm" required />
-                                            <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 flex justify-center items-center gap-2">
-                                                <CheckCircle size={16} /> Complete
-                                            </button>
-                                        </form>
-                                    </div>
+                                    <form action={handleComplete} className="w-full">
+                                        <input type="hidden" name="jobId" value={job.id} />
+                                        <input type="text" name="notes" placeholder="Repair Notes" className="w-full mb-2 px-2 py-1 border rounded text-sm" required />
+                                        <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 flex justify-center items-center gap-2">
+                                            <CheckCircle size={16} /> Complete Repair
+                                        </button>
+                                    </form>
                                 )}
 
                                 {job.status === 'IN_PAINT_SHOP' && allPanelsReady && (
