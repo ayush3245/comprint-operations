@@ -12,6 +12,7 @@ export type ActivityAction =
     | 'CREATED_USER'
     | 'UPDATED_USER'
     | 'LOGIN'
+    | 'CREATED_OUTWARD'
 
 interface LogActivityParams {
     action: ActivityAction

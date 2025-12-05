@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from './db'
-import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus } from '@prisma/client'
+import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus, OutwardType } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from './auth'
 import { logActivity } from './activity'
@@ -742,4 +742,269 @@ export async function getInventory() {
     },
     orderBy: { updatedAt: 'desc' }
   })
+}
+
+// --- Outward Actions ---
+
+export async function getReadyForStockDevices() {
+  return await prisma.device.findMany({
+    where: {
+      status: DeviceStatus.READY_FOR_STOCK
+    },
+    include: {
+      inwardBatch: true
+    },
+    orderBy: { updatedAt: 'desc' }
+  })
+}
+
+export async function getUsers() {
+  return await prisma.user.findMany({
+    where: {
+      active: true
+    },
+    select: {
+      id: true,
+      name: true,
+      role: true
+    },
+    orderBy: { name: 'asc' }
+  })
+}
+
+export async function getOutwardRecords() {
+  return await prisma.outwardRecord.findMany({
+    include: {
+      devices: true,
+      packedBy: {
+        select: { name: true }
+      },
+      checkedBy: {
+        select: { name: true }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+}
+
+export async function createOutward(data: {
+  type: 'SALES' | 'RENTAL'
+  customer: string
+  reference: string
+  shippingDetails?: string
+  packedById?: string
+  checkedById?: string
+  deviceIds: string[]
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  if (data.deviceIds.length === 0) {
+    throw new Error('Please select at least one device')
+  }
+
+  // Verify all devices are READY_FOR_STOCK
+  const devices = await prisma.device.findMany({
+    where: {
+      id: { in: data.deviceIds },
+      status: DeviceStatus.READY_FOR_STOCK
+    }
+  })
+
+  if (devices.length !== data.deviceIds.length) {
+    throw new Error('Some selected devices are not ready for dispatch')
+  }
+
+  // Generate outward ID
+  const count = await prisma.outwardRecord.count()
+  const outwardId = `OUT-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`
+
+  // Create outward record
+  const outwardRecord = await prisma.outwardRecord.create({
+    data: {
+      outwardId,
+      type: data.type === 'SALES' ? OutwardType.SALES : OutwardType.RENTAL,
+      customer: data.customer,
+      reference: data.reference,
+      shippingDetails: data.shippingDetails,
+      packedById: data.packedById,
+      checkedById: data.checkedById
+    }
+  })
+
+  // Update devices and create stock movements
+  const newStatus = data.type === 'SALES' ? DeviceStatus.STOCK_OUT_SOLD : DeviceStatus.STOCK_OUT_RENTAL
+  const movementType = data.type === 'SALES' ? MovementType.SALES_OUTWARD : MovementType.RENTAL_OUTWARD
+
+  for (const device of devices) {
+    await prisma.device.update({
+      where: { id: device.id },
+      data: {
+        status: newStatus,
+        outwardRecordId: outwardRecord.id
+      }
+    })
+
+    await prisma.stockMovement.create({
+      data: {
+        deviceId: device.id,
+        type: movementType,
+        fromLocation: device.location || 'Warehouse',
+        reference: outwardId,
+        userId: user.id
+      }
+    })
+  }
+
+  revalidatePath('/outward')
+  revalidatePath('/inventory')
+
+  await logActivity({
+    action: 'CREATED_OUTWARD',
+    details: `Created ${data.type} outward ${outwardId} for ${data.customer} with ${data.deviceIds.length} device(s)`,
+    userId: user.id,
+    metadata: {
+      outwardId: outwardRecord.id,
+      type: data.type,
+      customer: data.customer,
+      deviceCount: data.deviceIds.length
+    }
+  })
+
+  return outwardRecord
+}
+
+// --- Spare Parts Management Actions ---
+
+export async function getSpareParts() {
+  return await prisma.sparePart.findMany({
+    orderBy: { partCode: 'asc' }
+  })
+}
+
+export async function getSparePartById(id: string) {
+  return await prisma.sparePart.findUnique({
+    where: { id }
+  })
+}
+
+export async function createSparePart(data: {
+  partCode: string
+  description: string
+  category: string
+  compatibleModels?: string
+  minStock?: number
+  maxStock?: number
+  currentStock?: number
+  binLocation?: string
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Check if part code already exists
+  const existing = await prisma.sparePart.findUnique({
+    where: { partCode: data.partCode }
+  })
+  if (existing) {
+    throw new Error('Part code already exists')
+  }
+
+  const sparePart = await prisma.sparePart.create({
+    data: {
+      partCode: data.partCode,
+      description: data.description,
+      category: data.category,
+      compatibleModels: data.compatibleModels,
+      minStock: data.minStock || 0,
+      maxStock: data.maxStock || 100,
+      currentStock: data.currentStock || 0,
+      binLocation: data.binLocation
+    }
+  })
+
+  revalidatePath('/admin/spares')
+  return sparePart
+}
+
+export async function updateSparePart(id: string, data: {
+  partCode?: string
+  description?: string
+  category?: string
+  compatibleModels?: string
+  minStock?: number
+  maxStock?: number
+  currentStock?: number
+  binLocation?: string
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // If changing part code, check for duplicates
+  if (data.partCode) {
+    const existing = await prisma.sparePart.findFirst({
+      where: {
+        partCode: data.partCode,
+        id: { not: id }
+      }
+    })
+    if (existing) {
+      throw new Error('Part code already exists')
+    }
+  }
+
+  const sparePart = await prisma.sparePart.update({
+    where: { id },
+    data
+  })
+
+  revalidatePath('/admin/spares')
+  return sparePart
+}
+
+export async function deleteSparePart(id: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  await prisma.sparePart.delete({
+    where: { id }
+  })
+
+  revalidatePath('/admin/spares')
+}
+
+export async function adjustSpareStock(id: string, adjustment: number, reason: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const sparePart = await prisma.sparePart.findUnique({
+    where: { id }
+  })
+  if (!sparePart) throw new Error('Spare part not found')
+
+  const newStock = sparePart.currentStock + adjustment
+  if (newStock < 0) {
+    throw new Error('Stock cannot go below zero')
+  }
+
+  await prisma.sparePart.update({
+    where: { id },
+    data: { currentStock: newStock }
+  })
+
+  await logActivity({
+    action: 'MOVED_STOCK',
+    details: `Adjusted stock for ${sparePart.partCode}: ${adjustment > 0 ? '+' : ''}${adjustment} (${reason})`,
+    userId: user.id,
+    metadata: { sparePartId: id, adjustment, reason, newStock }
+  })
+
+  revalidatePath('/admin/spares')
+}
+
+export async function getLowStockParts() {
+  const parts = await prisma.sparePart.findMany({
+    orderBy: { currentStock: 'asc' }
+  })
+  // Filter parts where current stock is at or below minimum
+  return parts.filter(part => part.currentStock <= part.minStock)
 }

@@ -13,6 +13,8 @@ import {
     PaintBucket,
     ClipboardCheck,
     Warehouse,
+    Truck,
+    Cog,
     LogOut,
     ChevronRight,
     Menu,
@@ -42,21 +44,27 @@ export default function Sidebar({ user }: SidebarProps) {
     const baseLinks = user.role === 'SUPERADMIN'
         ? [
             { href: '/admin/users', label: 'User Management', icon: Users, roles: ['SUPERADMIN'] },
+            { href: '/admin/spares', label: 'Spare Parts', icon: Cog, roles: ['SUPERADMIN'] },
             { href: '/inward', label: 'Inward', icon: PackagePlus, roles: ['SUPERADMIN'] },
             { href: '/inspection', label: 'Inspection', icon: Search, roles: ['SUPERADMIN'] },
+            { href: '/spares', label: 'Spares Requests', icon: Wrench, roles: ['SUPERADMIN'] },
             { href: '/repair', label: 'Repair Station', icon: Wrench, roles: ['SUPERADMIN'] },
             { href: '/paint', label: 'Paint Shop', icon: PaintBucket, roles: ['SUPERADMIN'] },
             { href: '/qc', label: 'QC', icon: ClipboardCheck, roles: ['SUPERADMIN'] },
             { href: '/inventory', label: 'Inventory', icon: Warehouse, roles: ['SUPERADMIN'] },
+            { href: '/outward', label: 'Outward', icon: Truck, roles: ['SUPERADMIN'] },
         ]
         : [
             { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: [] },
             { href: '/inward', label: 'Inward', icon: PackagePlus, roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'] },
             { href: '/inspection', label: 'Inspection', icon: Search, roles: ['INSPECTION_ENGINEER', 'ADMIN'] },
+            { href: '/spares', label: 'Spares Requests', icon: Cog, roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'] },
+            { href: '/admin/spares', label: 'Spare Parts', icon: Cog, roles: ['WAREHOUSE_MANAGER', 'ADMIN'] },
             { href: '/repair', label: 'Repair Station', icon: Wrench, roles: ['REPAIR_ENGINEER', 'ADMIN'] },
             { href: '/paint', label: 'Paint Shop', icon: PaintBucket, roles: ['PAINT_SHOP_TECHNICIAN', 'ADMIN'] },
             { href: '/qc', label: 'QC', icon: ClipboardCheck, roles: ['QC_ENGINEER', 'ADMIN'] },
             { href: '/inventory', label: 'Inventory', icon: Warehouse, roles: ['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN'] },
+            { href: '/outward', label: 'Outward', icon: Truck, roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'] },
         ]
 
     const filteredLinks = baseLinks.filter(link =>
