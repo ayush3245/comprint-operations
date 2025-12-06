@@ -5,6 +5,7 @@ import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatu
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from './auth'
 import { logActivity } from './activity'
+import { notifySparesRequested, notifyQCFailed, notifyPaintReady } from './notifications'
 
 // --- Inward Actions ---
 
@@ -239,6 +240,26 @@ export async function submitInspection(deviceId: string, data: {
       userId: user.id,
       metadata: { repairJobId: repairJob?.id, deviceId, nextStatus }
     })
+  }
+
+  // Send notification if spares are required
+  if (data.sparesRequired && repairJob) {
+    const deviceForNotif = await prisma.device.findUnique({
+      where: { id: deviceId },
+      select: { barcode: true, model: true }
+    })
+    const inspector = await prisma.user.findUnique({
+      where: { id: data.inspectionEngId },
+      select: { name: true }
+    })
+    if (deviceForNotif) {
+      notifySparesRequested({
+        deviceBarcode: deviceForNotif.barcode,
+        deviceModel: deviceForNotif.model,
+        sparesRequired: data.sparesRequired,
+        requestedBy: inspector?.name || 'Unknown'
+      }).catch(err => console.error('Failed to send spares notification:', err))
+    }
   }
 
   return repairJob
@@ -560,6 +581,20 @@ export async function updatePanelStatus(panelId: string, status: 'IN_PAINT' | 'R
         where: { deviceId: panel.deviceId },
         data: { status: 'READY_FOR_COLLECTION' }
       })
+
+      // Notify repair engineer that paint panels are ready
+      const repairJob = await prisma.repairJob.findFirst({
+        where: { deviceId: panel.deviceId },
+        orderBy: { createdAt: 'desc' }
+      })
+      const panelTypes = allPanels.map(p => p.panelType)
+      notifyPaintReady({
+        deviceBarcode: device.barcode,
+        deviceModel: device.model,
+        panels: panelTypes,
+        repairEngId: repairJob?.repairEngId || null
+      }).catch(err => console.error('Failed to send paint ready notification:', err))
+
       return // Exit early - repair engineer will collect and complete repair
     } else {
       // Repair completed or not required, go to QC
@@ -715,6 +750,26 @@ export async function submitQC(deviceId: string, data: {
       userId: user.id,
       metadata: { deviceId, status: data.status }
     })
+  }
+
+  // Send notification if QC failed
+  if (data.status === 'FAILED_REWORK') {
+    const repairJob = await prisma.repairJob.findFirst({
+      where: { deviceId },
+      orderBy: { createdAt: 'desc' }
+    })
+    const qcEngineer = await prisma.user.findUnique({
+      where: { id: data.qcEngId },
+      select: { name: true }
+    })
+
+    notifyQCFailed({
+      deviceBarcode: device.barcode,
+      deviceModel: device.model,
+      remarks: data.remarks,
+      qcEngineer: qcEngineer?.name || 'Unknown',
+      repairEngId: repairJob?.repairEngId || null
+    }).catch(err => console.error('Failed to send QC failure notification:', err))
   }
 }
 
