@@ -21,6 +21,10 @@ enum DeviceCategory {
   LAPTOP
   DESKTOP
   WORKSTATION
+  SERVER
+  MONITOR
+  STORAGE
+  NETWORKING_CARD
 }
 
 enum Ownership {
@@ -119,12 +123,38 @@ model Device {
   brand           String
   model           String
 
-  // Hardware specifications
+  // Common hardware specifications (Laptop/Desktop/Workstation)
   cpu             String?
   ram             String?
   ssd             String?
   gpu             String?
   screenSize      String?
+
+  // Server-specific fields
+  formFactor      String?        // e.g., 1U rack, 2U rack, Tower
+  raidController  String?        // e.g., P408i-a, RAID 5
+  networkPorts    String?        // e.g., 4× 1GbE + 2× 10GbE
+
+  // Monitor-specific fields
+  monitorSize     String?        // e.g., 24 inch
+  resolution      String?        // e.g., 1920×1080
+  panelType       String?        // e.g., IPS, TN, VA
+  refreshRate     String?        // e.g., 75Hz, 144Hz
+  monitorPorts    String?        // e.g., HDMI + DisplayPort + VGA
+
+  // Storage-specific fields
+  storageType     String?        // HDD / SSD / NVMe
+  capacity        String?        // e.g., 1TB, 500GB
+  storageFormFactor String?      // e.g., 2.5", 3.5", M.2
+  interface       String?        // e.g., SATA, SAS, PCIe Gen4
+  rpm             String?        // e.g., 7200 RPM (for HDD only)
+
+  // Networking Card-specific fields
+  nicSpeed        String?        // e.g., 10GbE, 25GbE
+  portCount       String?        // e.g., 2-port, 4-port
+  connectorType   String?        // e.g., RJ45, SFP+, QSFP+
+  nicInterface    String?        // e.g., PCIe x8
+  bracketType     String?        // e.g., Low Profile / Full Height
 
   serial          String?
   conditionNotes  String?

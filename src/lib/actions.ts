@@ -46,20 +46,54 @@ export async function createInwardBatch(data: {
 }
 
 export async function addDeviceToBatch(batchId: string, data: {
-  category: 'LAPTOP' | 'DESKTOP' | 'WORKSTATION'
+  category: 'LAPTOP' | 'DESKTOP' | 'WORKSTATION' | 'SERVER' | 'MONITOR' | 'STORAGE' | 'NETWORKING_CARD'
   brand: string
   model: string
+  // Laptop/Desktop/Workstation fields
   cpu?: string
   ram?: string
   ssd?: string
   gpu?: string
   screenSize?: string
+  // Server fields
+  formFactor?: string
+  raidController?: string
+  networkPorts?: string
+  // Monitor fields
+  monitorSize?: string
+  resolution?: string
+  panelType?: string
+  refreshRate?: string
+  monitorPorts?: string
+  // Storage fields
+  storageType?: string
+  capacity?: string
+  storageFormFactor?: string
+  interface?: string
+  rpm?: string
+  // Networking card fields
+  nicSpeed?: string
+  portCount?: string
+  connectorType?: string
+  nicInterface?: string
+  bracketType?: string
+  // Common fields
   serial?: string
   ownership: Ownership
 }) {
-  const shortCat = data.category.substring(0, 1)
+  // Category prefix for barcode
+  const categoryPrefixes: Record<string, string> = {
+    LAPTOP: 'L',
+    DESKTOP: 'D',
+    WORKSTATION: 'W',
+    SERVER: 'S',
+    MONITOR: 'M',
+    STORAGE: 'ST',
+    NETWORKING_CARD: 'N'
+  }
+  const prefix = categoryPrefixes[data.category] || data.category.substring(0, 1)
   const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-  const barcode = `${shortCat}-${data.brand.substring(0, 3).toUpperCase()}-${random}`
+  const barcode = `${prefix}-${data.brand.substring(0, 3).toUpperCase()}-${random}`
 
   const user = await getCurrentUser()
   if (!user) throw new Error('Unauthorized')
@@ -91,12 +125,35 @@ export async function bulkUploadDevices(batchId: string, devices: Array<{
   category: string
   brand: string
   model: string
+  // Common fields
   cpu?: string
   ram?: string
   ssd?: string
   gpu?: string
   screenSize?: string
   serial?: string
+  // Server fields
+  formFactor?: string
+  raidController?: string
+  networkPorts?: string
+  // Monitor fields
+  monitorSize?: string
+  resolution?: string
+  panelType?: string
+  refreshRate?: string
+  monitorPorts?: string
+  // Storage fields
+  storageType?: string
+  capacity?: string
+  storageFormFactor?: string
+  interface?: string
+  rpm?: string
+  // Networking card fields
+  nicSpeed?: string
+  portCount?: string
+  connectorType?: string
+  nicInterface?: string
+  bracketType?: string
 }>) {
   const user = await getCurrentUser()
   if (!user) throw new Error('Unauthorized')
@@ -109,6 +166,8 @@ export async function bulkUploadDevices(batchId: string, devices: Array<{
 
   const ownership = batch.type === 'REFURB_PURCHASE' ? Ownership.REFURB_STOCK : Ownership.RENTAL_RETURN
 
+  const validCategories = ['LAPTOP', 'DESKTOP', 'WORKSTATION', 'SERVER', 'MONITOR', 'STORAGE', 'NETWORKING_CARD']
+
   const results = {
     success: 0,
     failed: 0,
@@ -119,9 +178,9 @@ export async function bulkUploadDevices(batchId: string, devices: Array<{
     const deviceData = devices[i]
     try {
       // Validate category
-      const category = deviceData.category.toUpperCase()
-      if (!['LAPTOP', 'DESKTOP', 'WORKSTATION'].includes(category)) {
-        throw new Error(`Invalid category: ${deviceData.category}`)
+      const category = deviceData.category.toUpperCase().replace(' ', '_')
+      if (!validCategories.includes(category)) {
+        throw new Error(`Invalid category: ${deviceData.category}. Valid categories: ${validCategories.join(', ')}`)
       }
 
       // Validate required fields
@@ -130,7 +189,7 @@ export async function bulkUploadDevices(batchId: string, devices: Array<{
       }
 
       await addDeviceToBatch(batchId, {
-        category: category as 'LAPTOP' | 'DESKTOP' | 'WORKSTATION',
+        category: category as 'LAPTOP' | 'DESKTOP' | 'WORKSTATION' | 'SERVER' | 'MONITOR' | 'STORAGE' | 'NETWORKING_CARD',
         brand: deviceData.brand.trim(),
         model: deviceData.model.trim(),
         cpu: deviceData.cpu?.trim(),
@@ -139,6 +198,28 @@ export async function bulkUploadDevices(batchId: string, devices: Array<{
         gpu: deviceData.gpu?.trim(),
         screenSize: deviceData.screenSize?.trim(),
         serial: deviceData.serial?.trim(),
+        // Server fields
+        formFactor: deviceData.formFactor?.trim(),
+        raidController: deviceData.raidController?.trim(),
+        networkPorts: deviceData.networkPorts?.trim(),
+        // Monitor fields
+        monitorSize: deviceData.monitorSize?.trim(),
+        resolution: deviceData.resolution?.trim(),
+        panelType: deviceData.panelType?.trim(),
+        refreshRate: deviceData.refreshRate?.trim(),
+        monitorPorts: deviceData.monitorPorts?.trim(),
+        // Storage fields
+        storageType: deviceData.storageType?.trim(),
+        capacity: deviceData.capacity?.trim(),
+        storageFormFactor: deviceData.storageFormFactor?.trim(),
+        interface: deviceData.interface?.trim(),
+        rpm: deviceData.rpm?.trim(),
+        // Networking card fields
+        nicSpeed: deviceData.nicSpeed?.trim(),
+        portCount: deviceData.portCount?.trim(),
+        connectorType: deviceData.connectorType?.trim(),
+        nicInterface: deviceData.nicInterface?.trim(),
+        bracketType: deviceData.bracketType?.trim(),
         ownership
       })
 
