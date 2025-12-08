@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createOutward } from '@/lib/actions'
 import { Device, InwardBatch, OutwardRecord, Role } from '@prisma/client'
+import { useToast } from '@/components/ui/Toast'
 
 type DeviceWithBatch = Device & { inwardBatch: InwardBatch }
 type UserOption = { id: string; name: string; role: Role }
@@ -21,6 +22,7 @@ interface OutwardClientProps {
 
 export default function OutwardClient({ devices, users, outwardRecords }: OutwardClientProps) {
     const router = useRouter()
+    const toast = useToast()
     const [type, setType] = useState<'SALES' | 'RENTAL'>('SALES')
     const [selectedDevices, setSelectedDevices] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
@@ -44,11 +46,14 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
+        const customer = formData.get('customer') as string
+        const reference = formData.get('reference') as string
+
         try {
             const data = {
                 type,
-                customer: formData.get('customer') as string,
-                reference: formData.get('reference') as string,
+                customer,
+                reference,
                 shippingDetails: formData.get('shippingDetails') as string || undefined,
                 packedById: formData.get('packedById') as string || undefined,
                 checkedById: formData.get('checkedById') as string || undefined,
@@ -56,12 +61,21 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
             }
 
             await createOutward(data)
+            toast.success(`${selectedDevices.length} device(s) have been dispatched and marked as ${type === 'SALES' ? 'sold' : 'rented out'}.`, {
+                title: `${type === 'SALES' ? 'Sales' : 'Rental'} Dispatch Created`,
+                details: [
+                    { label: 'Customer', value: customer },
+                    { label: type === 'SALES' ? 'Invoice No' : 'Rental Ref', value: reference },
+                    { label: 'Devices', value: `${selectedDevices.length} device(s)` },
+                    { label: 'Type', value: type === 'SALES' ? 'Sales Outward' : 'Rental Outward' }
+                ]
+            })
             setShowForm(false)
             setSelectedDevices([])
             router.refresh()
         } catch (error) {
             console.error(error)
-            alert(error instanceof Error ? error.message : 'Failed to create outward')
+            toast.error(error instanceof Error ? error.message : 'Failed to create dispatch')
         } finally {
             setLoading(false)
         }

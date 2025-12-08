@@ -4,9 +4,11 @@ import { createInwardBatch } from '@/lib/actions'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { InwardType } from '@prisma/client'
+import { useToast } from '@/components/ui/Toast'
 
 export default function NewInwardBatchClient() {
     const router = useRouter()
+    const toast = useToast()
     const [type, setType] = useState<InwardType>('REFURB_PURCHASE')
     const [loading, setLoading] = useState(false)
 
@@ -23,11 +25,12 @@ export default function NewInwardBatchClient() {
                 createdById: 'placeholder'
             }
 
-            await createInwardBatch(data)
-            router.push('/inward')
+            const batch = await createInwardBatch(data)
+            toast.success(`Batch created successfully! Now add devices.`)
+            router.push(`/inward/${batch.batchId}`)
         } catch (error) {
             console.error(error)
-            alert('Failed to create batch')
+            toast.error(error instanceof Error ? error.message : 'Failed to create batch')
         } finally {
             setLoading(false)
         }
