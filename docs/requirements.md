@@ -3,7 +3,14 @@
 ## 1. Project Overview
 
 ### 1.1 Purpose
-Comprint Operations is a comprehensive device refurbishment and repair tracking system designed to manage the complete lifecycle of laptops, desktops, and workstations from receiving to final dispatch. The system tracks devices through various workflow stages including inspection, repair, painting, quality control, and inventory management.
+Comprint Operations is a comprehensive device refurbishment and repair tracking system designed to manage the complete lifecycle of IT assets from receiving to final dispatch. The system tracks devices through various workflow stages including inspection, repair, painting, quality control, and inventory management.
+
+**Supported Device Categories:**
+- Laptops, Desktops, and Workstations
+- Servers
+- Monitors
+- Storage devices (HDD/SSD/NVMe)
+- Networking Cards (NICs)
 
 ### 1.2 Scope
 The application supports two primary business operations:
@@ -508,3 +515,5 @@ The application supports two primary business operations:
 | **Grade** | Quality classification (A or B) assigned after QC pass |
 | **Panel** | External device component requiring painting (Top Cover, Bottom Cover, etc.) |
 | **Spares** | Replacement parts required for repair |
+| **Device Category** | Type of IT asset: LAPTOP, DESKTOP, WORKSTATION, SERVER, MONITOR, STORAGE, NETWORKING_CARD |
+| **Confirmation Popup** | Dismissible modal notification confirming user actions with relevant details |

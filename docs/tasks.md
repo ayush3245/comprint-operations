@@ -7,12 +7,14 @@ This document outlines completed features, known issues, and planned enhancement
 ## 1. Completed Features
 
 ### 1.1 Core Infrastructure
-- [x] Next.js 15 project setup with App Router
-- [x] PostgreSQL database with Prisma ORM
+- [x] Next.js 16 project setup with App Router (Turbopack)
+- [x] PostgreSQL database with Prisma ORM 7.0
 - [x] Prisma adapter for PostgreSQL connection pooling
 - [x] TypeScript configuration
 - [x] Tailwind CSS 4 styling setup
 - [x] Framer Motion animations
+- [x] Recharts for dashboard visualizations
+- [x] Resend for email notifications
 
 ### 1.2 Authentication & Authorization
 - [x] Cookie-based authentication system
@@ -24,11 +26,13 @@ This document outlines completed features, known issues, and planned enhancement
 ### 1.3 Inward Management
 - [x] Create inward batches (Refurb/Rental Return)
 - [x] Add individual devices to batches
-- [x] Bulk upload devices from Excel
+- [x] Bulk upload devices from Excel (multi-sheet template for all device types)
 - [x] Auto-generate barcodes (X-BRD-NNNN format)
 - [x] Auto-generate batch IDs (BATCH-YYYY-NNNN format)
 - [x] View batch details and device list
 - [x] Print barcode labels
+- [x] Dynamic form fields based on device category
+- [x] Support for 7 device categories: LAPTOP, DESKTOP, WORKSTATION, SERVER, MONITOR, STORAGE, NETWORKING_CARD
 
 ### 1.4 Inspection Module
 - [x] Barcode scanner integration (ZXing)
@@ -77,6 +81,14 @@ This document outlines completed features, known issues, and planned enhancement
 - [x] User attribution
 - [x] Metadata storage (JSON)
 
+### 1.11 User Experience
+- [x] Dismissible confirmation popups for all workflow actions
+- [x] Toast/popup system with React Context
+- [x] Color-coded popup types (success, warning, error)
+- [x] Details display in confirmation popups (barcode, device info, status)
+- [x] Page transitions with Framer Motion
+- [x] Confetti effect on significant completions
+
 ---
 
 ## 2. Known Issues & Bug Fixes Completed
@@ -94,7 +106,7 @@ This document outlines completed features, known issues, and planned enhancement
 ### 2.2 Known Technical Debt
 | Item | Priority | Description |
 |------|----------|-------------|
-| Error toast notifications | Medium | Currently using console.error; should implement toast UI |
+| ~~Error toast notifications~~ | ~~Medium~~ | ✅ Implemented confirmation popup system |
 | Form validation | Medium | Add client-side validation for better UX |
 | Loading states | Low | Add skeleton loaders for data fetching |
 | Mobile responsiveness | Medium | Some forms need mobile optimization |
@@ -105,93 +117,94 @@ This document outlines completed features, known issues, and planned enhancement
 
 ### 3.1 High Priority
 
-#### T-001: Outward/Dispatch Module
+#### T-001: Outward/Dispatch Module ✅ COMPLETED
 **Complexity:** High
 **Dependencies:** Inventory module
 **Description:** Implement complete outward workflow for sales and rental dispatch
 
 **Tasks:**
-- [ ] Create outward page route `/outward`
-- [ ] Outward type selection (Sales / Rental)
-- [ ] Sales Outward form:
-  - [ ] Customer name input
-  - [ ] Sales Invoice number input
-  - [ ] Device selection interface (multi-select from READY_FOR_STOCK devices)
-  - [ ] Shipping details capture (carrier, tracking, address)
-  - [ ] Packed By user selection
-  - [ ] Checked By user selection (dual verification)
-- [ ] Rental Outward form:
-  - [ ] Customer name input
-  - [ ] Rental reference input
-  - [ ] Device selection interface
-  - [ ] Shipping details capture
-- [ ] Create `createOutward()` server action
-- [ ] Update device status to STOCK_OUT_SOLD or STOCK_OUT_RENTAL
-- [ ] Create stock movement records for each device
-- [ ] Generate dispatch documentation (packing list)
-- [ ] Activity logging for outward dispatch
+- [x] Create outward page route `/outward`
+- [x] Outward type selection (Sales / Rental)
+- [x] Sales Outward form:
+  - [x] Customer name input
+  - [x] Sales Invoice number input
+  - [x] Device selection interface (multi-select from READY_FOR_STOCK devices)
+  - [x] Shipping details capture (carrier, tracking, address)
+  - [x] Packed By user selection
+  - [x] Checked By user selection (dual verification)
+- [x] Rental Outward form:
+  - [x] Customer name input
+  - [x] Rental reference input
+  - [x] Device selection interface
+  - [x] Shipping details capture
+- [x] Create `createOutward()` server action
+- [x] Update device status to STOCK_OUT_SOLD or STOCK_OUT_RENTAL
+- [x] Create stock movement records for each device
+- [x] Generate dispatch documentation (packing list)
+- [x] Activity logging for outward dispatch
+- [x] Confirmation popup with dispatch details
 
 ---
 
-#### T-002: Spare Parts Inventory Management
+#### T-002: Spare Parts Inventory Management ✅ COMPLETED
 **Complexity:** Medium
 **Dependencies:** None
 **Description:** Full spare parts inventory tracking
 
 **Tasks:**
-- [ ] Spare parts catalog management (CRUD)
-  - [ ] Create spare part form (code, description, category, compatible models)
-  - [ ] Edit spare part details
-  - [ ] Delete/deactivate spare parts
-- [ ] Stock level tracking (current, min, max)
-- [ ] Bin location management
-- [ ] Stock alerts for low inventory (when current < min)
-- [ ] Spare parts issuance tracking:
-  - [ ] Link issued spares to specific repair jobs
-  - [ ] Decrease inventory when issued
-  - [ ] **Return unused spares to stock** (repair engineer can mark spares as unused)
-  - [ ] Track actual spares used vs issued
-- [ ] Stock movement history per part
-- [ ] Spare parts usage reports
+- [x] Spare parts catalog management (CRUD)
+  - [x] Create spare part form (code, description, category, compatible models)
+  - [x] Edit spare part details
+  - [x] Delete/deactivate spare parts
+- [x] Stock level tracking (current, min, max)
+- [x] Bin location management
+- [x] Stock alerts for low inventory (when current < min)
+- [x] Spare parts issuance tracking:
+  - [x] Link issued spares to specific repair jobs
+  - [x] Decrease inventory when issued
+  - [ ] **Return unused spares to stock** (repair engineer can mark spares as unused) - Pending
+  - [ ] Track actual spares used vs issued - Pending
+- [x] Stock movement history per part
+- [ ] Spare parts usage reports - Pending
 
 ---
 
-#### T-003: Dashboard Analytics
+#### T-003: Dashboard Analytics ✅ COMPLETED
 **Complexity:** Medium
 **Dependencies:** All workflow modules
 **Description:** Real-time operational dashboard with KPIs per original requirements
 
 **Tasks:**
-- [ ] **Devices by stage** (Pending Inspection / Under Repair / In Paint / Awaiting QC / Ready for Stock)
-- [ ] **TAT breaches** - Count of repair jobs exceeding 5 days
-- [ ] **QC pass/fail rates by engineer** - Individual engineer performance
-- [ ] **QC pass/fail rates by batch** - Batch quality tracking
-- [ ] **Stock snapshot by grade (A/B)** - Ready inventory by quality
-- [ ] **Stock snapshot by category** (Laptop/Desktop/Workstation)
-- [ ] **Stock snapshot by location** (Rack/Bin)
-- [ ] Daily/weekly throughput metrics
-- [ ] Repair engineer workload distribution
-- [ ] Average time per workflow stage
-- [ ] Batch completion tracking
-- [ ] Overdue device alerts
+- [x] **Devices by stage** (Pending Inspection / Under Repair / In Paint / Awaiting QC / Ready for Stock)
+- [x] **TAT breaches** - Count of repair jobs exceeding 5 days
+- [x] **QC pass/fail rates by engineer** - Individual engineer performance with Recharts visualization
+- [ ] **QC pass/fail rates by batch** - Batch quality tracking - Pending
+- [x] **Stock snapshot by grade (A/B)** - Ready inventory by quality
+- [x] **Stock snapshot by category** (Laptop/Desktop/Workstation/Server/Monitor/Storage/NIC)
+- [ ] **Stock snapshot by location** (Rack/Bin) - Pending
+- [x] Daily/weekly throughput metrics (bar chart)
+- [ ] Repair engineer workload distribution - Pending
+- [ ] Average time per workflow stage - Pending
+- [ ] Batch completion tracking - Pending
+- [x] Overdue device alerts
 
 ---
 
-#### T-004: Email Notifications
+#### T-004: Email Notifications ✅ COMPLETED
 **Complexity:** Medium
 **Dependencies:** User management
 **Description:** Automated email notifications for key events
 
 **Tasks:**
-- [ ] Set up email service (Resend/SendGrid)
-- [ ] Notification triggers:
-  - [ ] TAT approaching deadline
-  - [ ] TAT breached
-  - [ ] Spares requested
-  - [ ] QC failed
-  - [ ] Paint panels ready for collection
-- [ ] User notification preferences
-- [ ] Email templates
+- [x] Set up email service (Resend)
+- [x] Notification triggers:
+  - [x] TAT approaching deadline
+  - [x] TAT breached
+  - [x] Spares requested
+  - [x] QC failed
+  - [x] Paint panels ready for collection
+- [ ] User notification preferences - Pending
+- [x] Email templates
 
 ---
 
@@ -568,6 +581,9 @@ This document outlines completed features, known issues, and planned enhancement
 | 1.0.0 | 2025-12 | Initial release with core workflow modules |
 | 1.0.1 | 2025-12 | Bug fixes for workflow routing |
 | 1.0.2 | 2025-12 | QC rework context and repair job closure fixes |
+| 1.1.0 | 2025-12 | Added device categories (Server, Monitor, Storage, NIC) with dynamic form fields |
+| 1.1.1 | 2025-12 | Replaced toast notifications with dismissible confirmation popups for all workflow actions |
+| 1.1.2 | 2025-12 | Updated to Next.js 16, Prisma 7.0, added comprehensive documentation |
 
 ---
 

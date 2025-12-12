@@ -27,16 +27,21 @@
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| **Frontend** | React | 19.0.0 |
-| **Framework** | Next.js | 15.2.4 |
+| **Frontend** | React | 19.2.0 |
+| **Framework** | Next.js | 16.0.7 (Turbopack) |
 | **Styling** | Tailwind CSS | 4.0.0 |
-| **Animations** | Framer Motion | 12.6.0 |
-| **Icons** | Lucide React | 0.483.0 |
-| **ORM** | Prisma | 6.5.0 |
+| **Animations** | Framer Motion | 12.23.24 |
+| **Icons** | Lucide React | 0.554.0 |
+| **Charts** | Recharts | 3.5.1 |
+| **ORM** | Prisma | 7.0.0 |
 | **Database** | PostgreSQL | 14+ |
-| **DB Adapter** | @prisma/adapter-pg | 6.5.0 |
-| **Barcode** | @zxing/library | 0.21.3 |
-| **Excel** | xlsx | 0.18.5 |
+| **DB Adapter** | @prisma/adapter-pg | 7.0.0 |
+| **Barcode Gen** | JsBarcode | 3.12.1 |
+| **Barcode Scan** | @zxing/library | 0.21.3 |
+| **PDF Gen** | jsPDF | 3.0.4 |
+| **PDF Parse** | pdfjs-dist | 5.4.449 |
+| **Excel** | xlsx (SheetJS) | 0.18.5 |
+| **Email** | Resend | 6.5.2 |
 | **Language** | TypeScript | 5.x |
 
 ### 1.3 Design Patterns
@@ -215,10 +220,13 @@ comprint-operations/
 │   │   └── admin/
 │   │       └── users/         # User management
 │   ├── components/
-│   │   ├── Sidebar.tsx        # Navigation
-│   │   ├── BarcodeScanner.tsx # Camera scanner
-│   │   ├── BarcodePrintButton.tsx  # Print labels
-│   │   └── ui/                # Shadcn components
+│   │   ├── Sidebar.tsx              # Navigation
+│   │   ├── BarcodeScanner.tsx       # Camera/image barcode scanner
+│   │   ├── BarcodePrintButton.tsx   # Print labels
+│   │   ├── DynamicDeviceForm.tsx    # Category-aware device form
+│   │   ├── Providers.tsx            # Toast/popup context provider
+│   │   └── ui/
+│   │       └── Toast.tsx            # Confirmation popup component
 │   └── lib/
 │       ├── actions.ts         # Server actions
 │       ├── auth.ts            # Authentication
@@ -381,14 +389,38 @@ Adds a device to an existing batch.
 **Input:**
 ```typescript
 {
-  category: 'LAPTOP' | 'DESKTOP' | 'WORKSTATION'
+  category: 'LAPTOP' | 'DESKTOP' | 'WORKSTATION' | 'SERVER' | 'MONITOR' | 'STORAGE' | 'NETWORKING_CARD'
   brand: string
   model: string
+  // Common fields (Laptop/Desktop/Workstation)
   cpu?: string
   ram?: string
   ssd?: string
   gpu?: string
   screenSize?: string
+  // Server-specific
+  formFactor?: string       // e.g., 1U rack, 2U rack, Tower
+  raidController?: string   // e.g., P408i-a, RAID 5
+  networkPorts?: string     // e.g., 4x 1GbE + 2x 10GbE
+  // Monitor-specific
+  monitorSize?: string      // e.g., 24 inch
+  resolution?: string       // e.g., 1920x1080
+  panelType?: string        // e.g., IPS, TN, VA
+  refreshRate?: string      // e.g., 75Hz, 144Hz
+  monitorPorts?: string     // e.g., HDMI + DisplayPort + VGA
+  // Storage-specific
+  storageType?: string      // HDD / SSD / NVMe
+  capacity?: string         // e.g., 1TB, 500GB
+  storageFormFactor?: string // e.g., 2.5", 3.5", M.2
+  interface?: string        // e.g., SATA, SAS, PCIe Gen4
+  rpm?: string              // e.g., 7200 RPM (HDD only)
+  // Networking Card-specific
+  nicSpeed?: string         // e.g., 10GbE, 25GbE
+  portCount?: string        // e.g., 2-port, 4-port
+  connectorType?: string    // e.g., RJ45, SFP+, QSFP+
+  nicInterface?: string     // e.g., PCIe x8
+  bracketType?: string      // e.g., Low Profile / Full Height
+  // Common
   serial?: string
   ownership: 'REFURB_STOCK' | 'RENTAL_RETURN'
 }
@@ -773,6 +805,7 @@ interface AuditEntry {
 
 ```env
 DATABASE_URL=postgresql://user:pass@host:5432/db
+RESEND_API_KEY=re_xxxxx  # Optional: for email notifications
 ```
 
 ### 9.2 Database Connection
