@@ -47,3 +47,7 @@ USER_CREDENTIALS.md
 
 notes.docx
 ~$notes.docx
+nul
+
+# Serena MCP cache (local only)
+.serena/cache/
