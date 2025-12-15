@@ -1,6 +1,6 @@
 'use client'
 
-import { Clock, Loader2, CheckCircle } from 'lucide-react'
+import { Clock, Activity, CheckCircle } from 'lucide-react'
 
 interface DashboardStatsProps {
     pending: number
@@ -67,7 +67,7 @@ export default function DashboardStats({
                         <p className="text-3xl font-bold text-blue-600">{inProgress}</p>
                     </div>
                     <div className="p-3 bg-blue-100 rounded-full">
-                        <Loader2 className="w-6 h-6 text-blue-600" />
+                        <Activity className="w-6 h-6 text-blue-600" />
                     </div>
                 </div>
                 {onInProgressClick && (

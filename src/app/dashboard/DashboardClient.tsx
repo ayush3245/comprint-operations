@@ -107,56 +107,63 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
             label: 'Pending Inspection',
             value: stats.pendingInspection,
             icon: ClipboardList,
-            color: 'text-blue-500',
-            gradient: 'from-blue-500/20 to-blue-600/5',
+            color: 'text-blue-600',
+            bgColor: 'bg-blue-50',
+            gradient: 'from-blue-400/30 to-blue-500/10',
             roles: ['INSPECTION_ENGINEER', 'ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
         {
             label: 'Waiting for Spares',
             value: stats.waitingForSpares,
             icon: Clock,
-            color: 'text-amber-500',
-            gradient: 'from-amber-500/20 to-amber-600/5',
+            color: 'text-amber-600',
+            bgColor: 'bg-amber-50',
+            gradient: 'from-amber-400/30 to-amber-500/10',
             roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN', 'SUPERADMIN']
         },
         {
             label: 'Under Repair',
             value: stats.underRepair,
             icon: Wrench,
-            color: 'text-orange-500',
-            gradient: 'from-orange-500/20 to-orange-600/5',
+            color: 'text-orange-600',
+            bgColor: 'bg-orange-50',
+            gradient: 'from-orange-400/30 to-orange-500/10',
             roles: ['REPAIR_ENGINEER', 'ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
         {
             label: 'In Paint Shop',
             value: stats.inPaint,
             icon: PaintBucket,
-            color: 'text-purple-500',
-            gradient: 'from-purple-500/20 to-purple-600/5',
+            color: 'text-purple-600',
+            bgColor: 'bg-purple-50',
+            gradient: 'from-purple-400/30 to-purple-500/10',
             roles: ['PAINT_SHOP_TECHNICIAN', 'ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
         {
             label: 'Awaiting QC',
             value: stats.awaitingQC,
             icon: CheckCircle,
-            color: 'text-yellow-500',
-            gradient: 'from-yellow-500/20 to-yellow-600/5',
+            color: 'text-yellow-600',
+            bgColor: 'bg-yellow-50',
+            gradient: 'from-yellow-400/30 to-yellow-500/10',
             roles: ['QC_ENGINEER', 'ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
         {
             label: 'Ready for Stock',
             value: stats.readyForStock,
             icon: Package,
-            color: 'text-green-500',
-            gradient: 'from-green-500/20 to-green-600/5',
+            color: 'text-green-600',
+            bgColor: 'bg-green-50',
+            gradient: 'from-green-400/30 to-green-500/10',
             roles: ['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN', 'SUPERADMIN']
         },
         {
             label: 'TAT Breaches',
             value: stats.tatBreaches,
             icon: AlertTriangle,
-            color: 'text-red-500',
-            gradient: 'from-red-500/20 to-red-600/5',
+            color: 'text-red-600',
+            bgColor: 'bg-red-50',
+            gradient: 'from-red-400/30 to-red-500/10',
             roles: ['ADMIN', 'REPAIR_ENGINEER', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
     ]
@@ -256,14 +263,14 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
             >
                 {filteredStats.map((stat) => (
                     <motion.div key={stat.label} variants={item}>
-                        <GlassCard className="p-6 h-full hover:shadow-2xl transition-shadow duration-300 border-white/40">
-                            <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-50`} />
+                        <GlassCard className={`p-6 h-full hover:shadow-2xl transition-shadow duration-300 border-white/40 ${stat.bgColor}`}>
+                            <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} rounded-2xl`} />
                             <div className="relative flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider mb-1">{stat.label}</p>
+                                    <p className="text-sm text-gray-600 font-semibold uppercase tracking-wider mb-1">{stat.label}</p>
                                     <h3 className="text-4xl font-bold text-gray-800 tracking-tight">{stat.value}</h3>
                                 </div>
-                                <div className={`p-4 rounded-2xl bg-white/80 shadow-sm ${stat.color}`}>
+                                <div className={`p-4 rounded-2xl bg-white shadow-md ${stat.color}`}>
                                     <stat.icon size={28} />
                                 </div>
                             </div>

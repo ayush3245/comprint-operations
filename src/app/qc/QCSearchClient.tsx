@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ClipboardCheck, ScanLine } from 'lucide-react'
+import { ClipboardCheck, ScanLine, AlertCircle } from 'lucide-react'
 
 import { Suspense } from 'react'
 import ConfettiTrigger from '@/components/ui/ConfettiTrigger'
@@ -12,12 +12,16 @@ export default function QCSearchClient() {
     const router = useRouter()
     const [barcode, setBarcode] = useState('')
     const [showScanner, setShowScanner] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     function handleSearch(e: React.FormEvent) {
         e.preventDefault()
-        if (barcode.trim()) {
-            router.push(`/qc/${barcode.trim()}`)
+        if (!barcode.trim()) {
+            setError('Please enter or scan a barcode first')
+            return
         }
+        setError(null)
+        router.push(`/qc/${barcode.trim()}`)
     }
 
     function handleBarcodeDetected(detectedBarcode: string) {
@@ -47,6 +51,13 @@ export default function QCSearchClient() {
                         autoFocus
                     />
                     <ClipboardCheck className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
+
+                    {error && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+                            <AlertCircle size={18} className="flex-shrink-0" />
+                            <span className="text-sm">{error}</span>
+                        </div>
+                    )}
 
                     <button
                         type="submit"

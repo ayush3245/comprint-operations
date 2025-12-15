@@ -7,6 +7,7 @@ import { checkRole } from '@/lib/auth'
 import BulkUploadForm from './BulkUploadForm'
 import BarcodePrintButton from '@/components/BarcodePrintButton'
 import DynamicDeviceForm from '@/components/DynamicDeviceForm'
+import InwardDeviceList from './InwardDeviceList'
 
 export default async function BatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     await checkRole(['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'])
@@ -106,9 +107,9 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Batch: {batch.batchId}</h1>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">Batch: {batch.batchId}</h1>
                     <p className="text-gray-500">
                         {batch.type.replace('_', ' ')} • {formatDate(batch.date)} • Created by {batch.createdBy.name}
                     </p>
@@ -159,92 +160,10 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
                 {/* Device List */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-lg shadow overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-200">
+                        <div className="px-4 md:px-6 py-4 border-b border-gray-200">
                             <h2 className="text-lg font-semibold">Devices in Batch</h2>
                         </div>
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specifications</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {batch.devices.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
-                                            No devices added yet.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    batch.devices.map((device) => {
-                                        // Get category-specific specs
-                                        let specs = ''
-                                        switch (device.category) {
-                                            case 'LAPTOP':
-                                            case 'DESKTOP':
-                                            case 'WORKSTATION':
-                                                specs = [device.cpu, device.ram, device.ssd, device.gpu, device.screenSize].filter(Boolean).join(' • ')
-                                                break
-                                            case 'SERVER':
-                                                specs = [device.formFactor, device.cpu, device.ram, device.ssd].filter(Boolean).join(' • ')
-                                                break
-                                            case 'MONITOR':
-                                                specs = [device.monitorSize, device.resolution, device.panelType].filter(Boolean).join(' • ')
-                                                break
-                                            case 'STORAGE':
-                                                specs = [device.storageType, device.capacity, device.storageFormFactor, device.interface].filter(Boolean).join(' • ')
-                                                break
-                                            case 'NETWORKING_CARD':
-                                                specs = [device.nicSpeed, device.portCount, device.connectorType].filter(Boolean).join(' • ')
-                                                break
-                                        }
-
-                                        // Format category label
-                                        const categoryLabel = device.category.replace('_', ' ')
-
-                                        return (
-                                            <tr key={device.id}>
-                                                <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600">
-                                                    {device.barcode}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    <div className="font-medium">{device.brand} {device.model}</div>
-                                                    <div className="text-xs text-gray-500">{categoryLabel}</div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">
-                                                    {specs || '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                        {device.status.replace('_', ' ')}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <BarcodePrintButton
-                                                        devices={[{
-                                                            barcode: device.barcode,
-                                                            category: device.category,
-                                                            brand: device.brand,
-                                                            model: device.model,
-                                                            cpu: device.cpu,
-                                                            ram: device.ram,
-                                                            ssd: device.ssd,
-                                                            serial: device.serial
-                                                        }]}
-                                                        mode="single"
-                                                        variant="icon"
-                                                    />
-                                                </td>
-                                            </tr>
-                                        )
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                        <InwardDeviceList devices={batch.devices} />
                     </div>
                 </div>
             </div>

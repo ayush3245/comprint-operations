@@ -37,6 +37,7 @@ export default async function DisplayRepairPage() {
                 jobs={jobs}
                 userId={user.id}
                 userName={user.name}
+                userRole={user.role}
                 onStartRepair={handleStartRepair}
                 onCompleteRepair={handleCompleteRepair}
             />

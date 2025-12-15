@@ -37,6 +37,7 @@ export default async function BatteryBoostPage() {
                 jobs={jobs}
                 userId={user.id}
                 userName={user.name}
+                userRole={user.role}
                 onStartBoost={handleStartBoost}
                 onCompleteBoost={handleCompleteBoost}
             />

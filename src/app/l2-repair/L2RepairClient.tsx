@@ -9,6 +9,7 @@ import {
     Package, FileText, User
 } from 'lucide-react'
 import type { L3IssueType } from '@prisma/client'
+import ReportedIssuesDisplay from '@/components/ReportedIssuesDisplay'
 
 interface ChecklistItem {
     id: string
@@ -190,7 +191,9 @@ export default function L2RepairClient({
     }
 
     const getParallelWorkStatus = (device: AssignedDevice['device']) => {
-        const allPaintComplete = device.paintPanels.every(
+        // Only consider paint complete if there are panels AND they're all done
+        // (every() returns true for empty arrays, so we need the length check)
+        const allPaintComplete = device.paintPanels.length > 0 && device.paintPanels.every(
             p => p.status === 'READY_FOR_COLLECTION' || p.status === 'FITTED'
         )
 
@@ -240,8 +243,8 @@ export default function L2RepairClient({
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-800">L2 Repair Coordination</h1>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-800">L2 Repair Coordination</h1>
                 <span className="text-sm text-gray-500">Engineer: {userName}</span>
             </div>
 
@@ -373,10 +376,8 @@ export default function L2RepairClient({
                                                     )}
                                                     {job.reportedIssues && (
                                                         <div className="col-span-full">
-                                                            <span className="text-gray-600">Reported Issues:</span>
-                                                            <p className="mt-1 text-gray-800 bg-white p-2 rounded border">
-                                                                {job.reportedIssues}
-                                                            </p>
+                                                            <span className="text-gray-600 block mb-2">Reported Issues:</span>
+                                                            <ReportedIssuesDisplay issues={job.reportedIssues} />
                                                         </div>
                                                     )}
                                                     <div className="col-span-full flex flex-wrap gap-4">
@@ -578,9 +579,14 @@ export default function L2RepairClient({
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <Paintbrush size={16} />
                                                         <span className="font-medium text-sm">Paint</span>
+                                                        {status.paint.required && status.paint.panels.length > 0 && (
+                                                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                                                {status.paint.panels.length} panel{status.paint.panels.length !== 1 ? 's' : ''}
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    {status.paint.completed ? (
-                                                        <span className="text-xs text-green-600">Completed</span>
+                                                    {status.paint.required && status.paint.completed ? (
+                                                        <span className="text-xs text-green-600">All panels completed</span>
                                                     ) : status.paint.readyToCollect ? (
                                                         <button
                                                             onClick={() => {
@@ -601,13 +607,23 @@ export default function L2RepairClient({
                                                             <Download size={12} className="inline mr-1" />
                                                             Collect
                                                         </button>
-                                                    ) : status.paint.required ? (
-                                                        <div className="text-xs text-purple-600">
+                                                    ) : status.paint.required && status.paint.panels.length > 0 ? (
+                                                        <div className="space-y-1">
                                                             {status.paint.panels.map(p => (
-                                                                <div key={p.id}>{p.panelType}: {p.status.replace('_', ' ')}</div>
+                                                                <div key={p.id} className="text-xs flex items-center justify-between">
+                                                                    <span className="text-purple-700">{p.panelType}</span>
+                                                                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                                                                        p.status === 'AWAITING_PAINT' ? 'bg-gray-100 text-gray-600' :
+                                                                        p.status === 'IN_PAINT' ? 'bg-blue-100 text-blue-600' :
+                                                                        p.status === 'READY_FOR_COLLECTION' ? 'bg-yellow-100 text-yellow-700' :
+                                                                        'bg-green-100 text-green-600'
+                                                                    }`}>
+                                                                        {p.status.replace(/_/g, ' ')}
+                                                                    </span>
+                                                                </div>
                                                             ))}
                                                         </div>
-                                                    ) : (
+                                                    ) : !status.paint.required ? (
                                                         <button
                                                             onClick={() => setShowPaintModal(device.id)}
                                                             className="text-xs bg-purple-500 text-white px-2 py-1 rounded"
@@ -615,6 +631,8 @@ export default function L2RepairClient({
                                                             <Send size={12} className="inline mr-1" />
                                                             Send
                                                         </button>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-500">Not required</span>
                                                     )}
                                                 </div>
                                             </div>

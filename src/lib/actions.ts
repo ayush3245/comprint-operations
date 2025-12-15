@@ -122,6 +122,80 @@ export async function addDeviceToBatch(batchId: string, data: {
   return device
 }
 
+export async function updateDevice(deviceId: string, data: {
+  brand?: string
+  model?: string
+  // Laptop/Desktop/Workstation fields
+  cpu?: string
+  ram?: string
+  ssd?: string
+  gpu?: string
+  screenSize?: string
+  // Server fields
+  formFactor?: string
+  raidController?: string
+  networkPorts?: string
+  // Monitor fields
+  monitorSize?: string
+  resolution?: string
+  panelType?: string
+  refreshRate?: string
+  monitorPorts?: string
+  // Storage fields
+  storageType?: string
+  capacity?: string
+  storageFormFactor?: string
+  interface?: string
+  rpm?: string
+  // Networking card fields
+  nicSpeed?: string
+  portCount?: string
+  connectorType?: string
+  nicInterface?: string
+  bracketType?: string
+  // Common fields
+  serial?: string
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Get the device to find its batch for revalidation
+  const device = await prisma.device.findUnique({
+    where: { id: deviceId },
+    select: { inwardBatchId: true, barcode: true }
+  })
+
+  if (!device) throw new Error('Device not found')
+
+  // Only allow editing devices in RECEIVED status
+  const existingDevice = await prisma.device.findUnique({
+    where: { id: deviceId },
+    select: { status: true }
+  })
+
+  if (existingDevice?.status !== 'RECEIVED') {
+    throw new Error('Can only edit devices in RECEIVED status')
+  }
+
+  const updatedDevice = await prisma.device.update({
+    where: { id: deviceId },
+    data
+  })
+
+  // Revalidate the batch page
+  if (device.inwardBatchId) {
+    const batch = await prisma.inwardBatch.findUnique({
+      where: { id: device.inwardBatchId },
+      select: { batchId: true }
+    })
+    if (batch) {
+      revalidatePath(`/inward/${batch.batchId}`)
+    }
+  }
+
+  return updatedDevice
+}
+
 export async function bulkUploadDevices(batchId: string, devices: Array<{
   category: string
   brand: string
@@ -260,6 +334,7 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
   checklistItems: ChecklistItemResult[]
   sparesRequired: string
   overallNotes?: string
+  paintPanels?: string[]
 }) {
   // Get device to determine category
   const device = await prisma.device.findUnique({
@@ -286,13 +361,14 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
   // Determine if any items failed (requires repair)
   const hasFailedItems = data.checklistItems.some(item => item.status === 'FAIL')
   const repairRequired = hasFailedItems || Boolean(data.sparesRequired)
+  const paintRequired = data.paintPanels && data.paintPanels.length > 0
 
   // Determine next status - always goes to L2 Engineer for coordination if repair needed
   let nextStatus: DeviceStatus
-  if (repairRequired) {
+  if (repairRequired || paintRequired) {
     nextStatus = data.sparesRequired ? DeviceStatus.WAITING_FOR_SPARES : DeviceStatus.READY_FOR_REPAIR
   } else {
-    // If all pass and no spares, go directly to QC
+    // If all pass and no spares and no paint, go directly to QC
     nextStatus = DeviceStatus.AWAITING_QC
   }
 
@@ -301,14 +377,27 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
     where: { id: deviceId },
     data: {
       status: nextStatus,
-      repairRequired,
-      repairCompleted: !repairRequired
+      repairRequired: repairRequired || paintRequired,
+      repairCompleted: !(repairRequired || paintRequired),
+      paintRequired: paintRequired,
+      paintCompleted: !paintRequired
     }
   })
 
-  // Create repair job if repair is needed
+  // Create paint panels if any were selected
+  if (paintRequired && data.paintPanels) {
+    await prisma.paintPanel.createMany({
+      data: data.paintPanels.map(panel => ({
+        deviceId,
+        panelType: panel,
+        status: 'AWAITING_PAINT'
+      }))
+    })
+  }
+
+  // Create repair job if repair or paint is needed
   let repairJob = null
-  if (repairRequired) {
+  if (repairRequired || paintRequired) {
     const count = await prisma.repairJob.count()
     const jobId = `JOB-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`
 
@@ -339,10 +428,12 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
   if (user) {
     const failedCount = data.checklistItems.filter(i => i.status === 'FAIL').length
     const passedCount = data.checklistItems.filter(i => i.status === 'PASS').length
-    const statusDescription = repairRequired ? 'for L2 repair' : 'for QC'
+    const paintPanelCount = data.paintPanels?.length || 0
+    const statusDescription = (repairRequired || paintRequired) ? 'for L2 repair' : 'for QC'
+    const paintInfo = paintPanelCount > 0 ? `, ${paintPanelCount} paint panels` : ''
     await logActivity({
       action: 'COMPLETED_INSPECTION',
-      details: `Inspected device (${passedCount} pass, ${failedCount} fail), routed ${statusDescription}`,
+      details: `Inspected device (${passedCount} pass, ${failedCount} fail${paintInfo}), routed ${statusDescription}`,
       userId: user.id,
       metadata: {
         repairJobId: repairJob?.id,
@@ -350,7 +441,8 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
         nextStatus,
         passedCount,
         failedCount,
-        totalItems: data.checklistItems.length
+        totalItems: data.checklistItems.length,
+        paintPanels: data.paintPanels || []
       }
     })
   }
@@ -563,24 +655,139 @@ export async function getSparesRequests() {
   })
 }
 
-export async function issueSpares(jobId: string, sparesIssued: string) {
-  await prisma.repairJob.update({
-    where: { id: jobId },
-    data: {
-      sparesIssued,
-      status: 'READY_FOR_REPAIR'
-    }
-  })
+/**
+ * Parse spare parts string to extract part codes and quantities
+ * Supports formats: "PART001, PART002" or "PART001:2, PART002:1" or "PART001 x2, PART002"
+ */
+function parseSparesString(sparesString: string): Array<{ partCode: string; quantity: number }> {
+  if (!sparesString || !sparesString.trim()) return []
 
-  const job = await prisma.repairJob.findUnique({ where: { id: jobId } })
-  if (job) {
-    await prisma.device.update({
+  return sparesString.split(',').map(part => {
+    const trimmed = part.trim()
+    // Check for "PART:qty" format
+    if (trimmed.includes(':')) {
+      const [code, qty] = trimmed.split(':')
+      return { partCode: code.trim(), quantity: parseInt(qty.trim()) || 1 }
+    }
+    // Check for "PART x2" or "PART X2" format
+    const xMatch = trimmed.match(/(.+?)\s*[xX]\s*(\d+)$/)
+    if (xMatch) {
+      return { partCode: xMatch[1].trim(), quantity: parseInt(xMatch[2]) || 1 }
+    }
+    // Default: single item
+    return { partCode: trimmed, quantity: 1 }
+  }).filter(item => item.partCode.length > 0)
+}
+
+/**
+ * Validate that all requested spare parts are in stock
+ * Returns validation result with details on what's missing
+ */
+export async function validateSparesInStock(sparesString: string): Promise<{
+  valid: boolean
+  items: Array<{
+    partCode: string
+    requested: number
+    available: number
+    found: boolean
+  }>
+  errors: string[]
+}> {
+  const requestedParts = parseSparesString(sparesString)
+  const errors: string[] = []
+  const items: Array<{
+    partCode: string
+    requested: number
+    available: number
+    found: boolean
+  }> = []
+
+  for (const { partCode, quantity } of requestedParts) {
+    const sparePart = await prisma.sparePart.findFirst({
+      where: { partCode: { equals: partCode, mode: 'insensitive' } }
+    })
+
+    if (!sparePart) {
+      items.push({ partCode, requested: quantity, available: 0, found: false })
+      errors.push(`Part "${partCode}" not found in inventory`)
+    } else if (sparePart.currentStock < quantity) {
+      items.push({ partCode, requested: quantity, available: sparePart.currentStock, found: true })
+      errors.push(`Insufficient stock for "${partCode}": requested ${quantity}, available ${sparePart.currentStock}`)
+    } else {
+      items.push({ partCode, requested: quantity, available: sparePart.currentStock, found: true })
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    items,
+    errors
+  }
+}
+
+/**
+ * Issue spare parts for a repair job
+ * Validates stock availability and deducts from inventory
+ */
+export async function issueSpares(jobId: string, sparesIssued: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Validate stock availability first
+  const validation = await validateSparesInStock(sparesIssued)
+  if (!validation.valid) {
+    throw new Error(`Cannot issue spares: ${validation.errors.join('; ')}`)
+  }
+
+  // Get the job for logging
+  const job = await prisma.repairJob.findUnique({
+    where: { id: jobId },
+    include: { device: true }
+  })
+  if (!job) throw new Error('Repair job not found')
+
+  // Use a transaction to deduct stock and update job
+  await prisma.$transaction(async (tx) => {
+    // Deduct stock for each part
+    const parsedParts = parseSparesString(sparesIssued)
+    for (const { partCode, quantity } of parsedParts) {
+      await tx.sparePart.updateMany({
+        where: { partCode: { equals: partCode, mode: 'insensitive' } },
+        data: { currentStock: { decrement: quantity } }
+      })
+    }
+
+    // Update repair job
+    await tx.repairJob.update({
+      where: { id: jobId },
+      data: {
+        sparesIssued,
+        status: 'READY_FOR_REPAIR'
+      }
+    })
+
+    // Update device status
+    await tx.device.update({
       where: { id: job.deviceId },
       data: { status: 'READY_FOR_REPAIR' }
     })
-  }
+  })
+
+  // Log activity
+  await logActivity({
+    action: 'ISSUED_SPARES',
+    details: `Issued spares for ${job.device.barcode}: ${sparesIssued}`,
+    userId: user.id,
+    metadata: {
+      jobId,
+      deviceId: job.deviceId,
+      deviceBarcode: job.device.barcode,
+      sparesIssued
+    }
+  })
 
   revalidatePath('/spares')
+  revalidatePath('/l2-repair')
 }
 
 // --- Repair Actions ---
@@ -2452,6 +2659,50 @@ export async function createOutward(data: {
   })
 
   return outwardRecord
+}
+
+export async function updateOutwardRecord(outwardId: string, data: {
+  customer?: string
+  reference?: string
+  shippingDetails?: string
+  packedById?: string | null
+  checkedById?: string | null
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const existingRecord = await prisma.outwardRecord.findUnique({
+    where: { id: outwardId }
+  })
+
+  if (!existingRecord) {
+    throw new Error('Outward record not found')
+  }
+
+  const updatedRecord = await prisma.outwardRecord.update({
+    where: { id: outwardId },
+    data: {
+      customer: data.customer,
+      reference: data.reference,
+      shippingDetails: data.shippingDetails,
+      packedById: data.packedById,
+      checkedById: data.checkedById
+    }
+  })
+
+  revalidatePath('/outward')
+
+  await logActivity({
+    action: 'UPDATED_OUTWARD',
+    details: `Updated outward record ${existingRecord.outwardId}`,
+    userId: user.id,
+    metadata: {
+      outwardId: existingRecord.id,
+      changes: data
+    }
+  })
+
+  return updatedRecord
 }
 
 // --- Spare Parts Management Actions ---

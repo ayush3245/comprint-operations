@@ -36,6 +36,8 @@ export type ActivityAction =
     | 'UPDATED_CHECKLIST_ITEM'
     // L2 spare parts
     | 'REQUESTED_SPARES'
+    // Warehouse spares actions
+    | 'ISSUED_SPARES'
 
 interface LogActivityParams {
     action: ActivityAction

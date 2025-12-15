@@ -41,6 +41,7 @@ export default async function InspectionFormPage({ params }: { params: Promise<{
         }>
         sparesRequired: string
         overallNotes?: string
+        paintPanels: string[]
     }) {
         'use server'
         return await submitInspectionWithChecklist(deviceId, data)

@@ -246,7 +246,7 @@ export default function BarcodeScanner({ onBarcodeDetected, onClose }: BarcodeSc
                       Click to upload barcode image
                     </span>
                     <span className="text-xs text-gray-500">
-                      Supports: JPG, PNG, PDF, or any image format
+                      Supports: JPG, PNG, or any image format (max 10MB)
                     </span>
                   </>
                 )}
@@ -301,12 +301,12 @@ export default function BarcodeScanner({ onBarcodeDetected, onClose }: BarcodeSc
 
           {/* Instructions */}
           <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
-            <p className="font-medium mb-1">Tips for best results:</p>
+            <p className="font-medium mb-1">Note:</p>
             <ul className="list-disc list-inside space-y-1">
               <li>Ensure the barcode is well-lit and in focus</li>
               <li>Capture the entire barcode in the image</li>
               <li>Avoid glare or shadows on the barcode</li>
-              <li>PDF files: Scans all pages automatically</li>
+              <li>Maximum image size: 10MB</li>
               <li>Use manual entry if scanning fails</li>
             </ul>
           </div>

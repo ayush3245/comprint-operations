@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createOutward } from '@/lib/actions'
+import { createOutward, updateOutwardRecord } from '@/lib/actions'
 import { Device, InwardBatch, OutwardRecord, Role } from '@prisma/client'
 import { useToast } from '@/components/ui/Toast'
+import { Edit2, X, Loader2 } from 'lucide-react'
 
 type DeviceWithBatch = Device & { inwardBatch: InwardBatch }
 type UserOption = { id: string; name: string; role: Role }
@@ -27,6 +28,61 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
     const [selectedDevices, setSelectedDevices] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
     const [showForm, setShowForm] = useState(false)
+
+    // Edit modal state
+    const [isPending, startTransition] = useTransition()
+    const [editingRecord, setEditingRecord] = useState<OutwardWithDetails | null>(null)
+    const [editFormData, setEditFormData] = useState({
+        customer: '',
+        reference: '',
+        shippingDetails: '',
+        packedById: '',
+        checkedById: ''
+    })
+
+    function openEditModal(record: OutwardWithDetails) {
+        setEditingRecord(record)
+        setEditFormData({
+            customer: record.customer,
+            reference: record.reference,
+            shippingDetails: record.shippingDetails || '',
+            packedById: record.packedById || '',
+            checkedById: record.checkedById || ''
+        })
+    }
+
+    function closeEditModal() {
+        setEditingRecord(null)
+        setEditFormData({
+            customer: '',
+            reference: '',
+            shippingDetails: '',
+            packedById: '',
+            checkedById: ''
+        })
+    }
+
+    async function handleEditSubmit(e: React.FormEvent) {
+        e.preventDefault()
+        if (!editingRecord) return
+
+        startTransition(async () => {
+            try {
+                await updateOutwardRecord(editingRecord.id, {
+                    customer: editFormData.customer,
+                    reference: editFormData.reference,
+                    shippingDetails: editFormData.shippingDetails || undefined,
+                    packedById: editFormData.packedById || null,
+                    checkedById: editFormData.checkedById || null
+                })
+                toast.success('Outward record updated successfully')
+                closeEditModal()
+                router.refresh()
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : 'Failed to update record')
+            }
+        })
+    }
 
     const toggleDevice = (deviceId: string) => {
         setSelectedDevices(prev =>
@@ -91,8 +147,8 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Outward / Dispatch</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-800">Outward / Dispatch</h1>
                 <button
                     onClick={() => setShowForm(!showForm)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -152,7 +208,7 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                 No devices ready for dispatch.
                             </div>
                         ) : (
-                            <div className="border rounded-md max-h-64 overflow-y-auto">
+                            <div className="border rounded-md max-h-64 overflow-y-auto overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0">
                                         <tr>
@@ -211,7 +267,7 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
 
                     {/* Form Fields */}
                     <form action={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
                                 <input
@@ -245,7 +301,7 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Packed By</label>
                                 <select
@@ -312,12 +368,13 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Packed By</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Checked By</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {outwardRecords.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-10 text-center text-gray-500">
+                                    <td colSpan={9} className="px-6 py-10 text-center text-gray-500">
                                         No dispatch records yet.
                                     </td>
                                 </tr>
@@ -355,6 +412,15 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {formatDate(record.date)}
                                         </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <button
+                                                onClick={() => openEditModal(record)}
+                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                title="Edit Record"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             )}
@@ -362,6 +428,116 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                     </table>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {editingRecord && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-800">
+                                Edit: {editingRecord.outwardId}
+                            </h2>
+                            <button
+                                onClick={closeEditModal}
+                                className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+                            <div className="text-sm text-gray-500 mb-4">
+                                Type: <span className={`font-medium ${editingRecord.type === 'SALES' ? 'text-green-600' : 'text-purple-600'}`}>
+                                    {editingRecord.type}
+                                </span>
+                                <span className="mx-2">•</span>
+                                {editingRecord.devices.length} device(s)
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+                                <input
+                                    type="text"
+                                    value={editFormData.customer}
+                                    onChange={(e) => setEditFormData({ ...editFormData, customer: e.target.value })}
+                                    required
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {editingRecord.type === 'SALES' ? 'Invoice Number *' : 'Rental Reference *'}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editFormData.reference}
+                                    onChange={(e) => setEditFormData({ ...editFormData, reference: e.target.value })}
+                                    required
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Details</label>
+                                <textarea
+                                    value={editFormData.shippingDetails}
+                                    onChange={(e) => setEditFormData({ ...editFormData, shippingDetails: e.target.value })}
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Packed By</label>
+                                    <select
+                                        value={editFormData.packedById}
+                                        onChange={(e) => setEditFormData({ ...editFormData, packedById: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    >
+                                        <option value="">Select...</option>
+                                        {users.map(user => (
+                                            <option key={user.id} value={user.id}>{user.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Checked By</label>
+                                    <select
+                                        value={editFormData.checkedById}
+                                        onChange={(e) => setEditFormData({ ...editFormData, checkedById: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    >
+                                        <option value="">Select...</option>
+                                        {users.map(user => (
+                                            <option key={user.id} value={user.id}>{user.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={closeEditModal}
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isPending}
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isPending && <Loader2 size={16} className="animate-spin" />}
+                                    {isPending ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

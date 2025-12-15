@@ -31,6 +31,9 @@ export async function getAllUsers() {
     await requireSuperAdmin()
 
     return prisma.user.findMany({
+        where: {
+            deletedAt: null  // Filter out soft-deleted users
+        },
         select: {
             id: true,
             name: true,
@@ -166,45 +169,26 @@ export async function deleteUser(id: string): Promise<ActionResult> {
             return { success: false, error: 'You cannot delete your own account' }
         }
 
-        // Check if user has any related records
+        // Check if user exists and is not already deleted
         const user = await prisma.user.findUnique({
-            where: { id },
-            include: {
-                createdBatches: { take: 1 },
-                inspections: { take: 1 },
-                repairs: { take: 1 },
-                paintWork: { take: 1 },
-                qcInspections: { take: 1 },
-                movements: { take: 1 },
-                packedOutwards: { take: 1 },
-                checkedOutwards: { take: 1 },
-            }
+            where: { id }
         })
 
         if (!user) {
             return { success: false, error: 'User not found' }
         }
 
-        // Check if user has any related data
-        const hasRelations =
-            user.createdBatches.length > 0 ||
-            user.inspections.length > 0 ||
-            user.repairs.length > 0 ||
-            user.paintWork.length > 0 ||
-            user.qcInspections.length > 0 ||
-            user.movements.length > 0 ||
-            user.packedOutwards.length > 0 ||
-            user.checkedOutwards.length > 0
-
-        if (hasRelations) {
-            return {
-                success: false,
-                error: 'Cannot delete user with existing records. Deactivate the user instead.'
-            }
+        if (user.deletedAt) {
+            return { success: false, error: 'User is already deleted' }
         }
 
-        await prisma.user.delete({
-            where: { id }
+        // Soft delete: set deletedAt timestamp and deactivate
+        await prisma.user.update({
+            where: { id },
+            data: {
+                deletedAt: new Date(),
+                active: false
+            }
         })
 
         revalidatePath('/admin/users')

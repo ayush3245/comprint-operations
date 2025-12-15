@@ -166,7 +166,7 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
       { 'Instructions': 'DEVICE BULK UPLOAD TEMPLATE' },
       { 'Instructions': '' },
       { 'Instructions': 'Each sheet contains examples for different device categories.' },
-      { 'Instructions': 'You can use any sheet to upload devices - the system will read from the first sheet.' },
+      { 'Instructions': 'ALL SHEETS will be processed - you can add devices across multiple sheets!' },
       { 'Instructions': '' },
       { 'Instructions': 'VALID CATEGORIES:' },
       { 'Instructions': '- LAPTOP, DESKTOP, WORKSTATION (use Computers sheet)' },
@@ -180,7 +180,7 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
       { 'Instructions': '' },
       { 'Instructions': 'OPTIONAL FIELDS vary by category - see examples in each sheet.' },
       { 'Instructions': '' },
-      { 'Instructions': 'TIP: Copy data into the appropriate sheet and remove example rows.' }
+      { 'Instructions': 'TIP: Add your data to any sheet(s) and remove example rows before uploading.' }
     ]
     const wsInstructions = XLSX.utils.json_to_sheet(instructions)
     wsInstructions['!cols'] = [{ wch: 70 }]
@@ -207,63 +207,94 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
     try {
       const data = await file.arrayBuffer()
       const workbook = XLSX.read(data)
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-      const jsonData = XLSX.utils.sheet_to_json(worksheet)
 
-      // Map Excel column names to our expected format - supporting all device categories
-      const devices = jsonData.map((row: any) => ({
-        // Common fields
-        category: row['Category'] || row['category'],
-        brand: row['Brand'] || row['brand'],
-        model: row['Model'] || row['model'],
-        serial: row['Serial Number'] || row['serial'] || row['serial_number'],
+      // Collect devices from all sheets (skip Instructions sheet)
+      const allDevices: any[] = []
+      const sheetsProcessed: string[] = []
 
-        // Computer fields (Laptop/Desktop/Workstation)
-        cpu: row['CPU'] || row['cpu'],
-        ram: row['RAM'] || row['ram'],
-        ssd: row['SSD'] || row['ssd'],
-        gpu: row['GPU'] || row['gpu'],
-        screenSize: row['Screen Size'] || row['screenSize'] || row['screen_size'],
+      for (const sheetName of workbook.SheetNames) {
+        // Skip Instructions sheet
+        if (sheetName.toLowerCase() === 'instructions') continue
 
-        // Server fields
-        formFactor: row['Form Factor'] || row['formFactor'] || row['form_factor'],
-        raidController: row['RAID Controller'] || row['raidController'] || row['raid_controller'],
-        networkPorts: row['Network Ports'] || row['networkPorts'] || row['network_ports'],
+        const worksheet = workbook.Sheets[sheetName]
+        const jsonData = XLSX.utils.sheet_to_json(worksheet)
 
-        // Monitor fields
-        monitorSize: row['Monitor Size'] || row['monitorSize'] || row['monitor_size'],
-        resolution: row['Resolution'] || row['resolution'],
-        panelType: row['Panel Type'] || row['panelType'] || row['panel_type'],
-        refreshRate: row['Refresh Rate'] || row['refreshRate'] || row['refresh_rate'],
-        monitorPorts: row['Monitor Ports'] || row['monitorPorts'] || row['monitor_ports'],
+        // Skip empty sheets
+        if (jsonData.length === 0) continue
 
-        // Storage fields
-        storageType: row['Storage Type'] || row['storageType'] || row['storage_type'],
-        capacity: row['Capacity'] || row['capacity'],
-        storageFormFactor: row['Storage Form Factor'] || row['storageFormFactor'] || row['storage_form_factor'],
-        interface: row['Interface'] || row['interface'],
-        rpm: row['RPM'] || row['rpm'],
+        sheetsProcessed.push(sheetName)
 
-        // Networking card fields
-        nicSpeed: row['NIC Speed'] || row['nicSpeed'] || row['nic_speed'],
-        portCount: row['Port Count'] || row['portCount'] || row['port_count'],
-        connectorType: row['Connector Type'] || row['connectorType'] || row['connector_type'],
-        nicInterface: row['NIC Interface'] || row['nicInterface'] || row['nic_interface'],
-        bracketType: row['Bracket Type'] || row['bracketType'] || row['bracket_type']
-      }))
+        // Map Excel column names to our expected format - supporting all device categories
+        const devices = jsonData.map((row: any, index: number) => ({
+          // Source metadata for error tracking
+          _sourceSheet: sheetName,
+          _sourceRow: index + 2, // +2 because: 1-based + header row
 
-      const uploadResult = await onUpload(devices)
+          // Common fields
+          category: row['Category'] || row['category'],
+          brand: row['Brand'] || row['brand'],
+          model: row['Model'] || row['model'],
+          serial: row['Serial Number'] || row['serial'] || row['serial_number'],
+
+          // Computer fields (Laptop/Desktop/Workstation)
+          cpu: row['CPU'] || row['cpu'],
+          ram: row['RAM'] || row['ram'],
+          ssd: row['SSD'] || row['ssd'],
+          gpu: row['GPU'] || row['gpu'],
+          screenSize: row['Screen Size'] || row['screenSize'] || row['screen_size'],
+
+          // Server fields
+          formFactor: row['Form Factor'] || row['formFactor'] || row['form_factor'],
+          raidController: row['RAID Controller'] || row['raidController'] || row['raid_controller'],
+          networkPorts: row['Network Ports'] || row['networkPorts'] || row['network_ports'],
+
+          // Monitor fields
+          monitorSize: row['Monitor Size'] || row['monitorSize'] || row['monitor_size'],
+          resolution: row['Resolution'] || row['resolution'],
+          panelType: row['Panel Type'] || row['panelType'] || row['panel_type'],
+          refreshRate: row['Refresh Rate'] || row['refreshRate'] || row['refresh_rate'],
+          monitorPorts: row['Monitor Ports'] || row['monitorPorts'] || row['monitor_ports'],
+
+          // Storage fields
+          storageType: row['Storage Type'] || row['storageType'] || row['storage_type'],
+          capacity: row['Capacity'] || row['capacity'],
+          storageFormFactor: row['Storage Form Factor'] || row['storageFormFactor'] || row['storage_form_factor'],
+          interface: row['Interface'] || row['interface'],
+          rpm: row['RPM'] || row['rpm'],
+
+          // Networking card fields
+          nicSpeed: row['NIC Speed'] || row['nicSpeed'] || row['nic_speed'],
+          portCount: row['Port Count'] || row['portCount'] || row['port_count'],
+          connectorType: row['Connector Type'] || row['connectorType'] || row['connector_type'],
+          nicInterface: row['NIC Interface'] || row['nicInterface'] || row['nic_interface'],
+          bracketType: row['Bracket Type'] || row['bracketType'] || row['bracket_type']
+        }))
+
+        allDevices.push(...devices)
+      }
+
+      if (allDevices.length === 0) {
+        toast.error('No devices found in the file. Please check the sheet contents.')
+        setUploading(false)
+        return
+      }
+
+      const uploadResult = await onUpload(allDevices)
       setResult(uploadResult)
+
+      const sheetInfo = sheetsProcessed.length > 1
+        ? ` from ${sheetsProcessed.length} sheets (${sheetsProcessed.join(', ')})`
+        : ''
 
       if (uploadResult.failed === 0) {
         setFile(null)
-        toast.success(`Successfully uploaded ${uploadResult.success} device(s)`)
+        toast.success(`Successfully uploaded ${uploadResult.success} device(s)${sheetInfo}`)
         setTimeout(() => {
           setShowModal(false)
           setResult(null)
         }, 2000)
       } else if (uploadResult.success > 0) {
-        toast.warning(`Uploaded ${uploadResult.success} device(s), ${uploadResult.failed} failed`)
+        toast.warning(`Uploaded ${uploadResult.success} device(s), ${uploadResult.failed} failed${sheetInfo}`)
       } else {
         toast.error(`All ${uploadResult.failed} device(s) failed to upload`)
       }
@@ -377,7 +408,10 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
                       <div className="space-y-2 max-h-60 overflow-y-auto">
                         {result.errors.map((err, idx) => (
                           <div key={idx} className="text-sm text-red-700 bg-white p-2 rounded">
-                            <span className="font-medium">Row {err.row}:</span> {err.error}
+                            <span className="font-medium">
+                              {err.data._sourceSheet ? `[${err.data._sourceSheet}] ` : ''}
+                              Row {err.data._sourceRow || err.row}:
+                            </span> {err.error}
                             <div className="text-xs text-red-600 mt-1">
                               {err.data.brand} {err.data.model} ({err.data.category})
                             </div>
@@ -396,7 +430,8 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
                   <li>Valid categories: LAPTOP, DESKTOP, WORKSTATION, SERVER, MONITOR, STORAGE, NETWORKING_CARD</li>
                   <li>Brand and Model are required for all device types</li>
                   <li>The template has separate sheets for each device type with appropriate fields</li>
-                  <li>Use the first sheet in your uploaded file for data</li>
+                  <li><strong>All sheets will be processed</strong> (except Instructions sheet)</li>
+                  <li>You can add devices across multiple sheets in one upload</li>
                   <li>Each row represents one device</li>
                 </ul>
               </div>

@@ -2,19 +2,23 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, ScanLine } from 'lucide-react'
+import { Search, ScanLine, AlertCircle } from 'lucide-react'
 import BarcodeScanner from '@/components/BarcodeScanner'
 
 export default function InspectionSearchPage() {
     const router = useRouter()
     const [barcode, setBarcode] = useState('')
     const [showScanner, setShowScanner] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     function handleSearch(e: React.FormEvent) {
         e.preventDefault()
-        if (barcode.trim()) {
-            router.push(`/inspection/${barcode.trim()}`)
+        if (!barcode.trim()) {
+            setError('Please enter or scan a barcode first')
+            return
         }
+        setError(null)
+        router.push(`/inspection/${barcode.trim()}`)
     }
 
     function handleBarcodeDetected(detectedBarcode: string) {
@@ -43,6 +47,13 @@ export default function InspectionSearchPage() {
                         />
                         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={24} />
                     </div>
+
+                    {error && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+                            <AlertCircle size={18} className="flex-shrink-0" />
+                            <span className="text-sm">{error}</span>
+                        </div>
+                    )}
 
                     <button
                         type="submit"

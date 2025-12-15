@@ -108,6 +108,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
         active: true
     })
     const [showPassword, setShowPassword] = useState(false)
+    const [modalError, setModalError] = useState<string | null>(null)
 
     const filteredUsers = users.filter(user => {
         const matchesSearch =
@@ -126,6 +127,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
         setFormData({ name: '', email: '', password: '', role: 'ADMIN', active: true })
         setModalMode('create')
         setSelectedUser(null)
+        setModalError(null)
         setShowModal(true)
     }
 
@@ -139,6 +141,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
         })
         setModalMode('edit')
         setSelectedUser(user)
+        setModalError(null)
         setShowModal(true)
     }
 
@@ -146,12 +149,14 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
         setFormData({ ...formData, password: '' })
         setModalMode('password')
         setSelectedUser(user)
+        setModalError(null)
         setShowModal(true)
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         setIsLoading(true)
+        setModalError(null)
 
         try {
             if (modalMode === 'create') {
@@ -161,7 +166,8 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                     setShowModal(false)
                     window.location.reload()
                 } else {
-                    showNotification('error', result.error || 'Failed to create user')
+                    // Show error inside modal for better visibility
+                    setModalError(result.error || 'Failed to create user')
                 }
             } else if (modalMode === 'edit' && selectedUser) {
                 const result = await updateUser(selectedUser.id, formData)
@@ -170,7 +176,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                     setShowModal(false)
                     window.location.reload()
                 } else {
-                    showNotification('error', result.error || 'Failed to update user')
+                    setModalError(result.error || 'Failed to update user')
                 }
             } else if (modalMode === 'password' && selectedUser) {
                 const result = await resetUserPassword(selectedUser.id, formData.password)
@@ -178,11 +184,11 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                     showNotification('success', 'Password reset successfully')
                     setShowModal(false)
                 } else {
-                    showNotification('error', result.error || 'Failed to reset password')
+                    setModalError(result.error || 'Failed to reset password')
                 }
             }
         } catch {
-            showNotification('error', 'An unexpected error occurred')
+            setModalError('An unexpected error occurred')
         } finally {
             setIsLoading(false)
         }
@@ -446,6 +452,14 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                             </div>
 
                             <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                                {/* Error display inside modal for better visibility */}
+                                {modalError && (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700">
+                                        <AlertCircle size={18} className="flex-shrink-0" />
+                                        <span className="text-sm font-medium">{modalError}</span>
+                                    </div>
+                                )}
+
                                 {modalMode !== 'password' && (
                                     <>
                                         <div className="space-y-1">

@@ -28,6 +28,7 @@ interface DisplayRepairClientProps {
     jobs: DisplayJob[]
     userId: string
     userName: string
+    userRole: string
     onStartRepair: (jobId: string) => Promise<void>
     onCompleteRepair: (jobId: string, notes: string) => Promise<void>
 }
@@ -36,6 +37,7 @@ export default function DisplayRepairClient({
     jobs,
     userId,
     userName,
+    userRole,
     onStartRepair,
     onCompleteRepair
 }: DisplayRepairClientProps) {
@@ -183,49 +185,62 @@ export default function DisplayRepairClient({
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 border-b">
-                <button
-                    onClick={() => setActiveTab('pending')}
-                    className={`px-4 py-2 font-medium ${
-                        activeTab === 'pending'
-                            ? 'border-b-2 border-yellow-600 text-yellow-600'
-                            : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    <AlertTriangle size={16} className="inline mr-1" />
-                    Pending ({pendingJobs.length})
-                </button>
-                <button
-                    onClick={() => setActiveTab('in_progress')}
-                    className={`px-4 py-2 font-medium ${
-                        activeTab === 'in_progress'
-                            ? 'border-b-2 border-blue-600 text-blue-600'
-                            : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    <Clock size={16} className="inline mr-1" />
-                    In Progress ({inProgressJobs.length})
-                </button>
-            </div>
+            {/* Tabs - Only show for Display Technician, not L2 */}
+            {userRole !== 'L2_ENGINEER' && (
+                <div className="flex gap-2 border-b">
+                    <button
+                        onClick={() => setActiveTab('pending')}
+                        className={`px-4 py-2 font-medium ${
+                            activeTab === 'pending'
+                                ? 'border-b-2 border-yellow-600 text-yellow-600'
+                                : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        <AlertTriangle size={16} className="inline mr-1" />
+                        Pending ({pendingJobs.length})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('in_progress')}
+                        className={`px-4 py-2 font-medium ${
+                            activeTab === 'in_progress'
+                                ? 'border-b-2 border-blue-600 text-blue-600'
+                                : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        <Clock size={16} className="inline mr-1" />
+                        In Progress ({inProgressJobs.length})
+                    </button>
+                </div>
+            )}
 
             {/* Job Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activeTab === 'pending' && pendingJobs.length === 0 && (
+                {/* L2 view: Show only their in-progress jobs */}
+                {userRole === 'L2_ENGINEER' && myJobs.length === 0 && (
+                    <div className="col-span-full text-center py-10 text-gray-500">
+                        No display repair jobs in progress. View from L2 Repair page.
+                    </div>
+                )}
+                {userRole === 'L2_ENGINEER' && myJobs.map(job => (
+                    <JobCard key={job.id} job={job} showStart={false} />
+                ))}
+
+                {/* Technician view: Show based on active tab */}
+                {userRole !== 'L2_ENGINEER' && activeTab === 'pending' && pendingJobs.length === 0 && (
                     <div className="col-span-full text-center py-10 text-gray-500">
                         No pending display repair jobs. Check back later.
                     </div>
                 )}
-                {activeTab === 'pending' && pendingJobs.map(job => (
+                {userRole !== 'L2_ENGINEER' && activeTab === 'pending' && pendingJobs.map(job => (
                     <JobCard key={job.id} job={job} showStart={true} />
                 ))}
 
-                {activeTab === 'in_progress' && inProgressJobs.length === 0 && (
+                {userRole !== 'L2_ENGINEER' && activeTab === 'in_progress' && inProgressJobs.length === 0 && (
                     <div className="col-span-full text-center py-10 text-gray-500">
                         No jobs in progress. Pick up a pending job to get started.
                     </div>
                 )}
-                {activeTab === 'in_progress' && inProgressJobs.map(job => (
+                {userRole !== 'L2_ENGINEER' && activeTab === 'in_progress' && inProgressJobs.map(job => (
                     <JobCard key={job.id} job={job} showStart={false} />
                 ))}
             </div>

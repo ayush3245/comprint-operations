@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
-import { CheckCircle, XCircle, MinusCircle, ChevronDown, ChevronUp } from 'lucide-react'
+import { CheckCircle, XCircle, MinusCircle, ChevronDown, ChevronUp, Paintbrush } from 'lucide-react'
 import type { DeviceCategory } from '@prisma/client'
 import type { ChecklistItemDefinition } from '@/lib/checklist-definitions'
 
@@ -35,6 +35,7 @@ interface InspectionFormProps {
     }>
     sparesRequired: string
     overallNotes?: string
+    paintPanels: string[]
   }) => Promise<{ nextStatus: string }>
 }
 
@@ -66,6 +67,26 @@ export default function InspectionForm({
 
   const [sparesRequired, setSparesRequired] = useState('')
   const [overallNotes, setOverallNotes] = useState('')
+  const [showPaintSection, setShowPaintSection] = useState(false)
+
+  // Paint panel options
+  const paintPanelOptions = [
+    'Top Cover',
+    'Bottom Cover',
+    'Palm Rest',
+    'Bezel',
+    'Hinge Covers',
+    'Side Panels'
+  ]
+  const [selectedPaintPanels, setSelectedPaintPanels] = useState<string[]>([])
+
+  const togglePaintPanel = (panel: string) => {
+    setSelectedPaintPanels(prev =>
+      prev.includes(panel)
+        ? prev.filter(p => p !== panel)
+        : [...prev, panel]
+    )
+  }
 
   const updateItemStatus = (index: number, status: ChecklistStatus) => {
     setItems(prev => prev.map(item =>
@@ -110,7 +131,8 @@ export default function InspectionForm({
           inspectionEngId: userId,
           checklistItems: submissionItems,
           sparesRequired,
-          overallNotes: overallNotes || undefined
+          overallNotes: overallNotes || undefined,
+          paintPanels: selectedPaintPanels
         })
 
         // Build details array
@@ -122,6 +144,9 @@ export default function InspectionForm({
         ]
         if (sparesRequired) {
           details.push({ label: 'Spares Required', value: sparesRequired })
+        }
+        if (selectedPaintPanels.length > 0) {
+          details.push({ label: 'Paint Panels', value: selectedPaintPanels.join(', ') })
         }
         details.push({
           label: 'Next Step',
@@ -306,6 +331,64 @@ export default function InspectionForm({
           className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
           placeholder="List required spares (Part Codes). Leave empty if none."
         />
+      </div>
+
+      {/* Paint Panel Selection */}
+      <div className="bg-white rounded-lg shadow">
+        <div
+          className="p-4 border-b flex items-center justify-between cursor-pointer"
+          onClick={() => setShowPaintSection(!showPaintSection)}
+        >
+          <div className="flex items-center gap-2">
+            <Paintbrush size={20} className="text-orange-600" />
+            <h2 className="text-lg font-semibold">
+              Paint Required
+              {selectedPaintPanels.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-orange-600">
+                  ({selectedPaintPanels.length} panel{selectedPaintPanels.length !== 1 ? 's' : ''} selected)
+                </span>
+              )}
+            </h2>
+          </div>
+          {showPaintSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
+
+        {showPaintSection && (
+          <div className="p-4">
+            <p className="text-sm text-gray-600 mb-4">
+              Select panels that need painting. Leave unchecked if no painting is required.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {paintPanelOptions.map(panel => (
+                <label
+                  key={panel}
+                  className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                    selectedPaintPanels.includes(panel)
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedPaintPanels.includes(panel)}
+                    onChange={() => togglePaintPanel(panel)}
+                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                  />
+                  <span className={selectedPaintPanels.includes(panel) ? 'font-medium text-orange-700' : 'text-gray-700'}>
+                    {panel}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {selectedPaintPanels.length > 0 && (
+              <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-sm text-orange-800">
+                  <strong>Selected for painting:</strong> {selectedPaintPanels.join(', ')}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Overall Notes */}
