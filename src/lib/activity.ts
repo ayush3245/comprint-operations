@@ -13,6 +13,25 @@ export type ActivityAction =
     | 'UPDATED_USER'
     | 'LOGIN'
     | 'CREATED_OUTWARD'
+    // L2 Engineer coordination actions
+    | 'CLAIMED_DEVICE'
+    | 'SENT_TO_DISPLAY'
+    | 'SENT_TO_BATTERY'
+    | 'SENT_TO_L3'
+    | 'SENT_TO_PAINT'
+    | 'COMPLETED_DISPLAY_BY_L2'
+    | 'COMPLETED_BATTERY_BY_L2'
+    | 'COLLECTED_FROM_DISPLAY'
+    | 'COLLECTED_FROM_BATTERY'
+    | 'COLLECTED_FROM_L3'
+    | 'L2_SENT_TO_QC'
+    // Technician actions
+    | 'STARTED_DISPLAY_REPAIR'
+    | 'COMPLETED_DISPLAY_REPAIR'
+    | 'STARTED_BATTERY_BOOST'
+    | 'COMPLETED_BATTERY_BOOST'
+    | 'STARTED_L3_REPAIR'
+    | 'COMPLETED_L3_REPAIR'
 
 interface LogActivityParams {
     action: ActivityAction

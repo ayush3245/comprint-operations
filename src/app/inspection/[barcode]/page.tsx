@@ -1,7 +1,9 @@
-import { getDeviceByBarcode, submitInspection } from '@/lib/actions'
+import { getDeviceByBarcode, submitInspectionWithChecklist } from '@/lib/actions'
 import { checkRole } from '@/lib/auth'
+import { getChecklistForCategory } from '@/lib/checklist-definitions'
 import { AlertCircle } from 'lucide-react'
 import InspectionForm from './InspectionForm'
+import type { DeviceCategory } from '@prisma/client'
 
 export default async function InspectionFormPage({ params }: { params: Promise<{ barcode: string }> }) {
     const { barcode } = await params
@@ -26,16 +28,22 @@ export default async function InspectionFormPage({ params }: { params: Promise<{
         )
     }
 
+    // Get category-specific checklist items
+    const checklistItems = getChecklistForCategory(device.category as DeviceCategory)
+
     async function handleInspection(deviceId: string, data: {
         inspectionEngId: string
-        reportedIssues: string
-        cosmeticIssues: string
-        paintRequired: boolean
-        paintPanels: string[]
+        checklistItems: Array<{
+            itemIndex: number
+            itemText: string
+            status: 'PASS' | 'FAIL' | 'NOT_APPLICABLE'
+            notes?: string
+        }>
         sparesRequired: string
+        overallNotes?: string
     }) {
         'use server'
-        await submitInspection(deviceId, data)
+        return await submitInspectionWithChecklist(deviceId, data)
     }
 
     return (
@@ -56,6 +64,8 @@ export default async function InspectionFormPage({ params }: { params: Promise<{
                 deviceBarcode={device.barcode}
                 deviceBrand={device.brand}
                 deviceModel={device.model}
+                deviceCategory={device.category}
+                checklistItems={checklistItems}
                 onSubmit={handleInspection}
             />
         </div>

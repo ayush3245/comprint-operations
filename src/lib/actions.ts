@@ -1,7 +1,8 @@
 'use server'
 
 import { prisma } from './db'
-import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus, OutwardType } from '@prisma/client'
+import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus, OutwardType, ChecklistStatus, ChecklistStage, L3IssueType, ParallelWorkStatus } from '@prisma/client'
+import { getChecklistForCategory } from './checklist-definitions'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from './auth'
 import { logActivity } from './activity'
@@ -240,6 +241,154 @@ export async function bulkUploadDevices(batchId: string, devices: Array<{
 
 // --- Inspection Actions ---
 
+/**
+ * Checklist item result from inspection form
+ */
+interface ChecklistItemResult {
+  itemIndex: number
+  itemText: string
+  status: 'PASS' | 'FAIL' | 'NOT_APPLICABLE'
+  notes?: string
+}
+
+/**
+ * Submit inspection with category-specific checklist
+ * This is the new checklist-based inspection function
+ */
+export async function submitInspectionWithChecklist(deviceId: string, data: {
+  inspectionEngId: string
+  checklistItems: ChecklistItemResult[]
+  sparesRequired: string
+  overallNotes?: string
+}) {
+  // Get device to determine category
+  const device = await prisma.device.findUnique({
+    where: { id: deviceId }
+  })
+  if (!device) throw new Error('Device not found')
+
+  // Create inspection checklist items
+  for (const item of data.checklistItems) {
+    await prisma.inspectionChecklistItem.create({
+      data: {
+        deviceId,
+        itemIndex: item.itemIndex,
+        itemText: item.itemText,
+        status: item.status as ChecklistStatus,
+        notes: item.notes,
+        checkedById: data.inspectionEngId,
+        checkedAt: new Date(),
+        checkedAtStage: ChecklistStage.INSPECTION
+      }
+    })
+  }
+
+  // Determine if any items failed (requires repair)
+  const hasFailedItems = data.checklistItems.some(item => item.status === 'FAIL')
+  const repairRequired = hasFailedItems || Boolean(data.sparesRequired)
+
+  // Determine next status - always goes to L2 Engineer for coordination if repair needed
+  let nextStatus: DeviceStatus
+  if (repairRequired) {
+    nextStatus = data.sparesRequired ? DeviceStatus.WAITING_FOR_SPARES : DeviceStatus.READY_FOR_REPAIR
+  } else {
+    // If all pass and no spares, go directly to QC
+    nextStatus = DeviceStatus.AWAITING_QC
+  }
+
+  // Update device with workflow flags and status
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: {
+      status: nextStatus,
+      repairRequired,
+      repairCompleted: !repairRequired
+    }
+  })
+
+  // Create repair job if repair is needed
+  let repairJob = null
+  if (repairRequired) {
+    const count = await prisma.repairJob.count()
+    const jobId = `JOB-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`
+
+    // Collect failed items as reported issues
+    const failedItems = data.checklistItems
+      .filter(item => item.status === 'FAIL')
+      .map(item => `[${item.itemIndex}] ${item.itemText}${item.notes ? `: ${item.notes}` : ''}`)
+
+    repairJob = await prisma.repairJob.create({
+      data: {
+        jobId,
+        deviceId,
+        inspectionEngId: data.inspectionEngId,
+        reportedIssues: JSON.stringify({
+          failedItems,
+          notes: data.overallNotes
+        }),
+        sparesRequired: data.sparesRequired,
+        status: data.sparesRequired ? 'WAITING_FOR_SPARES' : 'READY_FOR_REPAIR'
+      }
+    })
+  }
+
+  revalidatePath('/inspection')
+  revalidatePath('/l2-repair')
+
+  const user = await getCurrentUser()
+  if (user) {
+    const failedCount = data.checklistItems.filter(i => i.status === 'FAIL').length
+    const passedCount = data.checklistItems.filter(i => i.status === 'PASS').length
+    const statusDescription = repairRequired ? 'for L2 repair' : 'for QC'
+    await logActivity({
+      action: 'COMPLETED_INSPECTION',
+      details: `Inspected device (${passedCount} pass, ${failedCount} fail), routed ${statusDescription}`,
+      userId: user.id,
+      metadata: {
+        repairJobId: repairJob?.id,
+        deviceId,
+        nextStatus,
+        passedCount,
+        failedCount,
+        totalItems: data.checklistItems.length
+      }
+    })
+  }
+
+  // Send notification if spares are required
+  if (data.sparesRequired && repairJob) {
+    const inspector = await prisma.user.findUnique({
+      where: { id: data.inspectionEngId },
+      select: { name: true }
+    })
+    notifySparesRequested({
+      deviceBarcode: device.barcode,
+      deviceModel: device.model,
+      sparesRequired: data.sparesRequired,
+      requestedBy: inspector?.name || 'Unknown'
+    }).catch(err => console.error('Failed to send spares notification:', err))
+  }
+
+  return { repairJob, nextStatus }
+}
+
+/**
+ * Get checklist items for a device (if already created)
+ */
+export async function getDeviceChecklistItems(deviceId: string) {
+  return await prisma.inspectionChecklistItem.findMany({
+    where: { deviceId },
+    include: {
+      checkedBy: { select: { name: true } }
+    },
+    orderBy: { itemIndex: 'asc' }
+  })
+}
+
+/**
+ * Legacy inspection function - kept for backward compatibility
+ * @deprecated Use submitInspectionWithChecklist instead
+ */
 export async function submitInspection(deviceId: string, data: {
   inspectionEngId: string
   reportedIssues: string
@@ -356,6 +505,45 @@ export async function getDeviceByBarcode(barcode: string) {
         take: 1
       },
       qcRecords: true
+    }
+  })
+}
+
+/**
+ * Get device data with full checklist and parallel work status for QC validation
+ */
+export async function getDeviceForQC(barcode: string) {
+  return await prisma.device.findUnique({
+    where: { barcode },
+    include: {
+      inwardBatch: true,
+      repairJobs: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        include: {
+          l2Engineer: { select: { name: true } },
+          inspectionEng: { select: { name: true } }
+        }
+      },
+      qcRecords: true,
+      inspectionChecklist: {
+        orderBy: { itemIndex: 'asc' },
+        include: {
+          checkedBy: { select: { name: true } }
+        }
+      },
+      displayRepairJobs: {
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      },
+      batteryBoostJobs: {
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      },
+      l3RepairJobs: {
+        orderBy: { createdAt: 'desc' }
+      },
+      paintPanels: true
     }
   })
 }
@@ -596,6 +784,986 @@ export async function collectFromPaint(jobId: string) {
       metadata: { jobId, deviceId: job.deviceId, nextStatus: nextDeviceStatus }
     })
   }
+}
+
+// --- L2 Engineer Coordination Actions ---
+
+/**
+ * L2 Engineer claims a device for repair coordination.
+ * The L2 Engineer owns the device throughout the repair cycle.
+ */
+export async function claimDeviceForL2(deviceId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+  if (user.role !== Role.L2_ENGINEER && user.role !== Role.REPAIR_ENGINEER && user.role !== Role.SUPERADMIN && user.role !== Role.ADMIN) {
+    throw new Error('Only L2 Engineers can claim devices')
+  }
+
+  // Check device is in a claimable state
+  const device = await prisma.device.findUnique({
+    where: { id: deviceId },
+    include: {
+      repairJobs: {
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      }
+    }
+  })
+
+  if (!device) throw new Error('Device not found')
+  if (device.status !== DeviceStatus.READY_FOR_REPAIR && device.status !== DeviceStatus.WAITING_FOR_SPARES) {
+    throw new Error('Device is not ready to be claimed for repair')
+  }
+
+  // Update the repair job with L2 engineer assignment
+  const repairJob = device.repairJobs[0]
+  if (!repairJob) throw new Error('No repair job found for this device')
+
+  await prisma.repairJob.update({
+    where: { id: repairJob.id },
+    data: {
+      l2EngineerId: user.id,
+      status: RepairStatus.UNDER_REPAIR,
+      repairStartDate: new Date()
+    }
+  })
+
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: { status: DeviceStatus.UNDER_REPAIR }
+  })
+
+  revalidatePath('/l2-repair')
+  revalidatePath('/repair')
+
+  await logActivity({
+    action: 'CLAIMED_DEVICE',
+    details: `L2 Engineer claimed device ${device.barcode} for repair coordination`,
+    userId: user.id,
+    metadata: { deviceId, repairJobId: repairJob.id }
+  })
+
+  return repairJob
+}
+
+/**
+ * Get devices assigned to a specific L2 Engineer
+ */
+export async function getL2AssignedDevices(l2EngineerId?: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const engineerId = l2EngineerId || user.id
+
+  return await prisma.repairJob.findMany({
+    where: {
+      l2EngineerId: engineerId,
+      status: { notIn: [RepairStatus.REPAIR_CLOSED] }
+    },
+    include: {
+      device: {
+        include: {
+          inspectionChecklist: {
+            orderBy: { itemIndex: 'asc' },
+            include: {
+              checkedBy: { select: { name: true } }
+            }
+          },
+          displayRepairJobs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          },
+          batteryBoostJobs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          },
+          l3RepairJobs: {
+            orderBy: { createdAt: 'desc' }
+          },
+          paintPanels: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+}
+
+/**
+ * L2 Engineer sends device to Display Technician
+ */
+export async function sendToDisplayRepair(deviceId: string, reportedIssues: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  if (!device) throw new Error('Device not found')
+
+  // Create display repair job
+  const displayJob = await prisma.displayRepairJob.create({
+    data: {
+      deviceId,
+      reportedIssues,
+      status: ParallelWorkStatus.PENDING
+    }
+  })
+
+  // Mark device as requiring display repair
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: { displayRepairRequired: true }
+  })
+
+  revalidatePath('/l2-repair')
+  revalidatePath('/display-repair')
+
+  await logActivity({
+    action: 'SENT_TO_DISPLAY',
+    details: `Sent device ${device.barcode} for display repair`,
+    userId: user.id,
+    metadata: { deviceId, displayJobId: displayJob.id }
+  })
+
+  return displayJob
+}
+
+/**
+ * L2 Engineer sends device to Battery Technician
+ */
+export async function sendToBatteryBoost(deviceId: string, initialCapacity: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  if (!device) throw new Error('Device not found')
+
+  // Create battery boost job
+  const batteryJob = await prisma.batteryBoostJob.create({
+    data: {
+      deviceId,
+      initialCapacity,
+      targetCapacity: '70%', // Minimum acceptable capacity
+      status: ParallelWorkStatus.PENDING
+    }
+  })
+
+  // Mark device as requiring battery boost
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: { batteryBoostRequired: true }
+  })
+
+  revalidatePath('/l2-repair')
+  revalidatePath('/battery-boost')
+
+  await logActivity({
+    action: 'SENT_TO_BATTERY',
+    details: `Sent device ${device.barcode} for battery boost (initial: ${initialCapacity})`,
+    userId: user.id,
+    metadata: { deviceId, batteryJobId: batteryJob.id, initialCapacity }
+  })
+
+  return batteryJob
+}
+
+/**
+ * L2 Engineer sends device to L3 Engineer for major repairs
+ */
+export async function sendToL3Repair(deviceId: string, issueType: L3IssueType, description: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  if (!device) throw new Error('Device not found')
+
+  // Create L3 repair job
+  const l3Job = await prisma.l3RepairJob.create({
+    data: {
+      deviceId,
+      issueType,
+      description,
+      status: ParallelWorkStatus.PENDING
+    }
+  })
+
+  // Mark device as requiring L3 repair
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: { l3RepairRequired: true }
+  })
+
+  revalidatePath('/l2-repair')
+  revalidatePath('/l3-repair')
+
+  await logActivity({
+    action: 'SENT_TO_L3',
+    details: `Sent device ${device.barcode} to L3 for ${issueType}`,
+    userId: user.id,
+    metadata: { deviceId, l3JobId: l3Job.id, issueType }
+  })
+
+  return l3Job
+}
+
+/**
+ * L2 Engineer sends panels to Paint Shop
+ */
+export async function sendPanelsToPaint(deviceId: string, panels: string[]) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  if (!device) throw new Error('Device not found')
+
+  if (panels.length === 0) {
+    throw new Error('Please select at least one panel')
+  }
+
+  // Create paint panels
+  await prisma.paintPanel.createMany({
+    data: panels.map(panel => ({
+      deviceId,
+      panelType: panel,
+      status: 'AWAITING_PAINT'
+    }))
+  })
+
+  // Mark device as requiring paint
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: { paintRequired: true }
+  })
+
+  revalidatePath('/l2-repair')
+  revalidatePath('/paint')
+
+  await logActivity({
+    action: 'SENT_TO_PAINT',
+    details: `Sent ${panels.length} panel(s) from device ${device.barcode} for painting`,
+    userId: user.id,
+    metadata: { deviceId, panels }
+  })
+}
+
+/**
+ * L2 Engineer completes display repair themselves
+ */
+export async function completeDisplayRepairByL2(deviceId: string, notes: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  if (!device) throw new Error('Device not found')
+
+  // Check if there's an existing display job and complete it
+  const existingJob = await prisma.displayRepairJob.findFirst({
+    where: { deviceId, status: { not: ParallelWorkStatus.COMPLETED } }
+  })
+
+  if (existingJob) {
+    await prisma.displayRepairJob.update({
+      where: { id: existingJob.id },
+      data: {
+        status: ParallelWorkStatus.COMPLETED,
+        completedAt: new Date(),
+        completedByL2: true,
+        notes
+      }
+    })
+  } else {
+    // Create a new completed job
+    await prisma.displayRepairJob.create({
+      data: {
+        deviceId,
+        status: ParallelWorkStatus.COMPLETED,
+        completedAt: new Date(),
+        completedByL2: true,
+        notes
+      }
+    })
+  }
+
+  // Mark display as completed
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: {
+      displayRepairRequired: true,
+      displayRepairCompleted: true
+    }
+  })
+
+  revalidatePath('/l2-repair')
+
+  await logActivity({
+    action: 'COMPLETED_DISPLAY_BY_L2',
+    details: `L2 Engineer completed display repair for device ${device.barcode}`,
+    userId: user.id,
+    metadata: { deviceId }
+  })
+}
+
+/**
+ * L2 Engineer completes battery boost themselves
+ */
+export async function completeBatteryBoostByL2(deviceId: string, finalCapacity: string, notes: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  if (!device) throw new Error('Device not found')
+
+  // Check if there's an existing battery job and complete it
+  const existingJob = await prisma.batteryBoostJob.findFirst({
+    where: { deviceId, status: { not: ParallelWorkStatus.COMPLETED } }
+  })
+
+  if (existingJob) {
+    await prisma.batteryBoostJob.update({
+      where: { id: existingJob.id },
+      data: {
+        status: ParallelWorkStatus.COMPLETED,
+        completedAt: new Date(),
+        completedByL2: true,
+        finalCapacity,
+        notes
+      }
+    })
+  } else {
+    // Create a new completed job
+    await prisma.batteryBoostJob.create({
+      data: {
+        deviceId,
+        status: ParallelWorkStatus.COMPLETED,
+        completedAt: new Date(),
+        completedByL2: true,
+        finalCapacity,
+        notes
+      }
+    })
+  }
+
+  // Mark battery as completed
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: {
+      batteryBoostRequired: true,
+      batteryBoostCompleted: true
+    }
+  })
+
+  revalidatePath('/l2-repair')
+
+  await logActivity({
+    action: 'COMPLETED_BATTERY_BY_L2',
+    details: `L2 Engineer completed battery boost for device ${device.barcode} (${finalCapacity})`,
+    userId: user.id,
+    metadata: { deviceId, finalCapacity }
+  })
+}
+
+/**
+ * L2 Engineer collects completed display repair
+ */
+export async function collectFromDisplayRepair(deviceId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const displayJob = await prisma.displayRepairJob.findFirst({
+    where: {
+      deviceId,
+      status: ParallelWorkStatus.COMPLETED
+    },
+    orderBy: { completedAt: 'desc' }
+  })
+
+  if (!displayJob) {
+    throw new Error('No completed display repair job found')
+  }
+
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: { displayRepairCompleted: true }
+  })
+
+  revalidatePath('/l2-repair')
+
+  await logActivity({
+    action: 'COLLECTED_FROM_DISPLAY',
+    details: 'Collected device from display repair',
+    userId: user.id,
+    metadata: { deviceId, displayJobId: displayJob.id }
+  })
+}
+
+/**
+ * L2 Engineer collects completed battery boost
+ */
+export async function collectFromBatteryBoost(deviceId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const batteryJob = await prisma.batteryBoostJob.findFirst({
+    where: {
+      deviceId,
+      status: ParallelWorkStatus.COMPLETED
+    },
+    orderBy: { completedAt: 'desc' }
+  })
+
+  if (!batteryJob) {
+    throw new Error('No completed battery boost job found')
+  }
+
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: { batteryBoostCompleted: true }
+  })
+
+  revalidatePath('/l2-repair')
+
+  await logActivity({
+    action: 'COLLECTED_FROM_BATTERY',
+    details: `Collected device from battery boost (final: ${batteryJob.finalCapacity})`,
+    userId: user.id,
+    metadata: { deviceId, batteryJobId: batteryJob.id, finalCapacity: batteryJob.finalCapacity }
+  })
+}
+
+/**
+ * L2 Engineer collects completed L3 repair
+ */
+export async function collectFromL3Repair(deviceId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const l3Job = await prisma.l3RepairJob.findFirst({
+    where: {
+      deviceId,
+      status: ParallelWorkStatus.COMPLETED
+    },
+    orderBy: { completedAt: 'desc' }
+  })
+
+  if (!l3Job) {
+    throw new Error('No completed L3 repair job found')
+  }
+
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: { l3RepairCompleted: true }
+  })
+
+  revalidatePath('/l2-repair')
+
+  await logActivity({
+    action: 'COLLECTED_FROM_L3',
+    details: `Collected device from L3 repair (${l3Job.issueType})`,
+    userId: user.id,
+    metadata: { deviceId, l3JobId: l3Job.id, issueType: l3Job.issueType }
+  })
+}
+
+/**
+ * L2 Engineer sends device to QC after all parallel work is complete
+ */
+export async function l2SendToQC(deviceId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const device = await prisma.device.findUnique({
+    where: { id: deviceId },
+    include: {
+      repairJobs: {
+        where: { l2EngineerId: user.id },
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      }
+    }
+  })
+
+  if (!device) throw new Error('Device not found')
+
+  // Validate all parallel work is complete
+  const errors: string[] = []
+
+  if (device.displayRepairRequired && !device.displayRepairCompleted) {
+    errors.push('Display repair not completed')
+  }
+  if (device.batteryBoostRequired && !device.batteryBoostCompleted) {
+    errors.push('Battery boost not completed')
+  }
+  if (device.l3RepairRequired && !device.l3RepairCompleted) {
+    errors.push('L3 repair not completed')
+  }
+  if (device.paintRequired && !device.paintCompleted) {
+    errors.push('Paint work not completed')
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Cannot send to QC: ${errors.join(', ')}`)
+  }
+
+  // Update device status
+  await prisma.device.update({
+    where: { id: deviceId },
+    data: {
+      status: DeviceStatus.AWAITING_QC,
+      repairCompleted: true
+    }
+  })
+
+  // Update repair job status
+  const repairJob = device.repairJobs[0]
+  if (repairJob) {
+    await prisma.repairJob.update({
+      where: { id: repairJob.id },
+      data: {
+        status: RepairStatus.AWAITING_QC,
+        repairEndDate: new Date()
+      }
+    })
+  }
+
+  revalidatePath('/l2-repair')
+  revalidatePath('/qc')
+
+  await logActivity({
+    action: 'L2_SENT_TO_QC',
+    details: `L2 Engineer sent device ${device.barcode} to QC`,
+    userId: user.id,
+    metadata: { deviceId, repairJobId: repairJob?.id }
+  })
+}
+
+/**
+ * Get parallel work status summary for a device
+ */
+export async function getDeviceParallelWorkStatus(deviceId: string) {
+  const device = await prisma.device.findUnique({
+    where: { id: deviceId },
+    include: {
+      displayRepairJobs: {
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      },
+      batteryBoostJobs: {
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      },
+      l3RepairJobs: {
+        orderBy: { createdAt: 'desc' }
+      },
+      paintPanels: true
+    }
+  })
+
+  if (!device) throw new Error('Device not found')
+
+  const allPaintComplete = device.paintPanels.every(
+    p => p.status === 'READY_FOR_COLLECTION' || p.status === 'FITTED'
+  )
+
+  return {
+    display: {
+      required: device.displayRepairRequired,
+      completed: device.displayRepairCompleted,
+      job: device.displayRepairJobs[0] || null
+    },
+    battery: {
+      required: device.batteryBoostRequired,
+      completed: device.batteryBoostCompleted,
+      job: device.batteryBoostJobs[0] || null
+    },
+    l3: {
+      required: device.l3RepairRequired,
+      completed: device.l3RepairCompleted,
+      jobs: device.l3RepairJobs
+    },
+    paint: {
+      required: device.paintRequired,
+      completed: device.paintCompleted || allPaintComplete,
+      panels: device.paintPanels
+    },
+    readyForQC: (
+      (!device.displayRepairRequired || device.displayRepairCompleted) &&
+      (!device.batteryBoostRequired || device.batteryBoostCompleted) &&
+      (!device.l3RepairRequired || device.l3RepairCompleted) &&
+      (!device.paintRequired || device.paintCompleted || allPaintComplete)
+    )
+  }
+}
+
+// --- Display Technician Actions ---
+
+/**
+ * Get display repair jobs for a technician
+ */
+export async function getDisplayRepairJobs(technicianId?: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const whereClause: { status?: { in: ParallelWorkStatus[] }; assignedToId?: string | null } = {
+    status: { in: [ParallelWorkStatus.PENDING, ParallelWorkStatus.IN_PROGRESS] }
+  }
+
+  // If technician ID provided, show their jobs; otherwise show unassigned or user's own
+  if (technicianId) {
+    whereClause.assignedToId = technicianId
+  }
+
+  return await prisma.displayRepairJob.findMany({
+    where: whereClause,
+    include: {
+      device: {
+        include: {
+          repairJobs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            include: {
+              l2Engineer: { select: { name: true } }
+            }
+          }
+        }
+      },
+      assignedTo: { select: { id: true, name: true } }
+    },
+    orderBy: { createdAt: 'asc' }
+  })
+}
+
+/**
+ * Display Technician starts working on a display repair
+ */
+export async function startDisplayRepair(jobId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const job = await prisma.displayRepairJob.findUnique({
+    where: { id: jobId }
+  })
+
+  if (!job) throw new Error('Display repair job not found')
+  if (job.status !== ParallelWorkStatus.PENDING) {
+    throw new Error('Job is not in pending status')
+  }
+
+  await prisma.displayRepairJob.update({
+    where: { id: jobId },
+    data: {
+      status: ParallelWorkStatus.IN_PROGRESS,
+      assignedToId: user.id,
+      startedAt: new Date()
+    }
+  })
+
+  revalidatePath('/display-repair')
+
+  await logActivity({
+    action: 'STARTED_DISPLAY_REPAIR',
+    details: 'Started display repair job',
+    userId: user.id,
+    metadata: { jobId, deviceId: job.deviceId }
+  })
+}
+
+/**
+ * Display Technician completes a display repair
+ */
+export async function completeDisplayRepair(jobId: string, notes: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const job = await prisma.displayRepairJob.findUnique({
+    where: { id: jobId },
+    include: { device: true }
+  })
+
+  if (!job) throw new Error('Display repair job not found')
+  if (job.status !== ParallelWorkStatus.IN_PROGRESS) {
+    throw new Error('Job is not in progress')
+  }
+
+  await prisma.displayRepairJob.update({
+    where: { id: jobId },
+    data: {
+      status: ParallelWorkStatus.COMPLETED,
+      completedAt: new Date(),
+      notes
+    }
+  })
+
+  revalidatePath('/display-repair')
+  revalidatePath('/l2-repair')
+
+  await logActivity({
+    action: 'COMPLETED_DISPLAY_REPAIR',
+    details: `Completed display repair for device ${job.device.barcode}`,
+    userId: user.id,
+    metadata: { jobId, deviceId: job.deviceId }
+  })
+}
+
+// --- Battery Technician Actions ---
+
+/**
+ * Get battery boost jobs for a technician
+ */
+export async function getBatteryBoostJobs(technicianId?: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const whereClause: { status?: { in: ParallelWorkStatus[] }; assignedToId?: string | null } = {
+    status: { in: [ParallelWorkStatus.PENDING, ParallelWorkStatus.IN_PROGRESS] }
+  }
+
+  if (technicianId) {
+    whereClause.assignedToId = technicianId
+  }
+
+  return await prisma.batteryBoostJob.findMany({
+    where: whereClause,
+    include: {
+      device: {
+        include: {
+          repairJobs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            include: {
+              l2Engineer: { select: { name: true } }
+            }
+          }
+        }
+      },
+      assignedTo: { select: { id: true, name: true } }
+    },
+    orderBy: { createdAt: 'asc' }
+  })
+}
+
+/**
+ * Battery Technician starts working on a battery boost
+ */
+export async function startBatteryBoost(jobId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const job = await prisma.batteryBoostJob.findUnique({
+    where: { id: jobId }
+  })
+
+  if (!job) throw new Error('Battery boost job not found')
+  if (job.status !== ParallelWorkStatus.PENDING) {
+    throw new Error('Job is not in pending status')
+  }
+
+  await prisma.batteryBoostJob.update({
+    where: { id: jobId },
+    data: {
+      status: ParallelWorkStatus.IN_PROGRESS,
+      assignedToId: user.id,
+      startedAt: new Date()
+    }
+  })
+
+  revalidatePath('/battery-boost')
+
+  await logActivity({
+    action: 'STARTED_BATTERY_BOOST',
+    details: `Started battery boost job (initial: ${job.initialCapacity})`,
+    userId: user.id,
+    metadata: { jobId, deviceId: job.deviceId, initialCapacity: job.initialCapacity }
+  })
+}
+
+/**
+ * Battery Technician completes a battery boost
+ */
+export async function completeBatteryBoost(jobId: string, finalCapacity: string, notes: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const job = await prisma.batteryBoostJob.findUnique({
+    where: { id: jobId },
+    include: { device: true }
+  })
+
+  if (!job) throw new Error('Battery boost job not found')
+  if (job.status !== ParallelWorkStatus.IN_PROGRESS) {
+    throw new Error('Job is not in progress')
+  }
+
+  await prisma.batteryBoostJob.update({
+    where: { id: jobId },
+    data: {
+      status: ParallelWorkStatus.COMPLETED,
+      completedAt: new Date(),
+      finalCapacity,
+      notes
+    }
+  })
+
+  revalidatePath('/battery-boost')
+  revalidatePath('/l2-repair')
+
+  await logActivity({
+    action: 'COMPLETED_BATTERY_BOOST',
+    details: `Completed battery boost for device ${job.device.barcode} (${job.initialCapacity} -> ${finalCapacity})`,
+    userId: user.id,
+    metadata: { jobId, deviceId: job.deviceId, initialCapacity: job.initialCapacity, finalCapacity }
+  })
+}
+
+// --- L3 Engineer Actions ---
+
+/**
+ * Get L3 repair jobs for an engineer
+ */
+export async function getL3RepairJobs(engineerId?: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const whereClause: { status?: { in: ParallelWorkStatus[] }; assignedToId?: string | null } = {
+    status: { in: [ParallelWorkStatus.PENDING, ParallelWorkStatus.IN_PROGRESS] }
+  }
+
+  if (engineerId) {
+    whereClause.assignedToId = engineerId
+  }
+
+  return await prisma.l3RepairJob.findMany({
+    where: whereClause,
+    include: {
+      device: {
+        include: {
+          repairJobs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            include: {
+              l2Engineer: { select: { name: true } }
+            }
+          }
+        }
+      },
+      assignedTo: { select: { id: true, name: true } }
+    },
+    orderBy: { createdAt: 'asc' }
+  })
+}
+
+/**
+ * L3 Engineer starts working on a major repair
+ */
+export async function startL3Repair(jobId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const job = await prisma.l3RepairJob.findUnique({
+    where: { id: jobId }
+  })
+
+  if (!job) throw new Error('L3 repair job not found')
+  if (job.status !== ParallelWorkStatus.PENDING) {
+    throw new Error('Job is not in pending status')
+  }
+
+  await prisma.l3RepairJob.update({
+    where: { id: jobId },
+    data: {
+      status: ParallelWorkStatus.IN_PROGRESS,
+      assignedToId: user.id,
+      startedAt: new Date()
+    }
+  })
+
+  revalidatePath('/l3-repair')
+
+  await logActivity({
+    action: 'STARTED_L3_REPAIR',
+    details: `Started L3 repair job (${job.issueType})`,
+    userId: user.id,
+    metadata: { jobId, deviceId: job.deviceId, issueType: job.issueType }
+  })
+}
+
+/**
+ * L3 Engineer completes a major repair
+ */
+export async function completeL3Repair(jobId: string, resolution: string, notes: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const job = await prisma.l3RepairJob.findUnique({
+    where: { id: jobId },
+    include: { device: true }
+  })
+
+  if (!job) throw new Error('L3 repair job not found')
+  if (job.status !== ParallelWorkStatus.IN_PROGRESS) {
+    throw new Error('Job is not in progress')
+  }
+
+  await prisma.l3RepairJob.update({
+    where: { id: jobId },
+    data: {
+      status: ParallelWorkStatus.COMPLETED,
+      completedAt: new Date(),
+      resolution,
+      notes
+    }
+  })
+
+  // Check if all L3 jobs for this device are complete
+  const pendingL3Jobs = await prisma.l3RepairJob.count({
+    where: {
+      deviceId: job.deviceId,
+      status: { not: ParallelWorkStatus.COMPLETED }
+    }
+  })
+
+  // If all L3 jobs complete, we could auto-mark l3RepairCompleted
+  // But per workflow, L2 should collect - so we don't auto-update
+
+  revalidatePath('/l3-repair')
+  revalidatePath('/l2-repair')
+
+  await logActivity({
+    action: 'COMPLETED_L3_REPAIR',
+    details: `Completed L3 repair (${job.issueType}) for device ${job.device.barcode}`,
+    userId: user.id,
+    metadata: { jobId, deviceId: job.deviceId, issueType: job.issueType, resolution }
+  })
+}
+
+/**
+ * Get available devices ready for L2 claiming (unassigned, ready for repair)
+ */
+export async function getDevicesReadyForL2() {
+  return await prisma.device.findMany({
+    where: {
+      status: { in: [DeviceStatus.READY_FOR_REPAIR, DeviceStatus.WAITING_FOR_SPARES] },
+      repairJobs: {
+        some: {
+          l2EngineerId: null
+        }
+      }
+    },
+    include: {
+      inwardBatch: true,
+      repairJobs: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        include: {
+          inspectionEng: { select: { name: true } }
+        }
+      },
+      inspectionChecklist: {
+        orderBy: { itemIndex: 'asc' },
+        include: {
+          checkedBy: { select: { name: true } }
+        }
+      }
+    },
+    orderBy: { updatedAt: 'asc' }
+  })
 }
 
 // --- Paint Actions ---

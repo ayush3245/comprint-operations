@@ -1,11 +1,11 @@
-import { getDeviceByBarcode, submitQC } from '@/lib/actions'
+import { getDeviceForQC, submitQC } from '@/lib/actions'
 import { checkRole } from '@/lib/auth'
 import { AlertCircle } from 'lucide-react'
 import QCForm from './QCForm'
 
 export default async function QCFormPage({ params }: { params: Promise<{ barcode: string }> }) {
     const { barcode } = await params
-    const device = await getDeviceByBarcode(barcode)
+    const device = await getDeviceForQC(barcode)
     const user = await checkRole(['QC_ENGINEER', 'ADMIN'])
 
     if (!device) return <div className="p-8 text-center text-red-600">Device not found</div>
@@ -25,6 +25,53 @@ export default async function QCFormPage({ params }: { params: Promise<{ barcode
             </div>
         )
     }
+
+    // Extract repair job info
+    const repairJob = device.repairJobs[0]
+    const l2EngineerName = repairJob?.l2Engineer?.name || null
+    const inspectionEngineerName = repairJob?.inspectionEng?.name || null
+
+    // Build parallel work status
+    const parallelWork = {
+        displayRepairRequired: device.displayRepairRequired,
+        displayRepairCompleted: device.displayRepairCompleted,
+        batteryBoostRequired: device.batteryBoostRequired,
+        batteryBoostCompleted: device.batteryBoostCompleted,
+        l3RepairRequired: device.l3RepairRequired,
+        l3RepairCompleted: device.l3RepairCompleted,
+        paintRequired: device.paintRequired,
+        paintCompleted: device.paintCompleted,
+        displayRepairJobs: device.displayRepairJobs.map(j => ({
+            status: j.status,
+            notes: j.notes
+        })),
+        batteryBoostJobs: device.batteryBoostJobs.map(j => ({
+            status: j.status,
+            finalCapacity: j.finalCapacity,
+            notes: j.notes
+        })),
+        l3RepairJobs: device.l3RepairJobs.map(j => ({
+            status: j.status,
+            issueType: j.issueType,
+            resolution: j.resolution,
+            notes: j.notes
+        })),
+        paintPanels: device.paintPanels.map(p => ({
+            panelType: p.panelType,
+            status: p.status
+        }))
+    }
+
+    // Build checklist items
+    const checklistItems = device.inspectionChecklist.map(item => ({
+        id: item.id,
+        itemIndex: item.itemIndex,
+        itemText: item.itemText,
+        status: item.status,
+        notes: item.notes,
+        checkedAtStage: item.checkedAtStage,
+        checkedBy: item.checkedBy
+    }))
 
     async function handleQC(deviceId: string, data: {
         qcEngId: string
@@ -52,6 +99,11 @@ export default async function QCFormPage({ params }: { params: Promise<{ barcode
                 deviceBarcode={device.barcode}
                 deviceBrand={device.brand}
                 deviceModel={device.model}
+                deviceCategory={device.category}
+                checklistItems={checklistItems}
+                parallelWork={parallelWork}
+                l2EngineerName={l2EngineerName}
+                inspectionEngineerName={inspectionEngineerName}
                 onSubmit={handleQC}
             />
         </div>

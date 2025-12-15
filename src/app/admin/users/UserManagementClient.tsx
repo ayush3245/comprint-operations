@@ -50,7 +50,11 @@ const ROLES: { value: Role; label: string }[] = [
     { value: 'MIS_WAREHOUSE_EXECUTIVE', label: 'MIS Warehouse Executive' },
     { value: 'WAREHOUSE_MANAGER', label: 'Warehouse Manager' },
     { value: 'INSPECTION_ENGINEER', label: 'Inspection Engineer' },
-    { value: 'REPAIR_ENGINEER', label: 'Repair Engineer' },
+    { value: 'L2_ENGINEER', label: 'L2 Engineer (Coordinator)' },
+    { value: 'L3_ENGINEER', label: 'L3 Engineer (Major Repairs)' },
+    { value: 'DISPLAY_TECHNICIAN', label: 'Display Technician' },
+    { value: 'BATTERY_TECHNICIAN', label: 'Battery Technician' },
+    { value: 'REPAIR_ENGINEER', label: 'Repair Engineer (Legacy)' },
     { value: 'PAINT_SHOP_TECHNICIAN', label: 'Paint Shop Technician' },
     { value: 'QC_ENGINEER', label: 'QC Engineer' },
 ]
@@ -66,8 +70,16 @@ function getRoleBadgeColor(role: Role): string {
             return 'bg-blue-100 text-blue-700 border-blue-200'
         case 'INSPECTION_ENGINEER':
             return 'bg-yellow-100 text-yellow-700 border-yellow-200'
-        case 'REPAIR_ENGINEER':
+        case 'L2_ENGINEER':
             return 'bg-orange-100 text-orange-700 border-orange-200'
+        case 'L3_ENGINEER':
+            return 'bg-indigo-100 text-indigo-700 border-indigo-200'
+        case 'DISPLAY_TECHNICIAN':
+            return 'bg-cyan-100 text-cyan-700 border-cyan-200'
+        case 'BATTERY_TECHNICIAN':
+            return 'bg-lime-100 text-lime-700 border-lime-200'
+        case 'REPAIR_ENGINEER':
+            return 'bg-amber-100 text-amber-700 border-amber-200'
         case 'PAINT_SHOP_TECHNICIAN':
             return 'bg-pink-100 text-pink-700 border-pink-200'
         case 'QC_ENGINEER':

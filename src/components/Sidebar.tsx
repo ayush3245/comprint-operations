@@ -19,7 +19,10 @@ import {
     ChevronRight,
     Menu,
     X,
-    Users
+    Users,
+    Monitor,
+    Battery,
+    Cpu
 } from 'lucide-react'
 import { logout } from '@/lib/auth-actions'
 import { cn } from '@/lib/utils'
@@ -49,7 +52,11 @@ export default function Sidebar({ user }: SidebarProps) {
             { href: '/inward', label: 'Inward', icon: PackagePlus, roles: ['SUPERADMIN'] },
             { href: '/inspection', label: 'Inspection', icon: Search, roles: ['SUPERADMIN'] },
             { href: '/spares', label: 'Spares Requests', icon: Wrench, roles: ['SUPERADMIN'] },
-            { href: '/repair', label: 'Repair Station', icon: Wrench, roles: ['SUPERADMIN'] },
+            { href: '/l2-repair', label: 'L2 Repair', icon: Wrench, roles: ['SUPERADMIN'] },
+            { href: '/l3-repair', label: 'L3 Repair', icon: Cpu, roles: ['SUPERADMIN'] },
+            { href: '/display-repair', label: 'Display Repair', icon: Monitor, roles: ['SUPERADMIN'] },
+            { href: '/battery-boost', label: 'Battery Boost', icon: Battery, roles: ['SUPERADMIN'] },
+            { href: '/repair', label: 'Repair (Legacy)', icon: Wrench, roles: ['SUPERADMIN'] },
             { href: '/paint', label: 'Paint Shop', icon: PaintBucket, roles: ['SUPERADMIN'] },
             { href: '/qc', label: 'QC', icon: ClipboardCheck, roles: ['SUPERADMIN'] },
             { href: '/inventory', label: 'Inventory', icon: Warehouse, roles: ['SUPERADMIN'] },
@@ -61,7 +68,11 @@ export default function Sidebar({ user }: SidebarProps) {
             { href: '/inspection', label: 'Inspection', icon: Search, roles: ['INSPECTION_ENGINEER', 'ADMIN'] },
             { href: '/spares', label: 'Spares Requests', icon: Cog, roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'] },
             { href: '/admin/spares', label: 'Spare Parts', icon: Cog, roles: ['WAREHOUSE_MANAGER', 'ADMIN'] },
-            { href: '/repair', label: 'Repair Station', icon: Wrench, roles: ['REPAIR_ENGINEER', 'ADMIN'] },
+            { href: '/l2-repair', label: 'L2 Repair', icon: Wrench, roles: ['L2_ENGINEER', 'REPAIR_ENGINEER', 'ADMIN'] },
+            { href: '/l3-repair', label: 'L3 Repair', icon: Cpu, roles: ['L3_ENGINEER', 'ADMIN'] },
+            { href: '/display-repair', label: 'Display Repair', icon: Monitor, roles: ['DISPLAY_TECHNICIAN', 'L2_ENGINEER', 'ADMIN'] },
+            { href: '/battery-boost', label: 'Battery Boost', icon: Battery, roles: ['BATTERY_TECHNICIAN', 'L2_ENGINEER', 'ADMIN'] },
+            { href: '/repair', label: 'Repair (Legacy)', icon: Wrench, roles: ['REPAIR_ENGINEER', 'ADMIN'] },
             { href: '/paint', label: 'Paint Shop', icon: PaintBucket, roles: ['PAINT_SHOP_TECHNICIAN', 'ADMIN'] },
             { href: '/qc', label: 'QC', icon: ClipboardCheck, roles: ['QC_ENGINEER', 'ADMIN'] },
             { href: '/inventory', label: 'Inventory', icon: Warehouse, roles: ['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN'] },

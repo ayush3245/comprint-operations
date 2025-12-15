@@ -12,7 +12,11 @@ enum Role {
   MIS_WAREHOUSE_EXECUTIVE
   WAREHOUSE_MANAGER
   INSPECTION_ENGINEER
-  REPAIR_ENGINEER
+  REPAIR_ENGINEER          // @deprecated - use L2_ENGINEER instead, kept for migration
+  L2_ENGINEER              // Coordinates all repair work (replaces REPAIR_ENGINEER)
+  L3_ENGINEER              // Major repairs: motherboard, locks, power issues
+  DISPLAY_TECHNICIAN       // Display/screen repairs
+  BATTERY_TECHNICIAN       // Battery boosting/replacement
   PAINT_SHOP_TECHNICIAN
   QC_ENGINEER
 }
@@ -80,6 +84,35 @@ enum Grade {
   B
 }
 
+// New enums for inspection checklist and parallel work
+enum ChecklistStatus {
+  PENDING
+  PASS
+  FAIL
+  NOT_APPLICABLE
+}
+
+enum ChecklistStage {
+  INSPECTION
+  L2_ENGINEER
+  L3_ENGINEER
+  QC
+}
+
+enum L3IssueType {
+  MOTHERBOARD
+  DOMAIN_LOCK
+  BIOS_LOCK
+  POWER_ON_ISSUE
+}
+
+enum ParallelWorkStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 enum MovementType {
   INWARD
   MOVE
@@ -108,12 +141,19 @@ model User {
   createdBatches    InwardBatch[]
   inspections       RepairJob[]      @relation("InspectionEngineer")
   repairs           RepairJob[]      @relation("RepairEngineer")
+  l2Assignments     RepairJob[]      @relation("L2Engineer")
   paintWork         PaintPanel[]
   qcInspections     QCRecord[]       @relation("QCEngineer")
   movements         StockMovement[]
   packedOutwards    OutwardRecord[]  @relation("PackedBy")
   checkedOutwards   OutwardRecord[]  @relation("CheckedBy")
   activityLogs      ActivityLog[]
+
+  // New relations for checklist and parallel work
+  checklistChecks   InspectionChecklistItem[]
+  displayRepairs    DisplayRepairJob[]
+  batteryBoosts     BatteryBoostJob[]
+  l3Repairs         L3RepairJob[]
 }
 
 model Device {
@@ -169,6 +209,14 @@ model Device {
   repairCompleted Boolean        @default(false)
   paintCompleted  Boolean        @default(false)
 
+  // Parallel work flags - set by L2 Engineer
+  displayRepairRequired  Boolean @default(false)
+  batteryBoostRequired   Boolean @default(false)
+  l3RepairRequired       Boolean @default(false)
+  displayRepairCompleted Boolean @default(false)
+  batteryBoostCompleted  Boolean @default(false)
+  l3RepairCompleted      Boolean @default(false)
+
   // References
   poInvoiceNo     String?        // For Refurb
   rentalRef       String?        // For Rental Return
@@ -185,6 +233,12 @@ model Device {
   movements       StockMovement[]
   outwardRecordId String?
   outwardRecord   OutwardRecord? @relation(fields: [outwardRecordId], references: [id])
+
+  // New relations for checklist and parallel work
+  inspectionChecklist InspectionChecklistItem[]
+  displayRepairJobs   DisplayRepairJob[]
+  batteryBoostJobs    BatteryBoostJob[]
+  l3RepairJobs        L3RepairJob[]
 }
 
 model InwardBatch {
@@ -232,27 +286,31 @@ model RepairJob {
   jobId           String       @unique
   deviceId        String
   device          Device       @relation(fields: [deviceId], references: [id])
-  
+
   inspectionEngId String?
   inspectionEng   User?        @relation("InspectionEngineer", fields: [inspectionEngId], references: [id])
-  
+
   repairEngId     String?
   repairEng       User?        @relation("RepairEngineer", fields: [repairEngId], references: [id])
-  
+
+  // L2 Engineer who owns this device throughout the repair cycle
+  l2EngineerId    String?
+  l2Engineer      User?        @relation("L2Engineer", fields: [l2EngineerId], references: [id])
+
   reportedIssues  String?      // JSON or text
   rootCause       String?
   sparesRequired  String?      // JSON list of part codes
   sparesIssued    String?      // JSON list
-  
+
   station         String?
-  
+
   repairStartDate DateTime?
   repairEndDate   DateTime?
   tatDueDate      DateTime?
-  
+
   status          RepairStatus @default(PENDING_INSPECTION)
   notes           String?
-  
+
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 }
@@ -340,11 +398,111 @@ model ActivityLog {
   id        String   @id @default(cuid())
   action    String   // e.g., "CREATED_INWARD", "UPDATED_REPAIR"
   details   String?  // Human readable description
-  
+
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  
+
   metadata  String?  // JSON for extra data (e.g., deviceId, batchId)
-  
+
   createdAt DateTime @default(now())
+}
+
+// =====================================================
+// NEW MODELS FOR WORKFLOW RESTRUCTURING
+// =====================================================
+
+// Inspection checklist items - category-specific, flows through L2/L3/QC
+model InspectionChecklistItem {
+  id              String          @id @default(cuid())
+  deviceId        String
+  device          Device          @relation(fields: [deviceId], references: [id])
+
+  itemIndex       Int             // Order within the category (1-20)
+  itemText        String          // The actual checklist item text
+
+  status          ChecklistStatus @default(PENDING)
+  notes           String?         // Optional notes for this item
+
+  checkedById     String?
+  checkedBy       User?           @relation(fields: [checkedById], references: [id])
+  checkedAt       DateTime?
+  checkedAtStage  ChecklistStage  @default(INSPECTION)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([deviceId, itemIndex])
+  @@index([deviceId])
+}
+
+// Display repair jobs - assigned by L2 to Display Technician or done by L2
+model DisplayRepairJob {
+  id              String             @id @default(cuid())
+  deviceId        String
+  device          Device             @relation(fields: [deviceId], references: [id])
+
+  reportedIssues  String?            // Display-specific issues
+  status          ParallelWorkStatus @default(PENDING)
+
+  assignedToId    String?
+  assignedTo      User?              @relation(fields: [assignedToId], references: [id])
+
+  startedAt       DateTime?
+  completedAt     DateTime?
+  notes           String?
+  completedByL2   Boolean            @default(false) // True if L2 did it themselves
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([deviceId])
+}
+
+// Battery boost jobs - assigned by L2 to Battery Technician or done by L2
+model BatteryBoostJob {
+  id              String             @id @default(cuid())
+  deviceId        String
+  device          Device             @relation(fields: [deviceId], references: [id])
+
+  initialCapacity String?            // e.g., "45%"
+  targetCapacity  String?            // e.g., "70%"
+  status          ParallelWorkStatus @default(PENDING)
+
+  assignedToId    String?
+  assignedTo      User?              @relation(fields: [assignedToId], references: [id])
+
+  startedAt       DateTime?
+  completedAt     DateTime?
+  finalCapacity   String?            // Actual capacity after boost
+  notes           String?
+  completedByL2   Boolean            @default(false) // True if L2 did it themselves
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([deviceId])
+}
+
+// L3 repair jobs - major repairs assigned by L2 to L3 Engineer
+model L3RepairJob {
+  id              String             @id @default(cuid())
+  deviceId        String
+  device          Device             @relation(fields: [deviceId], references: [id])
+
+  issueType       L3IssueType        // MOTHERBOARD, DOMAIN_LOCK, BIOS_LOCK, POWER_ON_ISSUE
+  description     String?            // Detailed description of the issue
+  status          ParallelWorkStatus @default(PENDING)
+
+  assignedToId    String?
+  assignedTo      User?              @relation(fields: [assignedToId], references: [id])
+
+  startedAt       DateTime?
+  completedAt     DateTime?
+  resolution      String?            // How the issue was resolved
+  notes           String?
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([deviceId])
 }
