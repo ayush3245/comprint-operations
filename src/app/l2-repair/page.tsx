@@ -2,6 +2,7 @@ import { checkRole } from '@/lib/auth'
 import {
     getL2AssignedDevices,
     getDevicesReadyForL2,
+    getL2CompletedDevices,
     claimDeviceForL2,
     sendToDisplayRepair,
     sendToBatteryBoost,
@@ -13,17 +14,22 @@ import {
     collectFromBatteryBoost,
     collectFromL3Repair,
     collectFromPaint,
-    l2SendToQC
+    l2SendToQC,
+    l2RequestSpares,
+    getUserDashboardStats
 } from '@/lib/actions'
 import L2RepairClient from './L2RepairClient'
+import DashboardStats from '@/components/DashboardStats'
 import type { L3IssueType } from '@prisma/client'
 
 export default async function L2RepairPage() {
     const user = await checkRole(['L2_ENGINEER', 'REPAIR_ENGINEER', 'ADMIN', 'SUPERADMIN'])
 
-    const [assignedDevices, availableDevices] = await Promise.all([
+    const [assignedDevices, availableDevices, completedDevices, stats] = await Promise.all([
         getL2AssignedDevices(user.id),
-        getDevicesReadyForL2()
+        getDevicesReadyForL2(),
+        getL2CompletedDevices(user.id),
+        getUserDashboardStats(user.id, user.role)
     ])
 
     // Server actions
@@ -87,24 +93,43 @@ export default async function L2RepairPage() {
         return await l2SendToQC(deviceId)
     }
 
+    async function handleRequestSpares(deviceId: string, sparesRequired: string, notes?: string) {
+        'use server'
+        return await l2RequestSpares(deviceId, sparesRequired, notes)
+    }
+
     return (
-        <L2RepairClient
-            assignedDevices={assignedDevices}
-            availableDevices={availableDevices}
-            userId={user.id}
-            userName={user.name}
-            onClaimDevice={handleClaimDevice}
-            onSendToDisplay={handleSendToDisplay}
-            onSendToBattery={handleSendToBattery}
-            onSendToL3={handleSendToL3}
-            onSendToPaint={handleSendToPaint}
-            onCompleteDisplayByL2={handleCompleteDisplayByL2}
-            onCompleteBatteryByL2={handleCompleteBatteryByL2}
-            onCollectFromDisplay={handleCollectFromDisplay}
-            onCollectFromBattery={handleCollectFromBattery}
-            onCollectFromL3={handleCollectFromL3}
-            onCollectFromPaint={handleCollectFromPaint}
-            onSendToQC={handleSendToQC}
-        />
+        <div className="p-6">
+            <DashboardStats
+                pending={stats.pending}
+                inProgress={stats.inProgress}
+                completed={stats.completed}
+                labels={{
+                    pending: 'Available to Claim',
+                    inProgress: 'My Active Jobs',
+                    completed: 'Handed Over'
+                }}
+            />
+            <L2RepairClient
+                assignedDevices={assignedDevices}
+                availableDevices={availableDevices}
+                completedDevices={completedDevices}
+                userId={user.id}
+                userName={user.name}
+                onClaimDevice={handleClaimDevice}
+                onSendToDisplay={handleSendToDisplay}
+                onSendToBattery={handleSendToBattery}
+                onSendToL3={handleSendToL3}
+                onSendToPaint={handleSendToPaint}
+                onCompleteDisplayByL2={handleCompleteDisplayByL2}
+                onCompleteBatteryByL2={handleCompleteBatteryByL2}
+                onCollectFromDisplay={handleCollectFromDisplay}
+                onCollectFromBattery={handleCollectFromBattery}
+                onCollectFromL3={handleCollectFromL3}
+                onCollectFromPaint={handleCollectFromPaint}
+                onSendToQC={handleSendToQC}
+                onRequestSpares={handleRequestSpares}
+            />
+        </div>
     )
 }

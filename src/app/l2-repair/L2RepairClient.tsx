@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import {
     Wrench, Monitor, Battery, Cpu, Paintbrush, CheckCircle,
-    Download, Send, Play, ChevronDown, ChevronUp, AlertCircle
+    Download, Send, Play, ChevronDown, ChevronUp, AlertCircle,
+    Package, FileText, User
 } from 'lucide-react'
 import type { L3IssueType } from '@prisma/client'
 
@@ -38,8 +39,11 @@ interface PaintPanel {
 
 interface AssignedDevice {
     id: string
-    jobId: string
     status: string
+    reportedIssues: string | null
+    sparesRequired: string | null
+    sparesIssued: string | null
+    inspectionEng: { name: string } | null
     device: {
         id: string
         barcode: string
@@ -72,14 +76,40 @@ interface AvailableDevice {
     repairJobs: Array<{
         id: string
         reportedIssues: string | null
+        sparesRequired: string | null
+        sparesIssued: string | null
         inspectionEng: { name: string } | null
     }>
     inspectionChecklist: ChecklistItem[]
 }
 
+interface CompletedDevice {
+    id: string
+    barcode: string
+    brand: string
+    model: string
+    category: string
+    status: string
+    updatedAt: Date
+    repairJobs: Array<{
+        id: string
+        status: string
+        repairEndDate: Date | null
+        l2Engineer: { name: string } | null
+        inspectionEng: { name: string } | null
+    }>
+    qcRecords: Array<{
+        status: string
+        finalGrade: string
+        completedAt: Date
+        qcEng: { name: string } | null
+    }>
+}
+
 interface L2RepairClientProps {
     assignedDevices: AssignedDevice[]
     availableDevices: AvailableDevice[]
+    completedDevices: CompletedDevice[]
     userId: string
     userName: string
     onClaimDevice: (deviceId: string) => Promise<any>
@@ -94,11 +124,13 @@ interface L2RepairClientProps {
     onCollectFromL3: (deviceId: string) => Promise<any>
     onCollectFromPaint: (jobId: string) => Promise<any>
     onSendToQC: (deviceId: string) => Promise<any>
+    onRequestSpares: (deviceId: string, sparesRequired: string, notes?: string) => Promise<any>
 }
 
 export default function L2RepairClient({
     assignedDevices,
     availableDevices,
+    completedDevices,
     userId,
     userName,
     onClaimDevice,
@@ -112,19 +144,21 @@ export default function L2RepairClient({
     onCollectFromBattery,
     onCollectFromL3,
     onCollectFromPaint,
-    onSendToQC
+    onSendToQC,
+    onRequestSpares
 }: L2RepairClientProps) {
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
     const toast = useToast()
     const [expandedDevice, setExpandedDevice] = useState<string | null>(null)
-    const [activeTab, setActiveTab] = useState<'assigned' | 'available'>('assigned')
+    const [activeTab, setActiveTab] = useState<'assigned' | 'available' | 'completed'>('assigned')
 
     // Modal states
     const [showL3Modal, setShowL3Modal] = useState<string | null>(null)
     const [showPaintModal, setShowPaintModal] = useState<string | null>(null)
     const [showBatteryModal, setShowBatteryModal] = useState<string | null>(null)
     const [showDisplayModal, setShowDisplayModal] = useState<string | null>(null)
+    const [showSparesModal, setShowSparesModal] = useState<string | null>(null)
 
     const handleClaim = async (device: AvailableDevice) => {
         startTransition(async () => {
@@ -231,6 +265,15 @@ export default function L2RepairClient({
                 >
                     Available ({availableDevices.length})
                 </button>
+                <button
+                    onClick={() => setActiveTab('completed')}
+                    className={`px-4 py-2 font-medium ${activeTab === 'completed'
+                        ? 'border-b-2 border-green-600 text-green-600'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                >
+                    Completed ({completedDevices.length})
+                </button>
             </div>
 
             {/* Assigned Devices */}
@@ -315,6 +358,64 @@ export default function L2RepairClient({
                                     {/* Expanded Content */}
                                     {isExpanded && (
                                         <div className="border-t p-4 space-y-4">
+                                            {/* Inspection Summary */}
+                                            <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                                                <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                                                    <FileText size={16} /> Inspection Summary
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                    {job.inspectionEng && (
+                                                        <div className="flex items-center gap-2">
+                                                            <User size={14} className="text-blue-600" />
+                                                            <span className="text-gray-600">Inspector:</span>
+                                                            <span className="font-medium">{job.inspectionEng.name}</span>
+                                                        </div>
+                                                    )}
+                                                    {job.reportedIssues && (
+                                                        <div className="col-span-full">
+                                                            <span className="text-gray-600">Reported Issues:</span>
+                                                            <p className="mt-1 text-gray-800 bg-white p-2 rounded border">
+                                                                {job.reportedIssues}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    <div className="col-span-full flex flex-wrap gap-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <Package size={14} className="text-orange-600" />
+                                                            <span className="text-gray-600">Spares Required:</span>
+                                                            <span className={job.sparesRequired ? 'font-medium text-orange-700' : 'text-gray-400'}>
+                                                                {job.sparesRequired || 'None'}
+                                                            </span>
+                                                        </div>
+                                                        {job.sparesIssued && (
+                                                            <div className="flex items-center gap-2">
+                                                                <CheckCircle size={14} className="text-green-600" />
+                                                                <span className="text-gray-600">Spares Issued:</span>
+                                                                <span className="font-medium text-green-700">{job.sparesIssued}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {/* Request Spares Button */}
+                                                    <div className="col-span-full">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                setShowSparesModal(device.id)
+                                                            }}
+                                                            disabled={job.status === 'WAITING_FOR_SPARES'}
+                                                            className={`flex items-center gap-2 px-3 py-2 rounded text-sm ${
+                                                                job.status === 'WAITING_FOR_SPARES'
+                                                                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                                                    : 'bg-orange-500 text-white hover:bg-orange-600'
+                                                            }`}
+                                                        >
+                                                            <Package size={14} />
+                                                            {job.status === 'WAITING_FOR_SPARES' ? 'Waiting for Spares' : 'Request Spares'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             {/* Failed Checklist Items */}
                                             {failedItems.length > 0 && (
                                                 <div className="bg-red-50 p-3 rounded">
@@ -599,6 +700,129 @@ export default function L2RepairClient({
                 </div>
             )}
 
+            {/* Completed Devices */}
+            {activeTab === 'completed' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {completedDevices.length === 0 ? (
+                        <div className="col-span-full text-center py-10 text-gray-500">
+                            No completed devices yet.
+                        </div>
+                    ) : (
+                        completedDevices.map((device) => {
+                            const repairJob = device.repairJobs[0]
+                            const qcRecord = device.qcRecords[0]
+
+                            return (
+                                <div key={device.id} className="bg-white rounded-lg shadow p-4 border-t-4 border-green-500">
+                                    <div className="mb-3">
+                                        <h3 className="font-bold text-lg">{device.barcode}</h3>
+                                        <p className="text-sm text-gray-500">
+                                            {device.brand} {device.model} • {device.category}
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-500">Status:</span>
+                                            <span className={`font-medium ${
+                                                device.status === 'READY_FOR_STOCK' ? 'text-green-600' :
+                                                device.status === 'AWAITING_QC' ? 'text-yellow-600' : 'text-gray-600'
+                                            }`}>
+                                                {device.status.replace(/_/g, ' ')}
+                                            </span>
+                                        </div>
+
+                                        {repairJob?.repairEndDate && (
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">Completed:</span>
+                                                <span>{new Date(repairJob.repairEndDate).toLocaleDateString()}</span>
+                                            </div>
+                                        )}
+
+                                        {qcRecord && (
+                                            <>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">QC Result:</span>
+                                                    <span className={qcRecord.status === 'PASSED' ? 'text-green-600 font-medium' : 'text-red-600'}>
+                                                        {qcRecord.status}
+                                                    </span>
+                                                </div>
+                                                {qcRecord.finalGrade && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Grade:</span>
+                                                        <span className="font-bold">Grade {qcRecord.finalGrade}</span>
+                                                    </div>
+                                                )}
+                                                {qcRecord.qcEng && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">QC By:</span>
+                                                        <span>{qcRecord.qcEng.name}</span>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+
+                                        {!qcRecord && (
+                                            <div className="text-center py-2 bg-yellow-50 rounded text-yellow-700 text-xs">
+                                                Awaiting QC Review
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+            )}
+
+            {/* Spares Request Modal */}
+            {showSparesModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                        <h3 className="text-lg font-bold mb-4">Request Spare Parts</h3>
+                        <form onSubmit={(e) => {
+                            e.preventDefault()
+                            const form = e.target as HTMLFormElement
+                            const sparesRequired = form.sparesRequired.value
+                            const notes = form.notes.value
+                            startTransition(async () => {
+                                try {
+                                    await onRequestSpares(showSparesModal, sparesRequired, notes)
+                                    toast.success('Spare parts request submitted')
+                                    setShowSparesModal(null)
+                                    router.refresh()
+                                } catch (err: any) {
+                                    toast.error(err.message)
+                                }
+                            })
+                        }}>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-1">Spare Parts Required</label>
+                                <textarea
+                                    name="sparesRequired"
+                                    className="w-full border rounded p-2"
+                                    rows={3}
+                                    placeholder="List part codes or descriptions (one per line)"
+                                    required
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+                                <textarea name="notes" className="w-full border rounded p-2" rows={2} placeholder="Any additional details..." />
+                            </div>
+                            <div className="flex gap-2">
+                                <button type="button" onClick={() => setShowSparesModal(null)} className="flex-1 py-2 border rounded">
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-orange-600 text-white rounded">
+                                    {isPending ? 'Requesting...' : 'Request Spares'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* L3 Modal */}
             {showL3Modal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -699,15 +923,23 @@ export default function L2RepairClient({
             {showBatteryModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">Send for Battery Boost</h3>
+                        <h3 className="text-lg font-bold mb-4">Battery Boost</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
                             const form = e.target as HTMLFormElement
+                            const doItMyself = (form.elements.namedItem('doItMyself') as HTMLInputElement)?.checked
                             const initialCapacity = form.initialCapacity.value
+                            const finalCapacity = form.finalCapacity?.value || ''
+                            const notes = form.notes?.value || ''
                             startTransition(async () => {
                                 try {
-                                    await onSendToBattery(showBatteryModal, initialCapacity)
-                                    toast.success('Sent for Battery Boost')
+                                    if (doItMyself) {
+                                        await onCompleteBatteryByL2(showBatteryModal, finalCapacity, notes)
+                                        toast.success('Battery boost completed by you')
+                                    } else {
+                                        await onSendToBattery(showBatteryModal, initialCapacity)
+                                        toast.success('Sent for Battery Boost')
+                                    }
                                     setShowBatteryModal(null)
                                     router.refresh()
                                 } catch (err: any) {
@@ -715,22 +947,53 @@ export default function L2RepairClient({
                                 }
                             })
                         }}>
-                            <div className="mb-4">
+                            <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="doItMyself"
+                                        className="w-4 h-4"
+                                        onChange={(e) => {
+                                            const form = e.target.closest('form')
+                                            const finalCapacityDiv = form?.querySelector('[data-field="finalCapacity"]') as HTMLElement
+                                            const notesDiv = form?.querySelector('[data-field="notes"]') as HTMLElement
+                                            const initialCapacityDiv = form?.querySelector('[data-field="initialCapacity"]') as HTMLElement
+                                            if (finalCapacityDiv) finalCapacityDiv.style.display = e.target.checked ? 'block' : 'none'
+                                            if (notesDiv) notesDiv.style.display = e.target.checked ? 'block' : 'none'
+                                            if (initialCapacityDiv) initialCapacityDiv.style.display = e.target.checked ? 'none' : 'block'
+                                        }}
+                                    />
+                                    <span className="text-sm font-medium text-blue-800">I&apos;ll handle this myself</span>
+                                </label>
+                            </div>
+                            <div className="mb-4" data-field="initialCapacity">
                                 <label className="block text-sm font-medium mb-1">Current Battery Capacity</label>
                                 <input
                                     type="text"
                                     name="initialCapacity"
                                     placeholder="e.g., 45%"
                                     className="w-full border rounded p-2"
-                                    required
                                 />
+                            </div>
+                            <div className="mb-4 hidden" data-field="finalCapacity">
+                                <label className="block text-sm font-medium mb-1">Final Battery Capacity</label>
+                                <input
+                                    type="text"
+                                    name="finalCapacity"
+                                    placeholder="e.g., 85%"
+                                    className="w-full border rounded p-2"
+                                />
+                            </div>
+                            <div className="mb-4 hidden" data-field="notes">
+                                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+                                <textarea name="notes" className="w-full border rounded p-2" rows={2} placeholder="Any notes about the work..." />
                             </div>
                             <div className="flex gap-2">
                                 <button type="button" onClick={() => setShowBatteryModal(null)} className="flex-1 py-2 border rounded">
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded">
-                                    {isPending ? 'Sending...' : 'Send'}
+                                    {isPending ? 'Processing...' : 'Submit'}
                                 </button>
                             </div>
                         </form>
@@ -742,15 +1005,22 @@ export default function L2RepairClient({
             {showDisplayModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">Send for Display Repair</h3>
+                        <h3 className="text-lg font-bold mb-4">Display Repair</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
                             const form = e.target as HTMLFormElement
+                            const doItMyself = (form.elements.namedItem('doItMyself') as HTMLInputElement)?.checked
                             const issues = form.issues.value
+                            const notes = form.notes?.value || ''
                             startTransition(async () => {
                                 try {
-                                    await onSendToDisplay(showDisplayModal, issues)
-                                    toast.success('Sent for Display Repair')
+                                    if (doItMyself) {
+                                        await onCompleteDisplayByL2(showDisplayModal, notes || issues)
+                                        toast.success('Display repair completed by you')
+                                    } else {
+                                        await onSendToDisplay(showDisplayModal, issues)
+                                        toast.success('Sent for Display Repair')
+                                    }
                                     setShowDisplayModal(null)
                                     router.refresh()
                                 } catch (err: any) {
@@ -758,22 +1028,46 @@ export default function L2RepairClient({
                                 }
                             })
                         }}>
-                            <div className="mb-4">
+                            <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="doItMyself"
+                                        className="w-4 h-4"
+                                        onChange={(e) => {
+                                            const form = e.target.closest('form')
+                                            const issuesDiv = form?.querySelector('[data-field="issues"]') as HTMLElement
+                                            const notesDiv = form?.querySelector('[data-field="notes"]') as HTMLElement
+                                            if (issuesDiv) {
+                                                const label = issuesDiv.querySelector('label')
+                                                if (label) label.textContent = e.target.checked ? 'Work Completed (notes)' : 'Display Issues'
+                                            }
+                                            if (notesDiv) notesDiv.style.display = e.target.checked ? 'block' : 'none'
+                                        }}
+                                    />
+                                    <span className="text-sm font-medium text-blue-800">I&apos;ll handle this myself</span>
+                                </label>
+                            </div>
+                            <div className="mb-4" data-field="issues">
                                 <label className="block text-sm font-medium mb-1">Display Issues</label>
                                 <textarea
                                     name="issues"
-                                    placeholder="Describe the display issues..."
+                                    placeholder="Describe the display issues or work completed..."
                                     className="w-full border rounded p-2"
                                     rows={3}
                                     required
                                 />
+                            </div>
+                            <div className="mb-4 hidden" data-field="notes">
+                                <label className="block text-sm font-medium mb-1">Additional Notes (optional)</label>
+                                <textarea name="notes" className="w-full border rounded p-2" rows={2} placeholder="Any additional notes..." />
                             </div>
                             <div className="flex gap-2">
                                 <button type="button" onClick={() => setShowDisplayModal(null)} className="flex-1 py-2 border rounded">
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded">
-                                    {isPending ? 'Sending...' : 'Send'}
+                                    {isPending ? 'Processing...' : 'Submit'}
                                 </button>
                             </div>
                         </form>

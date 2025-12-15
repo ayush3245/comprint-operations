@@ -1,11 +1,15 @@
 import { checkRole } from '@/lib/auth'
-import { getL3RepairJobs, startL3Repair, completeL3Repair } from '@/lib/actions'
+import { getL3RepairJobs, startL3Repair, completeL3Repair, getUserDashboardStats } from '@/lib/actions'
 import L3RepairClient from './L3RepairClient'
+import DashboardStats from '@/components/DashboardStats'
 
 export default async function L3RepairPage() {
     const user = await checkRole(['L3_ENGINEER', 'ADMIN', 'SUPERADMIN'])
 
-    const jobs = await getL3RepairJobs()
+    const [jobs, stats] = await Promise.all([
+        getL3RepairJobs(),
+        getUserDashboardStats(user.id, user.role)
+    ])
 
     async function handleStartRepair(jobId: string) {
         'use server'
@@ -18,12 +22,24 @@ export default async function L3RepairPage() {
     }
 
     return (
-        <L3RepairClient
-            jobs={jobs}
-            userId={user.id}
-            userName={user.name}
-            onStartRepair={handleStartRepair}
-            onCompleteRepair={handleCompleteRepair}
-        />
+        <div className="p-6">
+            <DashboardStats
+                pending={stats.pending}
+                inProgress={stats.inProgress}
+                completed={stats.completed}
+                labels={{
+                    pending: 'Waiting',
+                    inProgress: 'My Active',
+                    completed: 'Completed'
+                }}
+            />
+            <L3RepairClient
+                jobs={jobs}
+                userId={user.id}
+                userName={user.name}
+                onStartRepair={handleStartRepair}
+                onCompleteRepair={handleCompleteRepair}
+            />
+        </div>
     )
 }

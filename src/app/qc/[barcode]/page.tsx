@@ -1,4 +1,4 @@
-import { getDeviceForQC, submitQC } from '@/lib/actions'
+import { getDeviceForQC, submitQC, updateChecklistItemStatus } from '@/lib/actions'
 import { checkRole } from '@/lib/auth'
 import { AlertCircle } from 'lucide-react'
 import QCForm from './QCForm'
@@ -84,6 +84,15 @@ export default async function QCFormPage({ params }: { params: Promise<{ barcode
         await submitQC(deviceId, data)
     }
 
+    async function handleUpdateChecklistItem(
+        itemId: string,
+        status: 'PASS' | 'FAIL' | 'NOT_APPLICABLE',
+        notes?: string
+    ) {
+        'use server'
+        await updateChecklistItemStatus(itemId, status, notes)
+    }
+
     return (
         <div className="max-w-4xl mx-auto">
             <div className="mb-6 flex items-center justify-between">
@@ -105,6 +114,7 @@ export default async function QCFormPage({ params }: { params: Promise<{ barcode
                 l2EngineerName={l2EngineerName}
                 inspectionEngineerName={inspectionEngineerName}
                 onSubmit={handleQC}
+                onUpdateChecklistItem={handleUpdateChecklistItem}
             />
         </div>
     )

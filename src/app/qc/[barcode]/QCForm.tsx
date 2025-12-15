@@ -51,6 +51,11 @@ interface QCFormProps {
     finalGrade: 'A' | 'B' | null
     status: 'PASSED' | 'FAILED_REWORK'
   }) => Promise<void>
+  onUpdateChecklistItem: (
+    itemId: string,
+    status: 'PASS' | 'FAIL' | 'NOT_APPLICABLE',
+    notes?: string
+  ) => Promise<void>
 }
 
 export default function QCForm({
@@ -64,13 +69,27 @@ export default function QCForm({
   parallelWork,
   l2EngineerName,
   inspectionEngineerName,
-  onSubmit
+  onSubmit,
+  onUpdateChecklistItem
 }: QCFormProps) {
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
   const toast = useToast()
   const [showChecklist, setShowChecklist] = useState(true)
   const [decision, setDecision] = useState<'PASSED' | 'FAILED' | null>(null)
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
+
+  const handleToggleStatus = async (itemId: string, newStatus: 'PASS' | 'FAIL' | 'NOT_APPLICABLE') => {
+    setUpdatingItemId(itemId)
+    try {
+      await onUpdateChecklistItem(itemId, newStatus)
+      toast.success(`Item updated to ${newStatus.replace('_', ' ')}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update item')
+    } finally {
+      setUpdatingItemId(null)
+    }
+  }
 
   // Calculate checklist stats
   const passCount = checklistItems.filter(i => i.status === 'PASS').length
@@ -313,43 +332,80 @@ export default function QCForm({
                 No checklist items found for this device.
               </div>
             ) : (
-              checklistItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={`p-3 flex items-start gap-3 ${
-                    item.status === 'PASS' ? 'bg-green-50' :
-                    item.status === 'FAIL' ? 'bg-red-50' :
-                    item.status === 'NOT_APPLICABLE' ? 'bg-gray-50' : 'bg-yellow-50'
-                  }`}
-                >
-                  <div className="flex-shrink-0 mt-0.5">
-                    {getStatusIcon(item.status)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm text-gray-800">
-                        <span className="text-gray-400 mr-1">{item.itemIndex}.</span>
-                        {item.itemText}
-                      </p>
-                      <span className={`flex-shrink-0 px-2 py-0.5 rounded text-xs ${
-                        item.status === 'PASS' ? 'bg-green-200 text-green-800' :
-                        item.status === 'FAIL' ? 'bg-red-200 text-red-800' :
-                        item.status === 'NOT_APPLICABLE' ? 'bg-gray-200 text-gray-600' :
-                        'bg-yellow-200 text-yellow-800'
-                      }`}>
-                        {item.status.replace('_', ' ')}
-                      </span>
+              checklistItems.map((item) => {
+                const isUpdating = updatingItemId === item.id
+                return (
+                  <div
+                    key={item.id}
+                    className={`p-3 flex items-start gap-3 ${
+                      item.status === 'PASS' ? 'bg-green-50' :
+                      item.status === 'FAIL' ? 'bg-red-50' :
+                      item.status === 'NOT_APPLICABLE' ? 'bg-gray-50' : 'bg-yellow-50'
+                    } ${isUpdating ? 'opacity-50' : ''}`}
+                  >
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getStatusIcon(item.status)}
                     </div>
-                    {item.notes && (
-                      <p className="text-xs text-gray-600 mt-1 italic">Note: {item.notes}</p>
-                    )}
-                    <p className="text-xs text-gray-400 mt-1">
-                      {getStageLabel(item.checkedAtStage)}
-                      {item.checkedBy && ` by ${item.checkedBy.name}`}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm text-gray-800">
+                          <span className="text-gray-400 mr-1">{item.itemIndex}.</span>
+                          {item.itemText}
+                        </p>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {/* Toggle buttons */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(item.id, 'PASS')}
+                            disabled={isUpdating || item.status === 'PASS'}
+                            className={`p-1 rounded transition-colors ${
+                              item.status === 'PASS'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-gray-100 text-gray-500 hover:bg-green-100 hover:text-green-600'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title="Mark as Pass"
+                          >
+                            <CheckCircle size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(item.id, 'FAIL')}
+                            disabled={isUpdating || item.status === 'FAIL'}
+                            className={`p-1 rounded transition-colors ${
+                              item.status === 'FAIL'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title="Mark as Fail"
+                          >
+                            <XCircle size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStatus(item.id, 'NOT_APPLICABLE')}
+                            disabled={isUpdating || item.status === 'NOT_APPLICABLE'}
+                            className={`p-1 rounded transition-colors ${
+                              item.status === 'NOT_APPLICABLE'
+                                ? 'bg-gray-500 text-white'
+                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title="Mark as N/A"
+                          >
+                            <MinusCircle size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      {item.notes && (
+                        <p className="text-xs text-gray-600 mt-1 italic">Note: {item.notes}</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {getStageLabel(item.checkedAtStage)}
+                        {item.checkedBy && ` by ${item.checkedBy.name}`}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         )}

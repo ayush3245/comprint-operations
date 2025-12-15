@@ -32,6 +32,10 @@ export type ActivityAction =
     | 'COMPLETED_BATTERY_BOOST'
     | 'STARTED_L3_REPAIR'
     | 'COMPLETED_L3_REPAIR'
+    // QC actions
+    | 'UPDATED_CHECKLIST_ITEM'
+    // L2 spare parts
+    | 'REQUESTED_SPARES'
 
 interface LogActivityParams {
     action: ActivityAction

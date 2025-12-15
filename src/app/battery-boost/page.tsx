@@ -1,11 +1,15 @@
 import { checkRole } from '@/lib/auth'
-import { getBatteryBoostJobs, startBatteryBoost, completeBatteryBoost } from '@/lib/actions'
+import { getBatteryBoostJobs, startBatteryBoost, completeBatteryBoost, getUserDashboardStats } from '@/lib/actions'
 import BatteryBoostClient from './BatteryBoostClient'
+import DashboardStats from '@/components/DashboardStats'
 
 export default async function BatteryBoostPage() {
     const user = await checkRole(['BATTERY_TECHNICIAN', 'L2_ENGINEER', 'ADMIN', 'SUPERADMIN'])
 
-    const jobs = await getBatteryBoostJobs()
+    const [jobs, stats] = await Promise.all([
+        getBatteryBoostJobs(),
+        getUserDashboardStats(user.id, user.role)
+    ])
 
     async function handleStartBoost(jobId: string) {
         'use server'
@@ -18,12 +22,24 @@ export default async function BatteryBoostPage() {
     }
 
     return (
-        <BatteryBoostClient
-            jobs={jobs}
-            userId={user.id}
-            userName={user.name}
-            onStartBoost={handleStartBoost}
-            onCompleteBoost={handleCompleteBoost}
-        />
+        <div className="p-6">
+            <DashboardStats
+                pending={stats.pending}
+                inProgress={stats.inProgress}
+                completed={stats.completed}
+                labels={{
+                    pending: 'Waiting',
+                    inProgress: 'My Active',
+                    completed: 'Completed'
+                }}
+            />
+            <BatteryBoostClient
+                jobs={jobs}
+                userId={user.id}
+                userName={user.name}
+                onStartBoost={handleStartBoost}
+                onCompleteBoost={handleCompleteBoost}
+            />
+        </div>
     )
 }
