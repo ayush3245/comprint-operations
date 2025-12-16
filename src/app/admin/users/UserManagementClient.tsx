@@ -243,12 +243,12 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                 className="mb-8"
             >
                 <div className="flex items-center gap-4 mb-3">
-                    <div className="p-3 bg-blue-100 rounded-2xl border border-blue-200 text-blue-600">
+                    <div className="p-3 bg-indigo-100 dark:bg-indigo-500/20 rounded-2xl border border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400">
                         <Users size={32} />
                     </div>
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900">User Management</h1>
-                        <p className="text-gray-500 text-sm md:text-base mt-1 font-medium">Manage user accounts, roles, and credentials</p>
+                        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">User Management</h1>
+                        <p className="text-muted-foreground text-sm md:text-base mt-1 font-medium">Manage user accounts, roles, and credentials</p>
                     </div>
                 </div>
             </motion.div>
@@ -274,19 +274,19 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
             {/* Filters and Add Button */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
                     <input
                         type="text"
                         placeholder="Search by name or email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium shadow-sm"
+                        className="w-full pl-12 pr-4 py-3.5 bg-card border border-input rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-medium shadow-sm"
                     />
                 </div>
                 <select
                     value={filterRole}
                     onChange={(e) => setFilterRole(e.target.value as Role | '')}
-                    className="px-5 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+                    className="px-5 py-3.5 bg-card border border-input rounded-xl text-foreground font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-sm"
                 >
                     <option value="">All Roles</option>
                     {ROLES.map(role => (
@@ -299,7 +299,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={openCreateModal}
-                    className="flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all whitespace-nowrap"
+                    className="flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all whitespace-nowrap"
                 >
                     <Plus size={20} strokeWidth={2.5} />
                     <span>Add User</span>
@@ -311,15 +311,15 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-gray-200 bg-gray-50/50">
-                                <th className="px-6 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">User</th>
-                                <th className="px-6 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
-                                <th className="px-6 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
-                                <th className="px-6 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                            <tr className="border-b border-default bg-muted">
+                                <th className="px-6 py-5 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">User</th>
+                                <th className="px-6 py-5 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-5 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-5 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-5 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                             {filteredUsers.map((user, index) => (
                                 <motion.tr
                                     key={user.id}

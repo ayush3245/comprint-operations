@@ -89,13 +89,13 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Spare Parts Inventory</h1>
+                <h1 className="text-2xl font-bold text-foreground">Spare Parts Inventory</h1>
                 <button
                     onClick={() => {
                         setEditingPart(null)
                         setShowForm(!showForm)
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
                 >
                     <Plus size={18} />
                     Add Spare Part
@@ -104,7 +104,7 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
 
             {/* Low Stock Alert */}
             {lowStockParts.length > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 rounded-xl p-4 mb-6">
                     <div className="flex items-center gap-2 text-yellow-800 font-semibold mb-2">
                         <AlertTriangle size={20} />
                         Low Stock Alert ({lowStockParts.length} items)
@@ -309,10 +309,10 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
             )}
 
             {/* Spare Parts Table */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-card rounded-xl shadow-soft border border-default overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-muted">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Code</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>

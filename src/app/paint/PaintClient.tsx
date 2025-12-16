@@ -68,50 +68,50 @@ export default function PaintClient({ panels, onUpdateStatus }: PaintClientProps
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">Paint Shop</h1>
+            <h1 className="text-2xl font-bold mb-6 text-foreground">Paint Shop</h1>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+            <div className="bg-card rounded-xl shadow-soft border border-default overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-muted">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Device</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Panel Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Device</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Panel Type</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
                         {panels.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                                <td colSpan={4} className="px-6 py-10 text-center text-muted-foreground">
                                     No panels awaiting paint work.
                                 </td>
                             </tr>
                         ) : (
                             panels.map((panel) => (
-                                <tr key={panel.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <tr key={panel.id} className="hover:bg-muted/50 transition-colors">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                         <div className="font-medium">{panel.device.barcode}</div>
-                                        <div className="text-xs text-gray-500">{panel.device.brand} {panel.device.model}</div>
+                                        <div className="text-xs text-muted-foreground">{panel.device.brand} {panel.device.model}</div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                         {panel.panelType}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${panel.status === 'AWAITING_PAINT' ? 'bg-red-100 text-red-800' :
-                                            panel.status === 'IN_PAINT' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-green-100 text-green-800'
+                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${panel.status === 'AWAITING_PAINT' ? 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400' :
+                                            panel.status === 'IN_PAINT' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400' :
+                                                'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400'
                                             }`}>
                                             {panel.status.replace('_', ' ')}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                         <div className="flex gap-2">
                                             {panel.status === 'AWAITING_PAINT' && (
                                                 <button
                                                     onClick={() => handleStartPaint(panel)}
                                                     disabled={isPending}
-                                                    className="text-blue-600 hover:text-blue-800 flex items-center gap-1 disabled:opacity-50"
+                                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 disabled:opacity-50 transition-colors"
                                                 >
                                                     <PaintBucket size={16} /> {isPending ? 'Starting...' : 'Start'}
                                                 </button>
@@ -121,14 +121,14 @@ export default function PaintClient({ panels, onUpdateStatus }: PaintClientProps
                                                 <button
                                                     onClick={() => handleFinishPaint(panel)}
                                                     disabled={isPending}
-                                                    className="text-green-600 hover:text-green-800 flex items-center gap-1 disabled:opacity-50"
+                                                    className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 flex items-center gap-1 disabled:opacity-50 transition-colors"
                                                 >
                                                     <CheckCircle size={16} /> {isPending ? 'Finishing...' : 'Finish'}
                                                 </button>
                                             )}
 
                                             {panel.status === 'READY_FOR_COLLECTION' && (
-                                                <span className="text-gray-400 italic text-xs">Waiting for Repair Eng to collect</span>
+                                                <span className="text-muted-foreground italic text-xs">Waiting for Repair Eng to collect</span>
                                             )}
                                         </div>
                                     </td>

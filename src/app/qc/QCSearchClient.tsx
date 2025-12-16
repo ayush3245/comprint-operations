@@ -36,24 +36,26 @@ export default function QCSearchClient() {
                 <ConfettiTrigger />
             </Suspense>
             <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">Quality Control</h1>
-                <p className="text-gray-500 mt-2">Scan device barcode for final QC</p>
+                <h1 className="text-3xl font-bold text-foreground">Quality Control</h1>
+                <p className="text-muted-foreground mt-2">Scan device barcode for final QC</p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-card p-6 rounded-xl shadow-soft border border-default">
                 <form onSubmit={handleSearch} className="relative">
-                    <input
-                        type="text"
-                        value={barcode}
-                        onChange={(e) => setBarcode(e.target.value)}
-                        placeholder="Scan Barcode..."
-                        className="w-full pl-12 pr-4 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        autoFocus
-                    />
-                    <ClipboardCheck className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
+                    <div className="relative group">
+                        <input
+                            type="text"
+                            value={barcode}
+                            onChange={(e) => setBarcode(e.target.value)}
+                            placeholder="Scan Barcode..."
+                            className="w-full pl-12 pr-4 py-4 text-lg bg-secondary/50 border-2 border-input rounded-xl focus:bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all duration-200 text-foreground placeholder:text-muted-foreground"
+                            autoFocus
+                        />
+                        <ClipboardCheck className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={24} />
+                    </div>
 
                     {error && (
-                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+                        <div className="mt-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-2 text-destructive">
                             <AlertCircle size={18} className="flex-shrink-0" />
                             <span className="text-sm">{error}</span>
                         </div>
@@ -61,7 +63,7 @@ export default function QCSearchClient() {
 
                     <button
                         type="submit"
-                        className="w-full mt-4 bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                        className="w-full mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-medium hover:from-purple-500 hover:to-indigo-500 shadow-lg shadow-purple-500/20 transition-all duration-200"
                     >
                         Start QC
                     </button>
@@ -70,7 +72,7 @@ export default function QCSearchClient() {
                         <button
                             type="button"
                             onClick={() => setShowScanner(true)}
-                            className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary-hover font-medium transition-colors"
                         >
                             <ScanLine size={20} />
                             Scan Barcode from Image/PDF

@@ -148,17 +148,17 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h1 className="text-xl md:text-2xl font-bold text-gray-800">Outward / Dispatch</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">Outward / Dispatch</h1>
                 <button
                     onClick={() => setShowForm(!showForm)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                 >
                     {showForm ? 'Cancel' : 'New Dispatch'}
                 </button>
             </div>
 
             {showForm && (
-                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <div className="bg-card rounded-xl shadow-soft border border-default p-6 mb-6">
                     <h2 className="text-lg font-semibold mb-4">Create New Dispatch</h2>
 
                     {/* Type Selection */}
@@ -352,9 +352,9 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
             )}
 
             {/* Outward History */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-800">Dispatch History</h2>
+            <div className="bg-card rounded-xl shadow-soft border border-default overflow-hidden">
+                <div className="px-6 py-4 border-b border-default">
+                    <h2 className="text-lg font-semibold text-foreground">Dispatch History</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">

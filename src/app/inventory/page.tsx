@@ -9,39 +9,39 @@ export default async function InventoryPage() {
     // Helper function to format device status for display
     const getStatusDisplay = (status: string) => {
         const statusMap: Record<string, { label: string; color: string }> = {
-            RECEIVED: { label: 'Received', color: 'bg-gray-100 text-gray-800' },
-            PENDING_INSPECTION: { label: 'Pending Inspection', color: 'bg-blue-100 text-blue-800' },
-            WAITING_FOR_SPARES: { label: 'Waiting for Spares', color: 'bg-orange-100 text-orange-800' },
-            READY_FOR_REPAIR: { label: 'Ready for Repair', color: 'bg-yellow-100 text-yellow-800' },
-            UNDER_REPAIR: { label: 'Under Repair', color: 'bg-purple-100 text-purple-800' },
-            IN_PAINT_SHOP: { label: 'In Paint Shop', color: 'bg-pink-100 text-pink-800' },
-            AWAITING_QC: { label: 'Awaiting QC', color: 'bg-indigo-100 text-indigo-800' },
-            READY_FOR_STOCK: { label: 'Ready for Dispatch', color: 'bg-green-100 text-green-800' },
+            RECEIVED: { label: 'Received', color: 'bg-secondary text-secondary-foreground' },
+            PENDING_INSPECTION: { label: 'Pending Inspection', color: 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400' },
+            WAITING_FOR_SPARES: { label: 'Waiting for Spares', color: 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-400' },
+            READY_FOR_REPAIR: { label: 'Ready for Repair', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400' },
+            UNDER_REPAIR: { label: 'Under Repair', color: 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400' },
+            IN_PAINT_SHOP: { label: 'In Paint Shop', color: 'bg-pink-100 text-pink-800 dark:bg-pink-500/20 dark:text-pink-400' },
+            AWAITING_QC: { label: 'Awaiting QC', color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-400' },
+            READY_FOR_STOCK: { label: 'Ready for Dispatch', color: 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400' },
         }
-        return statusMap[status] || { label: status.replace(/_/g, ' '), color: 'bg-gray-100 text-gray-800' }
+        return statusMap[status] || { label: status.replace(/_/g, ' '), color: 'bg-secondary text-secondary-foreground' }
     }
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">Inventory</h1>
+            <h1 className="text-2xl font-bold mb-6 text-foreground">Inventory</h1>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-card rounded-xl shadow-soft border border-default overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-muted">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Device</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specifications</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ownership</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stage</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Barcode</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Device</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Specifications</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Grade</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Ownership</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Stage</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
                             {inventory.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                                    <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground">
                                         No devices in warehouse.
                                     </td>
                                 </tr>
@@ -57,28 +57,28 @@ export default async function InventoryPage() {
                                     ].filter(Boolean).join(' • ')
 
                                     return (
-                                        <tr key={device.id}>
-                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600">
+                                        <tr key={device.id} className="hover:bg-muted/50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-primary">
                                                 {device.barcode}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                                 <div className="font-medium">{device.brand} {device.model}</div>
-                                                <div className="text-xs text-gray-500">{device.category}</div>
+                                                <div className="text-xs text-muted-foreground">{device.category}</div>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                            <td className="px-6 py-4 text-sm text-muted-foreground">
                                                 {specs || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {device.grade ? (
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${device.grade === 'A' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${device.grade === 'A' ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400'
                                                         }`}>
                                                         Grade {device.grade}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-gray-400 text-xs">-</span>
+                                                    <span className="text-muted-foreground text-xs">-</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                                 {device.ownership.replace('_', ' ')}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">

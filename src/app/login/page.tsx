@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff, Sun, Moon } from 'lucide-react'
 import { login } from '@/lib/auth-actions'
+import { useTheme } from '@/components/ThemeProvider'
 
 export default function LoginPage() {
     const router = useRouter()
+    const { theme, setTheme, resolvedTheme } = useTheme()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -38,24 +40,42 @@ export default function LoginPage() {
         }
     }
 
+    const toggleTheme = () => {
+        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+    }
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+            {/* Background gradient effects */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-violet-500/5 dark:from-indigo-500/10 dark:to-violet-500/10" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl" />
+
+            {/* Theme toggle button */}
+            <button
+                onClick={toggleTheme}
+                className="absolute top-4 right-4 p-2.5 rounded-xl bg-card border border-default shadow-soft text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+                aria-label="Toggle theme"
+            >
+                {resolvedTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="w-full max-w-md"
+                className="w-full max-w-md relative z-10"
             >
-                <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8">
+                <div className="bg-card/80 backdrop-blur-xl border border-default rounded-2xl shadow-soft p-8">
                     <div className="text-center mb-8">
                         <motion.h1
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
-                            className="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300"
+                            className="text-3xl font-black tracking-tighter font-brand text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500 dark:from-indigo-400 dark:to-violet-400"
                         >
                             COMPRINT
                         </motion.h1>
-                        <p className="text-slate-400 mt-2 text-sm font-medium tracking-wide">
+                        <p className="text-muted-foreground mt-2 text-sm font-medium tracking-wide">
                             Operations Portal
                         </p>
                     </div>
@@ -65,25 +85,25 @@ export default function LoginPage() {
                             <motion.div
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"
+                                className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm"
                             >
                                 <AlertCircle size={18} />
                                 <span>{error}</span>
                             </motion.div>
                         )}
 
-                        <div className="space-y-1">
-                            <label htmlFor="email" className="block text-sm font-medium text-slate-300">
+                        <div className="space-y-1.5">
+                            <label htmlFor="email" className="block text-sm font-medium text-foreground">
                                 Email
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                                 <input
                                     type="email"
                                     id="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                                    className="w-full pl-10 pr-4 py-3 bg-secondary/50 border border-input rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                                     placeholder="Enter your email"
                                     required
                                     autoComplete="email"
@@ -91,18 +111,18 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-1">
-                            <label htmlFor="password" className="block text-sm font-medium text-slate-300">
+                        <div className="space-y-1.5">
+                            <label htmlFor="password" className="block text-sm font-medium text-foreground">
                                 Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     id="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                                    className="w-full pl-10 pr-12 py-3 bg-secondary/50 border border-input rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                                     placeholder="Enter your password"
                                     required
                                     autoComplete="current-password"
@@ -110,7 +130,7 @@ export default function LoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -122,7 +142,7 @@ export default function LoginPage() {
                             disabled={isLoading}
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.99 }}
-                            className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 dark:shadow-indigo-500/15 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -136,7 +156,7 @@ export default function LoginPage() {
                     </form>
                 </div>
 
-                <p className="text-center text-slate-500 text-xs mt-6">
+                <p className="text-center text-muted-foreground text-xs mt-6">
                     Contact your administrator if you need access
                 </p>
             </motion.div>

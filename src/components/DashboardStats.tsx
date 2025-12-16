@@ -1,6 +1,7 @@
 'use client'
 
 import { Clock, Activity, CheckCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface DashboardStatsProps {
     pending: number
@@ -36,63 +37,69 @@ export default function DashboardStats({
             {/* Pending */}
             <div
                 onClick={onPendingClick}
-                className={`bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500 ${
-                    onPendingClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
-                }`}
+                className={cn(
+                    'bg-card rounded-xl shadow-card p-5 border-l-4 border-yellow-500',
+                    'transition-all duration-200',
+                    onPendingClick && 'cursor-pointer hover:shadow-soft'
+                )}
             >
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-gray-500">{pendingLabel}</p>
-                        <p className="text-3xl font-bold text-yellow-600">{pending}</p>
+                        <p className="text-sm font-medium text-muted-foreground">{pendingLabel}</p>
+                        <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{pending}</p>
                     </div>
-                    <div className="p-3 bg-yellow-100 rounded-full">
-                        <Clock className="w-6 h-6 text-yellow-600" />
+                    <div className="p-3 bg-yellow-100 dark:bg-yellow-500/20 rounded-full">
+                        <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                     </div>
                 </div>
                 {onPendingClick && (
-                    <p className="text-xs text-gray-400 mt-2">Click to view</p>
+                    <p className="text-xs text-muted-foreground mt-3">Click to view</p>
                 )}
             </div>
 
             {/* In Progress */}
             <div
                 onClick={onInProgressClick}
-                className={`bg-white rounded-lg shadow p-4 border-l-4 border-blue-500 ${
-                    onInProgressClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
-                }`}
+                className={cn(
+                    'bg-card rounded-xl shadow-card p-5 border-l-4 border-indigo-500',
+                    'transition-all duration-200',
+                    onInProgressClick && 'cursor-pointer hover:shadow-soft'
+                )}
             >
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-gray-500">{inProgressLabel}</p>
-                        <p className="text-3xl font-bold text-blue-600">{inProgress}</p>
+                        <p className="text-sm font-medium text-muted-foreground">{inProgressLabel}</p>
+                        <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{inProgress}</p>
                     </div>
-                    <div className="p-3 bg-blue-100 rounded-full">
-                        <Activity className="w-6 h-6 text-blue-600" />
+                    <div className="p-3 bg-indigo-100 dark:bg-indigo-500/20 rounded-full">
+                        <Activity className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                     </div>
                 </div>
                 {onInProgressClick && (
-                    <p className="text-xs text-gray-400 mt-2">Click to view</p>
+                    <p className="text-xs text-muted-foreground mt-3">Click to view</p>
                 )}
             </div>
 
             {/* Completed */}
             <div
                 onClick={onCompletedClick}
-                className={`bg-white rounded-lg shadow p-4 border-l-4 border-green-500 ${
-                    onCompletedClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
-                }`}
+                className={cn(
+                    'bg-card rounded-xl shadow-card p-5 border-l-4 border-green-500',
+                    'transition-all duration-200',
+                    onCompletedClick && 'cursor-pointer hover:shadow-soft'
+                )}
             >
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-gray-500">{completedLabel}</p>
-                        <p className="text-3xl font-bold text-green-600">{completed}</p>
+                        <p className="text-sm font-medium text-muted-foreground">{completedLabel}</p>
+                        <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">{completed}</p>
                     </div>
-                    <div className="p-3 bg-green-100 rounded-full">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
+                    <div className="p-3 bg-green-100 dark:bg-green-500/20 rounded-full">
+                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                     </div>
                 </div>
                 {onCompletedClick && (
-                    <p className="text-xs text-gray-400 mt-2">Click to view</p>
+                    <p className="text-xs text-muted-foreground mt-3">Click to view</p>
                 )}
             </div>
         </div>

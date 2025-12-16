@@ -19,14 +19,18 @@ export default function GlassCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             className={cn(
-                'relative overflow-hidden rounded-2xl border border-white/20 shadow-xl backdrop-blur-xl',
-                gradient ? 'bg-gradient-to-br from-white/80 to-white/40' : 'bg-white/70',
+                'relative overflow-hidden rounded-2xl shadow-soft backdrop-blur-xl',
+                'border border-default',
+                // Light mode
+                gradient
+                    ? 'bg-gradient-to-br from-white/80 to-white/40 dark:from-slate-800/80 dark:to-slate-900/40'
+                    : 'bg-white/70 dark:bg-slate-800/70',
                 className
             )}
             {...props}
         >
             {gradient && (
-                <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
             )}
             <div className="relative z-10">
                 {children as React.ReactNode}

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react'
 import { logout } from '@/lib/auth-actions'
 import { cn } from '@/lib/utils'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 interface SidebarProps {
     user: {
@@ -86,14 +86,17 @@ export default function Sidebar({ user }: SidebarProps) {
     return (
         <>
             {/* Mobile Header */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 z-40 flex items-center px-4 border-b border-white/10 shadow-md">
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                >
-                    <Menu size={24} />
-                </button>
-                <span className="ml-3 text-lg font-bold text-white tracking-tight">COMPRINT</span>
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 z-40 flex items-center justify-between px-4 border-b border-slate-700/50 shadow-lg">
+                <div className="flex items-center">
+                    <button
+                        onClick={() => setIsOpen(true)}
+                        className="p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                        <Menu size={24} />
+                    </button>
+                    <span className="ml-3 text-lg font-brand font-bold text-white tracking-tight">COMPRINT</span>
+                </div>
+                <ThemeToggle />
             </div>
 
             {/* Mobile Overlay */}
@@ -107,7 +110,7 @@ export default function Sidebar({ user }: SidebarProps) {
             {/* Sidebar Container */}
             <motion.div
                 className={cn(
-                    "fixed left-0 top-0 h-screen w-72 bg-slate-900/95 backdrop-blur-xl border-r border-white/10 text-slate-100 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out",
+                    "fixed left-0 top-0 h-screen w-72 bg-slate-900 border-r border-slate-700/50 text-slate-100 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out",
                     isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
                 )}
             >
@@ -121,20 +124,27 @@ export default function Sidebar({ user }: SidebarProps) {
                     </button>
                 </div>
 
-                <div className="p-8 border-b border-white/10 bg-gradient-to-r from-slate-900 to-slate-800">
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                    >
-                        <h1 className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                            COMPRINT
-                        </h1>
-                        <p className="text-xs text-slate-400 mt-1 font-medium tracking-widest uppercase">Operations Portal</p>
-                    </motion.div>
+                {/* Header with Brand and Theme Toggle */}
+                <div className="p-6 border-b border-slate-700/50">
+                    <div className="flex items-center justify-between">
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <h1 className="text-2xl font-brand font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">
+                                COMPRINT
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-0.5 font-medium tracking-widest uppercase">Operations Portal</p>
+                        </motion.div>
+                        <div className="hidden md:block">
+                            <ThemeToggle />
+                        </div>
+                    </div>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                {/* Navigation */}
+                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     {filteredLinks.map((link) => {
                         const Icon = link.icon
                         const isActive = pathname.startsWith(link.href)
@@ -148,26 +158,26 @@ export default function Sidebar({ user }: SidebarProps) {
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeTab"
-                                        className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl border border-blue-500/30"
+                                        className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-violet-600/20 rounded-lg border border-indigo-500/30"
                                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                     />
                                 )}
                                 <div className={cn(
-                                    "relative flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200",
+                                    "relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                                     isActive ? "text-white" : "text-slate-400 hover:text-white hover:bg-white/5"
                                 )}>
-                                    <Icon size={20} className={cn(
+                                    <Icon size={18} className={cn(
                                         "transition-colors duration-200",
-                                        isActive ? "text-blue-400" : "group-hover:text-blue-300"
+                                        isActive ? "text-indigo-400" : "group-hover:text-indigo-300"
                                     )} />
-                                    <span className="font-medium tracking-wide text-sm">{link.label}</span>
+                                    <span className="font-medium text-sm">{link.label}</span>
                                     {isActive && (
                                         <motion.div
                                             initial={{ opacity: 0, x: -10 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             className="ml-auto"
                                         >
-                                            <ChevronRight size={16} className="text-blue-400" />
+                                            <ChevronRight size={14} className="text-indigo-400" />
                                         </motion.div>
                                     )}
                                 </div>
@@ -176,21 +186,22 @@ export default function Sidebar({ user }: SidebarProps) {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-white/10 bg-slate-950/30">
-                    <div className="flex items-center gap-3 px-4 py-3 mb-4 bg-white/5 rounded-xl border border-white/5">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-sm font-bold text-white shadow-lg ring-2 ring-white/10">
+                {/* User Section */}
+                <div className="p-4 border-t border-slate-700/50">
+                    <div className="flex items-center gap-3 px-3 py-2.5 mb-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-sm font-bold text-white shadow-lg">
                             {user.name.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold truncate text-slate-200">{user.name}</p>
-                            <p className="text-xs text-slate-500 truncate font-medium">{user.role.replace(/_/g, ' ')}</p>
+                            <p className="text-sm font-semibold truncate text-slate-200">{user.name}</p>
+                            <p className="text-xs text-slate-500 truncate">{user.role.replace(/_/g, ' ')}</p>
                         </div>
                     </div>
                     <button
                         onClick={() => logout()}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl transition-all duration-200 text-sm font-semibold border border-transparent hover:border-red-500/20 group"
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-all duration-200 text-sm font-medium group"
                     >
-                        <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform" />
                         <span>Sign Out</span>
                     </button>
                 </div>
