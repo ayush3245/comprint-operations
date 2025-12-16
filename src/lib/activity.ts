@@ -13,6 +13,7 @@ export type ActivityAction =
     | 'UPDATED_USER'
     | 'LOGIN'
     | 'CREATED_OUTWARD'
+    | 'UPDATED_OUTWARD'
     // L2 Engineer coordination actions
     | 'CLAIMED_DEVICE'
     | 'SENT_TO_DISPLAY'
