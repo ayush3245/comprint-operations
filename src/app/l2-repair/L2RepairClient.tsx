@@ -244,17 +244,17 @@ export default function L2RepairClient({
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <h1 className="text-xl md:text-2xl font-bold text-gray-800">L2 Repair Coordination</h1>
-                <span className="text-sm text-gray-500">Engineer: {userName}</span>
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">L2 Repair Coordination</h1>
+                <span className="text-sm text-muted-foreground">Engineer: {userName}</span>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b">
+            <div className="flex gap-2 border-b border-default">
                 <button
                     onClick={() => setActiveTab('assigned')}
                     className={`px-4 py-2 font-medium ${activeTab === 'assigned'
-                        ? 'border-b-2 border-blue-600 text-blue-600'
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                        : 'text-muted-foreground hover:text-foreground'
                         }`}
                 >
                     My Devices ({assignedDevices.length})
@@ -262,8 +262,8 @@ export default function L2RepairClient({
                 <button
                     onClick={() => setActiveTab('available')}
                     className={`px-4 py-2 font-medium ${activeTab === 'available'
-                        ? 'border-b-2 border-blue-600 text-blue-600'
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                        : 'text-muted-foreground hover:text-foreground'
                         }`}
                 >
                     Available ({availableDevices.length})
@@ -271,8 +271,8 @@ export default function L2RepairClient({
                 <button
                     onClick={() => setActiveTab('completed')}
                     className={`px-4 py-2 font-medium ${activeTab === 'completed'
-                        ? 'border-b-2 border-green-600 text-green-600'
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? 'border-b-2 border-green-600 text-green-600 dark:text-green-400'
+                        : 'text-muted-foreground hover:text-foreground'
                         }`}
                 >
                     Completed ({completedDevices.length})
@@ -283,7 +283,7 @@ export default function L2RepairClient({
             {activeTab === 'assigned' && (
                 <div className="space-y-4">
                     {assignedDevices.length === 0 ? (
-                        <div className="text-center py-10 text-gray-500">
+                        <div className="text-center py-10 text-muted-foreground">
                             No devices assigned. Check the Available tab to claim devices.
                         </div>
                     ) : (
@@ -294,21 +294,21 @@ export default function L2RepairClient({
                             const failedItems = device.inspectionChecklist.filter(i => i.status === 'FAIL')
 
                             return (
-                                <div key={job.id} className="bg-white rounded-lg shadow border">
+                                <div key={job.id} className="bg-card rounded-lg shadow-soft border border-default">
                                     {/* Header */}
                                     <div
-                                        className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
+                                        className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted"
                                         onClick={() => setExpandedDevice(isExpanded ? null : device.id)}
                                     >
                                         <div className="flex items-center gap-4">
                                             <div>
-                                                <h3 className="font-bold text-lg">{device.barcode}</h3>
-                                                <p className="text-sm text-gray-500">
+                                                <h3 className="font-bold text-lg text-foreground">{device.barcode}</h3>
+                                                <p className="text-sm text-muted-foreground">
                                                     {device.brand} {device.model} • {device.category}
                                                 </p>
                                             </div>
                                             {failedItems.length > 0 && (
-                                                <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">
+                                                <span className="px-2 py-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 rounded text-xs">
                                                     {failedItems.length} Failed Items
                                                 </span>
                                             )}
@@ -350,49 +350,49 @@ export default function L2RepairClient({
                                                 )}
                                             </div>
                                             {status.readyForQC && (
-                                                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                                                <span className="px-3 py-1 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
                                                     Ready for QC
                                                 </span>
                                             )}
-                                            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                            {isExpanded ? <ChevronUp size={20} className="text-foreground" /> : <ChevronDown size={20} className="text-foreground" />}
                                         </div>
                                     </div>
 
                                     {/* Expanded Content */}
                                     {isExpanded && (
-                                        <div className="border-t p-4 space-y-4">
+                                        <div className="border-t border-default p-4 space-y-4">
                                             {/* Inspection Summary */}
-                                            <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                                                <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                                            <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded border border-blue-200 dark:border-blue-500/30">
+                                                <h4 className="font-semibold text-blue-800 dark:text-blue-400 mb-3 flex items-center gap-2">
                                                     <FileText size={16} /> Inspection Summary
                                                 </h4>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                     {job.inspectionEng && (
                                                         <div className="flex items-center gap-2">
-                                                            <User size={14} className="text-blue-600" />
-                                                            <span className="text-gray-600">Inspector:</span>
-                                                            <span className="font-medium">{job.inspectionEng.name}</span>
+                                                            <User size={14} className="text-blue-600 dark:text-blue-400" />
+                                                            <span className="text-muted-foreground">Inspector:</span>
+                                                            <span className="font-medium text-foreground">{job.inspectionEng.name}</span>
                                                         </div>
                                                     )}
                                                     {job.reportedIssues && (
                                                         <div className="col-span-full">
-                                                            <span className="text-gray-600 block mb-2">Reported Issues:</span>
+                                                            <span className="text-muted-foreground block mb-2">Reported Issues:</span>
                                                             <ReportedIssuesDisplay issues={job.reportedIssues} />
                                                         </div>
                                                     )}
                                                     <div className="col-span-full flex flex-wrap gap-4">
                                                         <div className="flex items-center gap-2">
-                                                            <Package size={14} className="text-orange-600" />
-                                                            <span className="text-gray-600">Spares Required:</span>
-                                                            <span className={job.sparesRequired ? 'font-medium text-orange-700' : 'text-gray-400'}>
+                                                            <Package size={14} className="text-orange-600 dark:text-orange-400" />
+                                                            <span className="text-muted-foreground">Spares Required:</span>
+                                                            <span className={job.sparesRequired ? 'font-medium text-orange-700 dark:text-orange-400' : 'text-muted-foreground'}>
                                                                 {job.sparesRequired || 'None'}
                                                             </span>
                                                         </div>
                                                         {job.sparesIssued && (
                                                             <div className="flex items-center gap-2">
-                                                                <CheckCircle size={14} className="text-green-600" />
-                                                                <span className="text-gray-600">Spares Issued:</span>
-                                                                <span className="font-medium text-green-700">{job.sparesIssued}</span>
+                                                                <CheckCircle size={14} className="text-green-600 dark:text-green-400" />
+                                                                <span className="text-muted-foreground">Spares Issued:</span>
+                                                                <span className="font-medium text-green-700 dark:text-green-400">{job.sparesIssued}</span>
                                                             </div>
                                                         )}
                                                     </div>
@@ -406,7 +406,7 @@ export default function L2RepairClient({
                                                             disabled={job.status === 'WAITING_FOR_SPARES'}
                                                             className={`flex items-center gap-2 px-3 py-2 rounded text-sm ${
                                                                 job.status === 'WAITING_FOR_SPARES'
-                                                                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                                                    ? 'bg-muted text-muted-foreground cursor-not-allowed'
                                                                     : 'bg-orange-500 text-white hover:bg-orange-600'
                                                             }`}
                                                         >
@@ -419,15 +419,15 @@ export default function L2RepairClient({
 
                                             {/* Failed Checklist Items */}
                                             {failedItems.length > 0 && (
-                                                <div className="bg-red-50 p-3 rounded">
-                                                    <h4 className="font-semibold text-red-800 mb-2 flex items-center gap-2">
+                                                <div className="bg-red-50 dark:bg-red-500/10 p-3 rounded border border-red-200 dark:border-red-500/30">
+                                                    <h4 className="font-semibold text-red-800 dark:text-red-400 mb-2 flex items-center gap-2">
                                                         <AlertCircle size={16} /> Failed Inspection Items
                                                     </h4>
                                                     <ul className="space-y-1 text-sm">
                                                         {failedItems.map(item => (
-                                                            <li key={item.id} className="text-red-700">
+                                                            <li key={item.id} className="text-red-700 dark:text-red-400">
                                                                 [{item.itemIndex}] {item.itemText}
-                                                                {item.notes && <span className="text-red-600 ml-2">- {item.notes}</span>}
+                                                                {item.notes && <span className="text-red-600 dark:text-red-400 ml-2">- {item.notes}</span>}
                                                             </li>
                                                         ))}
                                                     </ul>
@@ -438,15 +438,15 @@ export default function L2RepairClient({
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 {/* Display Status */}
                                                 <div className={`p-3 rounded border ${status.display.required
-                                                    ? status.display.completed ? 'bg-green-50 border-green-200' :
-                                                        status.display.readyToCollect ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'
-                                                    : 'bg-gray-50 border-gray-200'}`}>
+                                                    ? status.display.completed ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30' :
+                                                        status.display.readyToCollect ? 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/30' : 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30'
+                                                    : 'bg-muted border-default'}`}>
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <Monitor size={16} />
-                                                        <span className="font-medium text-sm">Display</span>
+                                                        <Monitor size={16} className="text-foreground" />
+                                                        <span className="font-medium text-sm text-foreground">Display</span>
                                                     </div>
                                                     {status.display.completed ? (
-                                                        <span className="text-xs text-green-600">Completed</span>
+                                                        <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
                                                     ) : status.display.readyToCollect ? (
                                                         <button
                                                             onClick={() => {
@@ -467,7 +467,7 @@ export default function L2RepairClient({
                                                             Collect
                                                         </button>
                                                     ) : status.display.required ? (
-                                                        <span className="text-xs text-blue-600">
+                                                        <span className="text-xs text-blue-600 dark:text-blue-400">
                                                             {status.display.inProgress ? 'In Progress' : status.display.pending ? 'Pending' : 'Sent'}
                                                         </span>
                                                     ) : (
@@ -483,15 +483,15 @@ export default function L2RepairClient({
 
                                                 {/* Battery Status */}
                                                 <div className={`p-3 rounded border ${status.battery.required
-                                                    ? status.battery.completed ? 'bg-green-50 border-green-200' :
-                                                        status.battery.readyToCollect ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'
-                                                    : 'bg-gray-50 border-gray-200'}`}>
+                                                    ? status.battery.completed ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30' :
+                                                        status.battery.readyToCollect ? 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/30' : 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30'
+                                                    : 'bg-muted border-default'}`}>
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <Battery size={16} />
-                                                        <span className="font-medium text-sm">Battery</span>
+                                                        <Battery size={16} className="text-foreground" />
+                                                        <span className="font-medium text-sm text-foreground">Battery</span>
                                                     </div>
                                                     {status.battery.completed ? (
-                                                        <span className="text-xs text-green-600">Completed</span>
+                                                        <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
                                                     ) : status.battery.readyToCollect ? (
                                                         <button
                                                             onClick={() => {
@@ -512,7 +512,7 @@ export default function L2RepairClient({
                                                             Collect
                                                         </button>
                                                     ) : status.battery.required ? (
-                                                        <span className="text-xs text-blue-600">
+                                                        <span className="text-xs text-blue-600 dark:text-blue-400">
                                                             {status.battery.inProgress ? 'In Progress' : status.battery.pending ? 'Pending' : 'Sent'}
                                                         </span>
                                                     ) : (
@@ -528,15 +528,15 @@ export default function L2RepairClient({
 
                                                 {/* L3 Status */}
                                                 <div className={`p-3 rounded border ${status.l3.required
-                                                    ? status.l3.completed ? 'bg-green-50 border-green-200' :
-                                                        status.l3.readyToCollect ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'
-                                                    : 'bg-gray-50 border-gray-200'}`}>
+                                                    ? status.l3.completed ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30' :
+                                                        status.l3.readyToCollect ? 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/30' : 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30'
+                                                    : 'bg-muted border-default'}`}>
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <Cpu size={16} />
-                                                        <span className="font-medium text-sm">L3 Repair</span>
+                                                        <Cpu size={16} className="text-foreground" />
+                                                        <span className="font-medium text-sm text-foreground">L3 Repair</span>
                                                     </div>
                                                     {status.l3.completed ? (
-                                                        <span className="text-xs text-green-600">Completed</span>
+                                                        <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
                                                     ) : status.l3.readyToCollect ? (
                                                         <button
                                                             onClick={() => {
@@ -557,7 +557,7 @@ export default function L2RepairClient({
                                                             Collect
                                                         </button>
                                                     ) : status.l3.required ? (
-                                                        <span className="text-xs text-blue-600">
+                                                        <span className="text-xs text-blue-600 dark:text-blue-400">
                                                             {status.l3.inProgress ? 'In Progress' : status.l3.pending ? 'Pending' : 'Sent'}
                                                         </span>
                                                     ) : (
@@ -573,20 +573,20 @@ export default function L2RepairClient({
 
                                                 {/* Paint Status */}
                                                 <div className={`p-3 rounded border ${status.paint.required
-                                                    ? status.paint.completed ? 'bg-green-50 border-green-200' :
-                                                        status.paint.readyToCollect ? 'bg-yellow-50 border-yellow-200' : 'bg-purple-50 border-purple-200'
-                                                    : 'bg-gray-50 border-gray-200'}`}>
+                                                    ? status.paint.completed ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30' :
+                                                        status.paint.readyToCollect ? 'bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/30' : 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/30'
+                                                    : 'bg-muted border-default'}`}>
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <Paintbrush size={16} />
-                                                        <span className="font-medium text-sm">Paint</span>
+                                                        <Paintbrush size={16} className="text-foreground" />
+                                                        <span className="font-medium text-sm text-foreground">Paint</span>
                                                         {status.paint.required && status.paint.panels.length > 0 && (
-                                                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                                            <span className="text-xs bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full">
                                                                 {status.paint.panels.length} panel{status.paint.panels.length !== 1 ? 's' : ''}
                                                             </span>
                                                         )}
                                                     </div>
                                                     {status.paint.required && status.paint.completed ? (
-                                                        <span className="text-xs text-green-600">All panels completed</span>
+                                                        <span className="text-xs text-green-600 dark:text-green-400">All panels completed</span>
                                                     ) : status.paint.readyToCollect ? (
                                                         <button
                                                             onClick={() => {
@@ -611,12 +611,12 @@ export default function L2RepairClient({
                                                         <div className="space-y-1">
                                                             {status.paint.panels.map(p => (
                                                                 <div key={p.id} className="text-xs flex items-center justify-between">
-                                                                    <span className="text-purple-700">{p.panelType}</span>
+                                                                    <span className="text-purple-700 dark:text-purple-400">{p.panelType}</span>
                                                                     <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                                                                        p.status === 'AWAITING_PAINT' ? 'bg-gray-100 text-gray-600' :
-                                                                        p.status === 'IN_PAINT' ? 'bg-blue-100 text-blue-600' :
-                                                                        p.status === 'READY_FOR_COLLECTION' ? 'bg-yellow-100 text-yellow-700' :
-                                                                        'bg-green-100 text-green-600'
+                                                                        p.status === 'AWAITING_PAINT' ? 'bg-muted text-muted-foreground' :
+                                                                        p.status === 'IN_PAINT' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' :
+                                                                        p.status === 'READY_FOR_COLLECTION' ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400' :
+                                                                        'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400'
                                                                     }`}>
                                                                         {p.status.replace(/_/g, ' ')}
                                                                     </span>
@@ -632,14 +632,14 @@ export default function L2RepairClient({
                                                             Send
                                                         </button>
                                                     ) : (
-                                                        <span className="text-xs text-gray-500">Not required</span>
+                                                        <span className="text-xs text-muted-foreground">Not required</span>
                                                     )}
                                                 </div>
                                             </div>
 
                                             {/* Send to QC Button */}
                                             {status.readyForQC && (
-                                                <div className="pt-4 border-t">
+                                                <div className="pt-4 border-t border-default">
                                                     <button
                                                         onClick={() => handleSendToQC(device.id, device.barcode)}
                                                         disabled={isPending}
@@ -663,7 +663,7 @@ export default function L2RepairClient({
             {activeTab === 'available' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {availableDevices.length === 0 ? (
-                        <div className="col-span-full text-center py-10 text-gray-500">
+                        <div className="col-span-full text-center py-10 text-muted-foreground">
                             No devices available for claiming.
                         </div>
                     ) : (
@@ -672,27 +672,27 @@ export default function L2RepairClient({
                             const failedItems = device.inspectionChecklist.filter(i => i.status === 'FAIL')
 
                             return (
-                                <div key={device.id} className="bg-white rounded-lg shadow p-4 border-t-4 border-blue-500">
+                                <div key={device.id} className="bg-card rounded-lg shadow-soft p-4 border border-default border-t-4 border-t-blue-500">
                                     <div className="mb-4">
-                                        <h3 className="font-bold text-lg">{device.barcode}</h3>
-                                        <p className="text-sm text-gray-500">
+                                        <h3 className="font-bold text-lg text-foreground">{device.barcode}</h3>
+                                        <p className="text-sm text-muted-foreground">
                                             {device.brand} {device.model} • {device.category}
                                         </p>
-                                        <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs">
+                                        <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-400 rounded text-xs">
                                             {device.status.replace('_', ' ')}
                                         </span>
                                     </div>
 
                                     {repairJob?.inspectionEng && (
-                                        <p className="text-xs text-gray-500 mb-2">
+                                        <p className="text-xs text-muted-foreground mb-2">
                                             Inspected by: {repairJob.inspectionEng.name}
                                         </p>
                                     )}
 
                                     {failedItems.length > 0 && (
-                                        <div className="bg-red-50 p-2 rounded mb-3 text-xs">
-                                            <strong className="text-red-700">{failedItems.length} Failed Items</strong>
-                                            <ul className="mt-1 text-red-600 max-h-20 overflow-y-auto">
+                                        <div className="bg-red-50 dark:bg-red-500/10 p-2 rounded mb-3 text-xs border border-red-100 dark:border-red-500/30">
+                                            <strong className="text-red-700 dark:text-red-400">{failedItems.length} Failed Items</strong>
+                                            <ul className="mt-1 text-red-600 dark:text-red-400 max-h-20 overflow-y-auto">
                                                 {failedItems.slice(0, 3).map(item => (
                                                     <li key={item.id}>• {item.itemText.substring(0, 40)}...</li>
                                                 ))}
@@ -722,7 +722,7 @@ export default function L2RepairClient({
             {activeTab === 'completed' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {completedDevices.length === 0 ? (
-                        <div className="col-span-full text-center py-10 text-gray-500">
+                        <div className="col-span-full text-center py-10 text-muted-foreground">
                             No completed devices yet.
                         </div>
                     ) : (
@@ -731,20 +731,20 @@ export default function L2RepairClient({
                             const qcRecord = device.qcRecords[0]
 
                             return (
-                                <div key={device.id} className="bg-white rounded-lg shadow p-4 border-t-4 border-green-500">
+                                <div key={device.id} className="bg-card rounded-lg shadow-soft p-4 border border-default border-t-4 border-t-green-500">
                                     <div className="mb-3">
-                                        <h3 className="font-bold text-lg">{device.barcode}</h3>
-                                        <p className="text-sm text-gray-500">
+                                        <h3 className="font-bold text-lg text-foreground">{device.barcode}</h3>
+                                        <p className="text-sm text-muted-foreground">
                                             {device.brand} {device.model} • {device.category}
                                         </p>
                                     </div>
 
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-gray-500">Status:</span>
+                                            <span className="text-muted-foreground">Status:</span>
                                             <span className={`font-medium ${
-                                                device.status === 'READY_FOR_STOCK' ? 'text-green-600' :
-                                                device.status === 'AWAITING_QC' ? 'text-yellow-600' : 'text-gray-600'
+                                                device.status === 'READY_FOR_STOCK' ? 'text-green-600 dark:text-green-400' :
+                                                device.status === 'AWAITING_QC' ? 'text-yellow-600 dark:text-yellow-400' : 'text-foreground'
                                             }`}>
                                                 {device.status.replace(/_/g, ' ')}
                                             </span>
@@ -752,36 +752,36 @@ export default function L2RepairClient({
 
                                         {repairJob?.repairEndDate && (
                                             <div className="flex justify-between">
-                                                <span className="text-gray-500">Completed:</span>
-                                                <span>{new Date(repairJob.repairEndDate).toLocaleDateString()}</span>
+                                                <span className="text-muted-foreground">Completed:</span>
+                                                <span className="text-foreground">{new Date(repairJob.repairEndDate).toLocaleDateString()}</span>
                                             </div>
                                         )}
 
                                         {qcRecord && (
                                             <>
                                                 <div className="flex justify-between">
-                                                    <span className="text-gray-500">QC Result:</span>
-                                                    <span className={qcRecord.status === 'PASSED' ? 'text-green-600 font-medium' : 'text-red-600'}>
+                                                    <span className="text-muted-foreground">QC Result:</span>
+                                                    <span className={qcRecord.status === 'PASSED' ? 'text-green-600 dark:text-green-400 font-medium' : 'text-red-600 dark:text-red-400'}>
                                                         {qcRecord.status}
                                                     </span>
                                                 </div>
                                                 {qcRecord.finalGrade && (
                                                     <div className="flex justify-between">
-                                                        <span className="text-gray-500">Grade:</span>
-                                                        <span className="font-bold">Grade {qcRecord.finalGrade}</span>
+                                                        <span className="text-muted-foreground">Grade:</span>
+                                                        <span className="font-bold text-foreground">Grade {qcRecord.finalGrade}</span>
                                                     </div>
                                                 )}
                                                 {qcRecord.qcEng && (
                                                     <div className="flex justify-between">
-                                                        <span className="text-gray-500">QC By:</span>
-                                                        <span>{qcRecord.qcEng.name}</span>
+                                                        <span className="text-muted-foreground">QC By:</span>
+                                                        <span className="text-foreground">{qcRecord.qcEng.name}</span>
                                                     </div>
                                                 )}
                                             </>
                                         )}
 
                                         {!qcRecord && (
-                                            <div className="text-center py-2 bg-yellow-50 rounded text-yellow-700 text-xs">
+                                            <div className="text-center py-2 bg-yellow-50 dark:bg-yellow-500/10 rounded text-yellow-700 dark:text-yellow-400 text-xs">
                                                 Awaiting QC Review
                                             </div>
                                         )}
@@ -796,8 +796,8 @@ export default function L2RepairClient({
             {/* Spares Request Modal */}
             {showSparesModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">Request Spare Parts</h3>
+                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                        <h3 className="text-lg font-bold mb-4 text-foreground">Request Spare Parts</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
                             const form = e.target as HTMLFormElement
@@ -815,21 +815,21 @@ export default function L2RepairClient({
                             })
                         }}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium mb-1">Spare Parts Required</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Spare Parts Required</label>
                                 <textarea
                                     name="sparesRequired"
-                                    className="w-full border rounded p-2"
+                                    className="w-full border border-default rounded p-2 bg-card text-foreground"
                                     rows={3}
                                     placeholder="List part codes or descriptions (one per line)"
                                     required
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
-                                <textarea name="notes" className="w-full border rounded p-2" rows={2} placeholder="Any additional details..." />
+                                <label className="block text-sm font-medium mb-1 text-foreground">Notes (optional)</label>
+                                <textarea name="notes" className="w-full border border-default rounded p-2 bg-card text-foreground" rows={2} placeholder="Any additional details..." />
                             </div>
                             <div className="flex gap-2">
-                                <button type="button" onClick={() => setShowSparesModal(null)} className="flex-1 py-2 border rounded">
+                                <button type="button" onClick={() => setShowSparesModal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={isPending} className="flex-1 py-2 bg-orange-600 text-white rounded">
@@ -844,8 +844,8 @@ export default function L2RepairClient({
             {/* L3 Modal */}
             {showL3Modal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">Send to L3 Engineer</h3>
+                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                        <h3 className="text-lg font-bold mb-4 text-foreground">Send to L3 Engineer</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
                             const form = e.target as HTMLFormElement
@@ -863,19 +863,19 @@ export default function L2RepairClient({
                             })
                         }}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium mb-1">Issue Type</label>
-                                <select name="issueType" className="w-full border rounded p-2" required>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Issue Type</label>
+                                <select name="issueType" className="w-full border border-default rounded p-2 bg-card text-foreground" required>
                                     {L3IssueTypes.map(type => (
                                         <option key={type} value={type}>{type.replace('_', ' ')}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium mb-1">Description</label>
-                                <textarea name="description" className="w-full border rounded p-2" rows={3} required />
+                                <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
+                                <textarea name="description" className="w-full border border-default rounded p-2 bg-card text-foreground" rows={3} required />
                             </div>
                             <div className="flex gap-2">
-                                <button type="button" onClick={() => setShowL3Modal(null)} className="flex-1 py-2 border rounded">
+                                <button type="button" onClick={() => setShowL3Modal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded">
@@ -890,8 +890,8 @@ export default function L2RepairClient({
             {/* Paint Modal */}
             {showPaintModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">Send Panels to Paint</h3>
+                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                        <h3 className="text-lg font-bold mb-4 text-foreground">Send Panels to Paint</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
                             const form = e.target as HTMLFormElement
@@ -918,14 +918,14 @@ export default function L2RepairClient({
                         }}>
                             <div className="mb-4 grid grid-cols-2 gap-2">
                                 {PaintPanelOptions.map(panel => (
-                                    <label key={panel} className="flex items-center gap-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                                    <label key={panel} className="flex items-center gap-2 p-2 border border-default rounded hover:bg-muted cursor-pointer">
                                         <input type="checkbox" name={panel} />
-                                        <span className="text-sm">{panel}</span>
+                                        <span className="text-sm text-foreground">{panel}</span>
                                     </label>
                                 ))}
                             </div>
                             <div className="flex gap-2">
-                                <button type="button" onClick={() => setShowPaintModal(null)} className="flex-1 py-2 border rounded">
+                                <button type="button" onClick={() => setShowPaintModal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={isPending} className="flex-1 py-2 bg-purple-600 text-white rounded">
@@ -940,8 +940,8 @@ export default function L2RepairClient({
             {/* Battery Modal */}
             {showBatteryModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">Battery Boost</h3>
+                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                        <h3 className="text-lg font-bold mb-4 text-foreground">Battery Boost</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
                             const form = e.target as HTMLFormElement
@@ -965,7 +965,7 @@ export default function L2RepairClient({
                                 }
                             })
                         }}>
-                            <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
+                            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-500/10 rounded border border-blue-200 dark:border-blue-500/30">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -981,33 +981,33 @@ export default function L2RepairClient({
                                             if (initialCapacityDiv) initialCapacityDiv.style.display = e.target.checked ? 'none' : 'block'
                                         }}
                                     />
-                                    <span className="text-sm font-medium text-blue-800">I&apos;ll handle this myself</span>
+                                    <span className="text-sm font-medium text-blue-800 dark:text-blue-400">I&apos;ll handle this myself</span>
                                 </label>
                             </div>
                             <div className="mb-4" data-field="initialCapacity">
-                                <label className="block text-sm font-medium mb-1">Current Battery Capacity</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Current Battery Capacity</label>
                                 <input
                                     type="text"
                                     name="initialCapacity"
                                     placeholder="e.g., 45%"
-                                    className="w-full border rounded p-2"
+                                    className="w-full border border-default rounded p-2 bg-card text-foreground"
                                 />
                             </div>
                             <div className="mb-4 hidden" data-field="finalCapacity">
-                                <label className="block text-sm font-medium mb-1">Final Battery Capacity</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Final Battery Capacity</label>
                                 <input
                                     type="text"
                                     name="finalCapacity"
                                     placeholder="e.g., 85%"
-                                    className="w-full border rounded p-2"
+                                    className="w-full border border-default rounded p-2 bg-card text-foreground"
                                 />
                             </div>
                             <div className="mb-4 hidden" data-field="notes">
-                                <label className="block text-sm font-medium mb-1">Notes (optional)</label>
-                                <textarea name="notes" className="w-full border rounded p-2" rows={2} placeholder="Any notes about the work..." />
+                                <label className="block text-sm font-medium mb-1 text-foreground">Notes (optional)</label>
+                                <textarea name="notes" className="w-full border border-default rounded p-2 bg-card text-foreground" rows={2} placeholder="Any notes about the work..." />
                             </div>
                             <div className="flex gap-2">
-                                <button type="button" onClick={() => setShowBatteryModal(null)} className="flex-1 py-2 border rounded">
+                                <button type="button" onClick={() => setShowBatteryModal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded">
@@ -1022,8 +1022,8 @@ export default function L2RepairClient({
             {/* Display Modal */}
             {showDisplayModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">Display Repair</h3>
+                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                        <h3 className="text-lg font-bold mb-4 text-foreground">Display Repair</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
                             const form = e.target as HTMLFormElement
@@ -1046,7 +1046,7 @@ export default function L2RepairClient({
                                 }
                             })
                         }}>
-                            <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
+                            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-500/10 rounded border border-blue-200 dark:border-blue-500/30">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -1063,25 +1063,25 @@ export default function L2RepairClient({
                                             if (notesDiv) notesDiv.style.display = e.target.checked ? 'block' : 'none'
                                         }}
                                     />
-                                    <span className="text-sm font-medium text-blue-800">I&apos;ll handle this myself</span>
+                                    <span className="text-sm font-medium text-blue-800 dark:text-blue-400">I&apos;ll handle this myself</span>
                                 </label>
                             </div>
                             <div className="mb-4" data-field="issues">
-                                <label className="block text-sm font-medium mb-1">Display Issues</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Display Issues</label>
                                 <textarea
                                     name="issues"
                                     placeholder="Describe the display issues or work completed..."
-                                    className="w-full border rounded p-2"
+                                    className="w-full border border-default rounded p-2 bg-card text-foreground"
                                     rows={3}
                                     required
                                 />
                             </div>
                             <div className="mb-4 hidden" data-field="notes">
-                                <label className="block text-sm font-medium mb-1">Additional Notes (optional)</label>
-                                <textarea name="notes" className="w-full border rounded p-2" rows={2} placeholder="Any additional notes..." />
+                                <label className="block text-sm font-medium mb-1 text-foreground">Additional Notes (optional)</label>
+                                <textarea name="notes" className="w-full border border-default rounded p-2 bg-card text-foreground" rows={2} placeholder="Any additional notes..." />
                             </div>
                             <div className="flex gap-2">
-                                <button type="button" onClick={() => setShowDisplayModal(null)} className="flex-1 py-2 border rounded">
+                                <button type="button" onClick={() => setShowDisplayModal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
                                 <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded">

@@ -210,27 +210,27 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                         ) : (
                             <div className="border rounded-md max-h-64 overflow-y-auto overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50 sticky top-0">
+                                    <thead className="bg-muted sticky top-0">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedDevices.length === devices.length && devices.length > 0}
                                                     onChange={selectAll}
-                                                    className="rounded border-gray-300"
+                                                    className="rounded border-gray-300 dark:border-gray-600"
                                                 />
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Device</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Batch</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Barcode</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Device</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Grade</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Batch</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                                    <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
                                         {devices.map(device => (
                                             <tr
                                                 key={device.id}
-                                                className={`cursor-pointer hover:bg-gray-50 ${selectedDevices.includes(device.id) ? 'bg-blue-50' : ''
+                                                className={`cursor-pointer transition-colors ${selectedDevices.includes(device.id) ? 'bg-indigo-50 dark:bg-indigo-500/20' : 'bg-card hover:bg-muted'
                                                     }`}
                                                 onClick={() => toggleDevice(device.id)}
                                             >
@@ -243,20 +243,20 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                                         className="rounded border-gray-300"
                                                     />
                                                 </td>
-                                                <td className="px-4 py-2 font-mono text-sm text-blue-600">{device.barcode}</td>
+                                                <td className="px-4 py-2 font-mono text-sm text-primary">{device.barcode}</td>
                                                 <td className="px-4 py-2 text-sm">
-                                                    <div className="font-medium">{device.brand} {device.model}</div>
-                                                    <div className="text-xs text-gray-500">{device.category}</div>
+                                                    <div className="font-medium text-foreground">{device.brand} {device.model}</div>
+                                                    <div className="text-xs text-muted-foreground">{device.category}</div>
                                                 </td>
                                                 <td className="px-4 py-2">
                                                     {device.grade && (
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${device.grade === 'A' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${device.grade === 'A' ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400'
                                                             }`}>
                                                             Grade {device.grade}
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-2 text-sm text-gray-500">{device.inwardBatch.batchId}</td>
+                                                <td className="px-4 py-2 text-sm text-muted-foreground">{device.inwardBatch.batchId}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -357,65 +357,65 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                     <h2 className="text-lg font-semibold text-foreground">Dispatch History</h2>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-muted">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Outward ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Devices</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Packed By</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Checked By</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Outward ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Type</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Customer</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Reference</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Devices</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Packed By</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Checked By</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
                             {outwardRecords.length === 0 ? (
                                 <tr>
-                                    <td colSpan={9} className="px-6 py-10 text-center text-gray-500">
+                                    <td colSpan={9} className="px-6 py-10 text-center text-muted-foreground">
                                         No dispatch records yet.
                                     </td>
                                 </tr>
                             ) : (
                                 outwardRecords.map(record => (
-                                    <tr key={record.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600">
+                                    <tr key={record.id} className="bg-card hover:bg-muted transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-primary">
                                             {record.outwardId}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.type === 'SALES'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-purple-100 text-purple-800'
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400'
+                                                : 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400'
                                                 }`}>
                                                 {record.type}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                             {record.customer}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                             {record.reference}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <span className="px-2 py-1 bg-gray-100 rounded text-xs">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                                            <span className="px-2 py-1 bg-muted rounded text-xs">
                                                 {record.devices.length} device(s)
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                             {record.packedBy?.name || '-'}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                             {record.checkedBy?.name || '-'}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                             {formatDate(record.date)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <button
                                                 onClick={() => openEditModal(record)}
-                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
                                                 title="Edit Record"
                                             >
                                                 <Edit2 size={16} />

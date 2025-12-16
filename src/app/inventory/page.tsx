@@ -57,7 +57,7 @@ export default async function InventoryPage() {
                                     ].filter(Boolean).join(' • ')
 
                                     return (
-                                        <tr key={device.id} className="hover:bg-muted/50 transition-colors">
+                                        <tr key={device.id} className="bg-card hover:bg-muted transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-primary">
                                                 {device.barcode}
                                             </td>

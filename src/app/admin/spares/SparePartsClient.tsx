@@ -105,13 +105,13 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
             {/* Low Stock Alert */}
             {lowStockParts.length > 0 && (
                 <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 rounded-xl p-4 mb-6">
-                    <div className="flex items-center gap-2 text-yellow-800 font-semibold mb-2">
+                    <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-300 font-semibold mb-2">
                         <AlertTriangle size={20} />
                         Low Stock Alert ({lowStockParts.length} items)
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {lowStockParts.map(part => (
-                            <span key={part.id} className="px-2 py-1 bg-yellow-100 rounded text-sm text-yellow-800">
+                            <span key={part.id} className="px-2 py-1 bg-yellow-100 dark:bg-yellow-500/20 rounded text-sm text-yellow-800 dark:text-yellow-300">
                                 {part.partCode}: {part.currentStock}/{part.minStock}
                             </span>
                         ))}
@@ -121,30 +121,30 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
 
             {/* Add/Edit Form */}
             {showForm && (
-                <div className="bg-white rounded-lg shadow p-6 mb-6">
-                    <h2 className="text-lg font-semibold mb-4">
+                <div className="bg-card rounded-xl shadow-soft border border-default p-6 mb-6">
+                    <h2 className="text-lg font-semibold text-foreground mb-4">
                         {editingPart ? 'Edit Spare Part' : 'Add New Spare Part'}
                     </h2>
                     <form action={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Part Code *</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Part Code *</label>
                                 <input
                                     type="text"
                                     name="partCode"
                                     required
                                     defaultValue={editingPart?.partCode || ''}
                                     placeholder="e.g., KB-DELL-001"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Category *</label>
                                 <select
                                     name="category"
                                     required
                                     defaultValue={editingPart?.category || ''}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 >
                                     <option value="">Select Category</option>
                                     <option value="Keyboard">Keyboard</option>
@@ -162,67 +162,67 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                            <label className="block text-sm font-medium text-foreground mb-1">Description *</label>
                             <input
                                 type="text"
                                 name="description"
                                 required
                                 defaultValue={editingPart?.description || ''}
                                 placeholder="e.g., Dell Latitude 5520 Keyboard US Layout"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Compatible Models</label>
+                            <label className="block text-sm font-medium text-foreground mb-1">Compatible Models</label>
                             <input
                                 type="text"
                                 name="compatibleModels"
                                 defaultValue={editingPart?.compatibleModels || ''}
                                 placeholder="e.g., Latitude 5520, 5530, 5540"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                             />
                         </div>
 
                         <div className="grid grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Current Stock</label>
                                 <input
                                     type="number"
                                     name="currentStock"
                                     min="0"
                                     defaultValue={editingPart?.currentStock || 0}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Min Stock</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Min Stock</label>
                                 <input
                                     type="number"
                                     name="minStock"
                                     min="0"
                                     defaultValue={editingPart?.minStock || 0}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Max Stock</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Max Stock</label>
                                 <input
                                     type="number"
                                     name="maxStock"
                                     min="0"
                                     defaultValue={editingPart?.maxStock || 100}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Bin Location</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Bin Location</label>
                                 <input
                                     type="text"
                                     name="binLocation"
                                     defaultValue={editingPart?.binLocation || ''}
                                     placeholder="e.g., A1-03"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                         </div>
@@ -234,14 +234,14 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                                     setShowForm(false)
                                     setEditingPart(null)
                                 }}
-                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                className="px-4 py-2 bg-muted border border-input rounded-lg text-foreground hover:bg-muted/80 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                             >
                                 {loading ? 'Saving...' : editingPart ? 'Update' : 'Create'}
                             </button>
@@ -252,15 +252,15 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
 
             {/* Stock Adjustment Modal */}
             {showAdjustStock && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                        <h2 className="text-lg font-semibold mb-4">Adjust Stock - {showAdjustStock.partCode}</h2>
-                        <p className="text-sm text-gray-500 mb-4">
-                            Current stock: <strong>{showAdjustStock.currentStock}</strong>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-md border border-default">
+                        <h2 className="text-lg font-semibold text-foreground mb-4">Adjust Stock - {showAdjustStock.partCode}</h2>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Current stock: <strong className="text-foreground">{showAdjustStock.currentStock}</strong>
                         </p>
                         <form action={handleAdjustStock} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                     Adjustment (+ to add, - to remove)
                                 </label>
                                 <input
@@ -268,15 +268,15 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                                     name="adjustment"
                                     required
                                     placeholder="e.g., +10 or -5"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Reason</label>
                                 <select
                                     name="reason"
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 >
                                     <option value="">Select reason</option>
                                     <option value="Stock received">Stock received</option>
@@ -291,14 +291,14 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                                 <button
                                     type="button"
                                     onClick={() => setShowAdjustStock(null)}
-                                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                    className="px-4 py-2 bg-muted border border-input rounded-lg text-foreground hover:bg-muted/80 transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                                 >
                                     {loading ? 'Updating...' : 'Apply'}
                                 </button>
@@ -314,18 +314,18 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-muted">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Code</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Part Code</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Description</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Category</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Stock</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Location</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
                             {spareParts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                                    <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground">
                                         No spare parts in inventory. Add your first spare part.
                                     </td>
                                 </tr>
@@ -333,61 +333,61 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                                 spareParts.map(part => {
                                     const isLowStock = part.currentStock <= part.minStock
                                     return (
-                                        <tr key={part.id} className={isLowStock ? 'bg-yellow-50' : ''}>
-                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600 font-semibold">
+                                        <tr key={part.id} className={isLowStock ? 'bg-yellow-50 dark:bg-yellow-500/10 hover:bg-yellow-100 dark:hover:bg-yellow-500/20' : 'bg-card hover:bg-muted'} style={{ transition: 'background-color 150ms' }}>
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600 dark:text-blue-400 font-semibold">
                                                 {part.partCode}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-900">
+                                            <td className="px-6 py-4 text-sm text-foreground">
                                                 <div>{part.description}</div>
                                                 {part.compatibleModels && (
-                                                    <div className="text-xs text-gray-500">
+                                                    <div className="text-xs text-muted-foreground">
                                                         Compatible: {part.compatibleModels}
                                                     </div>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                                                <span className="px-2 py-1 bg-muted rounded text-xs text-foreground">
                                                     {part.category}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`font-semibold ${isLowStock ? 'text-red-600' : 'text-gray-900'}`}>
+                                                    <span className={`font-semibold ${isLowStock ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
                                                         {part.currentStock}
                                                     </span>
-                                                    <span className="text-xs text-gray-500">
+                                                    <span className="text-xs text-muted-foreground">
                                                         / {part.maxStock}
                                                     </span>
                                                     {isLowStock && (
                                                         <AlertTriangle size={14} className="text-yellow-500" />
                                                     )}
                                                 </div>
-                                                <div className="text-xs text-gray-500">
+                                                <div className="text-xs text-muted-foreground">
                                                     Min: {part.minStock}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                                 {part.binLocation || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => setShowAdjustStock(part)}
-                                                        className="p-1.5 text-green-600 hover:bg-green-50 rounded"
+                                                        className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/20 rounded transition-colors"
                                                         title="Adjust Stock"
                                                     >
                                                         <Package size={18} />
                                                     </button>
                                                     <button
                                                         onClick={() => openEdit(part)}
-                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                                                        className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded transition-colors"
                                                         title="Edit"
                                                     >
                                                         <Pencil size={18} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(part.id)}
-                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                                                        className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded transition-colors"
                                                         title="Delete"
                                                     >
                                                         <Trash2 size={18} />

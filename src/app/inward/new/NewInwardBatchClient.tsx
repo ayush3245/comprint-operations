@@ -38,18 +38,18 @@ export default function NewInwardBatchClient() {
 
     return (
         <div className="max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Create New Inward Batch</h1>
+            <h1 className="text-2xl font-bold mb-6 text-foreground">Create New Inward Batch</h1>
 
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-card p-6 rounded-xl shadow-soft border border-default">
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Inward Type</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Inward Type</label>
                     <div className="flex gap-4">
                         <button
                             type="button"
                             onClick={() => setType('REFURB_PURCHASE')}
-                            className={`px-4 py-2 rounded-md border ${type === 'REFURB_PURCHASE'
-                                ? 'bg-blue-50 border-blue-500 text-blue-700'
-                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                            className={`px-4 py-2 rounded-lg border transition-colors ${type === 'REFURB_PURCHASE'
+                                ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-500/20 dark:border-indigo-400 dark:text-indigo-300'
+                                : 'bg-card border-input text-foreground hover:bg-muted'
                                 }`}
                         >
                             Refurb Purchase
@@ -57,9 +57,9 @@ export default function NewInwardBatchClient() {
                         <button
                             type="button"
                             onClick={() => setType('RENTAL_RETURN')}
-                            className={`px-4 py-2 rounded-md border ${type === 'RENTAL_RETURN'
-                                ? 'bg-blue-50 border-blue-500 text-blue-700'
-                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                            className={`px-4 py-2 rounded-lg border transition-colors ${type === 'RENTAL_RETURN'
+                                ? 'bg-indigo-50 border-indigo-500 text-indigo-700 dark:bg-indigo-500/20 dark:border-indigo-400 dark:text-indigo-300'
+                                : 'bg-card border-input text-foreground hover:bg-muted'
                                 }`}
                         >
                             Rental Return
@@ -71,50 +71,50 @@ export default function NewInwardBatchClient() {
                     {type === 'REFURB_PURCHASE' ? (
                         <>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">PO / Invoice No</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">PO / Invoice No</label>
                                 <input
                                     type="text"
                                     name="poInvoiceNo"
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Supplier Name</label>
                                 <input
                                     type="text"
                                     name="supplier"
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                         </>
                     ) : (
                         <>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Customer Name</label>
                                 <input
                                     type="text"
                                     name="customer"
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Rental Reference / Ticket ID</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Rental Reference / Ticket ID</label>
                                 <input
                                     type="text"
                                     name="rentalRef"
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Subject / Thread Reference</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Email Subject / Thread Reference</label>
                                 <input
                                     type="text"
                                     name="emailSubject"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
                                 />
                             </div>
                         </>
@@ -124,14 +124,14 @@ export default function NewInwardBatchClient() {
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            className="px-4 py-2 bg-muted border border-input rounded-lg text-foreground hover:bg-muted/80 transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                         >
                             {loading ? 'Creating...' : 'Create Batch'}
                         </button>

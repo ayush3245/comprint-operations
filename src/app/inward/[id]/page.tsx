@@ -109,11 +109,11 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">Batch: {batch.batchId}</h1>
-                    <p className="text-gray-500">
+                    <h1 className="text-xl md:text-2xl font-bold text-foreground">Batch: {batch.batchId}</h1>
+                    <p className="text-muted-foreground">
                         {batch.type.replace('_', ' ')} • {formatDate(batch.date)} • Created by {batch.createdBy.name}
                     </p>
-                    <div className="mt-2 text-sm text-gray-600">
+                    <div className="mt-2 text-sm text-muted-foreground">
                         {batch.type === 'REFURB_PURCHASE' ? (
                             <>PO: {batch.poInvoiceNo} {batch.supplier && `• Supplier: ${batch.supplier}`}</>
                         ) : (
@@ -139,7 +139,7 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
                         />
                     )}
                     <BulkUploadForm batchId={batch.id} onUpload={handleBulkUpload} />
-                    <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium">
+                    <div className="bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 px-4 py-2 rounded-lg font-medium">
                         {batch.devices.length} Devices
                     </div>
                 </div>
@@ -148,8 +148,8 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Add Device Form */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white p-6 rounded-lg shadow">
-                        <h2 className="text-lg font-semibold mb-4">Add Device</h2>
+                    <div className="bg-card p-6 rounded-lg shadow-soft border border-default">
+                        <h2 className="text-lg font-semibold mb-4 text-foreground">Add Device</h2>
                         <DynamicDeviceForm
                             onSubmit={handleAddDevice}
                             batchType={batch.type}
@@ -159,9 +159,9 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
 
                 {/* Device List */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-lg shadow overflow-hidden">
-                        <div className="px-4 md:px-6 py-4 border-b border-gray-200">
-                            <h2 className="text-lg font-semibold">Devices in Batch</h2>
+                    <div className="bg-card rounded-lg shadow-soft border border-default overflow-hidden">
+                        <div className="px-4 md:px-6 py-4 border-b border-default">
+                            <h2 className="text-lg font-semibold text-foreground">Devices in Batch</h2>
                         </div>
                         <InwardDeviceList devices={batch.devices} />
                     </div>

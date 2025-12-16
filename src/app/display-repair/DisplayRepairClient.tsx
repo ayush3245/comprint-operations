@@ -89,26 +89,26 @@ export default function DisplayRepairClient({
         const isMyJob = job.assignedTo?.id === userId
 
         return (
-            <div className={`bg-white rounded-lg shadow border-l-4 ${
-                job.status === 'IN_PROGRESS' ? 'border-blue-500' : 'border-yellow-500'
+            <div className={`bg-card rounded-lg shadow-soft border border-default border-l-4 ${
+                job.status === 'IN_PROGRESS' ? 'border-l-blue-500' : 'border-l-yellow-500'
             }`}>
                 <div className="p-4">
                     <div className="flex items-start justify-between mb-3">
                         <div>
-                            <h3 className="font-bold text-lg">{job.device.barcode}</h3>
-                            <p className="text-sm text-gray-500">
+                            <h3 className="font-bold text-lg text-foreground">{job.device.barcode}</h3>
+                            <p className="text-sm text-muted-foreground">
                                 {job.device.brand} {job.device.model} • {job.device.category}
                             </p>
                         </div>
-                        <Monitor size={24} className="text-blue-600" />
+                        <Monitor size={24} className="text-blue-600 dark:text-blue-400" />
                     </div>
 
-                    <div className="bg-gray-50 p-3 rounded mb-3">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Reported Issues:</p>
-                        <p className="text-sm text-gray-600">{job.reportedIssues || 'No issues specified'}</p>
+                    <div className="bg-muted p-3 rounded mb-3">
+                        <p className="text-sm font-medium text-foreground mb-1">Reported Issues:</p>
+                        <p className="text-sm text-muted-foreground">{job.reportedIssues || 'No issues specified'}</p>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                         <span className="flex items-center gap-1">
                             <User size={14} />
                             L2: {l2Engineer}
@@ -150,7 +150,7 @@ export default function DisplayRepairClient({
                     )}
 
                     {job.status === 'IN_PROGRESS' && !isMyJob && (
-                        <div className="text-center py-2 text-sm text-gray-500">
+                        <div className="text-center py-2 text-sm text-muted-foreground">
                             Being worked on by {job.assignedTo?.name}
                         </div>
                     )}
@@ -163,37 +163,37 @@ export default function DisplayRepairClient({
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <Monitor size={28} className="text-blue-600" />
-                    <h1 className="text-2xl font-bold text-gray-800">Display Repair Queue</h1>
+                    <Monitor size={28} className="text-blue-600 dark:text-blue-400" />
+                    <h1 className="text-2xl font-bold text-foreground">Display Repair Queue</h1>
                 </div>
-                <span className="text-sm text-gray-500">Technician: {userName}</span>
+                <span className="text-sm text-muted-foreground">Technician: {userName}</span>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
-                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <div className="text-2xl font-bold text-yellow-700">{pendingJobs.length}</div>
-                    <div className="text-sm text-yellow-600">Pending</div>
+                <div className="bg-yellow-50 dark:bg-yellow-500/10 p-4 rounded-lg border border-yellow-200 dark:border-yellow-500/30">
+                    <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{pendingJobs.length}</div>
+                    <div className="text-sm text-yellow-600 dark:text-yellow-400">Pending</div>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <div className="text-2xl font-bold text-blue-700">{myJobs.length}</div>
-                    <div className="text-sm text-blue-600">My Active Jobs</div>
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg border border-blue-200 dark:border-blue-500/30">
+                    <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">{myJobs.length}</div>
+                    <div className="text-sm text-blue-600 dark:text-blue-400">My Active Jobs</div>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <div className="text-2xl font-bold text-gray-700">{inProgressJobs.length - myJobs.length}</div>
-                    <div className="text-sm text-gray-600">Others Active</div>
+                <div className="bg-muted p-4 rounded-lg border border-default">
+                    <div className="text-2xl font-bold text-foreground">{inProgressJobs.length - myJobs.length}</div>
+                    <div className="text-sm text-muted-foreground">Others Active</div>
                 </div>
             </div>
 
             {/* Tabs - Only show for Display Technician, not L2 */}
             {userRole !== 'L2_ENGINEER' && (
-                <div className="flex gap-2 border-b">
+                <div className="flex gap-2 border-b border-default">
                     <button
                         onClick={() => setActiveTab('pending')}
                         className={`px-4 py-2 font-medium ${
                             activeTab === 'pending'
-                                ? 'border-b-2 border-yellow-600 text-yellow-600'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'border-b-2 border-yellow-600 text-yellow-600 dark:text-yellow-400'
+                                : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
                         <AlertTriangle size={16} className="inline mr-1" />
@@ -203,8 +203,8 @@ export default function DisplayRepairClient({
                         onClick={() => setActiveTab('in_progress')}
                         className={`px-4 py-2 font-medium ${
                             activeTab === 'in_progress'
-                                ? 'border-b-2 border-blue-600 text-blue-600'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                                : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
                         <Clock size={16} className="inline mr-1" />
@@ -217,7 +217,7 @@ export default function DisplayRepairClient({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* L2 view: Show only their in-progress jobs */}
                 {userRole === 'L2_ENGINEER' && myJobs.length === 0 && (
-                    <div className="col-span-full text-center py-10 text-gray-500">
+                    <div className="col-span-full text-center py-10 text-muted-foreground">
                         No display repair jobs in progress. View from L2 Repair page.
                     </div>
                 )}
@@ -227,7 +227,7 @@ export default function DisplayRepairClient({
 
                 {/* Technician view: Show based on active tab */}
                 {userRole !== 'L2_ENGINEER' && activeTab === 'pending' && pendingJobs.length === 0 && (
-                    <div className="col-span-full text-center py-10 text-gray-500">
+                    <div className="col-span-full text-center py-10 text-muted-foreground">
                         No pending display repair jobs. Check back later.
                     </div>
                 )}
@@ -236,7 +236,7 @@ export default function DisplayRepairClient({
                 ))}
 
                 {userRole !== 'L2_ENGINEER' && activeTab === 'in_progress' && inProgressJobs.length === 0 && (
-                    <div className="col-span-full text-center py-10 text-gray-500">
+                    <div className="col-span-full text-center py-10 text-muted-foreground">
                         No jobs in progress. Pick up a pending job to get started.
                     </div>
                 )}
@@ -248,9 +248,9 @@ export default function DisplayRepairClient({
             {/* Complete Modal */}
             {completeModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <CheckCircle className="text-green-600" size={24} />
+                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-foreground">
+                            <CheckCircle className="text-green-600 dark:text-green-400" size={24} />
                             Complete Display Repair
                         </h3>
                         <form onSubmit={(e) => {
@@ -260,17 +260,17 @@ export default function DisplayRepairClient({
                             handleComplete(completeModal, notes)
                         }}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium mb-1">Repair Notes *</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Repair Notes *</label>
                                 <textarea
                                     name="notes"
-                                    className="w-full border rounded p-2"
+                                    className="w-full border border-default rounded p-2 bg-card text-foreground"
                                     rows={4}
                                     placeholder="Describe what was repaired (e.g., screen replaced, cable reconnected, bezel fixed)..."
                                     required
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="flex items-center gap-2 text-sm">
+                                <label className="flex items-center gap-2 text-sm text-foreground">
                                     <input type="checkbox" name="testedDisplay" defaultChecked />
                                     Display tested and working properly
                                 </label>
@@ -279,7 +279,7 @@ export default function DisplayRepairClient({
                                 <button
                                     type="button"
                                     onClick={() => setCompleteModal(null)}
-                                    className="flex-1 py-2 border rounded hover:bg-gray-50"
+                                    className="flex-1 py-2 border border-default rounded hover:bg-muted text-foreground"
                                 >
                                     Cancel
                                 </button>

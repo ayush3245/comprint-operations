@@ -176,38 +176,38 @@ export default function InwardDeviceList({ devices }: Props) {
     return (
         <>
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-muted">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specifications</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Barcode</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Details</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Specifications</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
                         {devices.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                                <td colSpan={5} className="px-6 py-10 text-center text-muted-foreground">
                                     No devices added yet.
                                 </td>
                             </tr>
                         ) : (
                             devices.map((device) => (
-                                <tr key={device.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-blue-600">
+                                <tr key={device.id} className="bg-card hover:bg-muted transition-colors">
+                                    <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-primary">
                                         {device.barcode}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                         <div className="font-medium">{device.brand} {device.model}</div>
-                                        <div className="text-xs text-gray-500">{device.category.replace('_', ' ')}</div>
+                                        <div className="text-xs text-muted-foreground">{device.category.replace('_', ' ')}</div>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">
+                                    <td className="px-6 py-4 text-sm text-muted-foreground">
                                         {getDeviceSpecs(device) || '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400">
                                             {device.status.replace('_', ' ')}
                                         </span>
                                     </td>
@@ -216,7 +216,7 @@ export default function InwardDeviceList({ devices }: Props) {
                                             {device.status === 'RECEIVED' && (
                                                 <button
                                                     onClick={() => openEditModal(device)}
-                                                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                    className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
                                                     title="Edit Device"
                                                 >
                                                     <Edit2 size={16} />

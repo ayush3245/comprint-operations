@@ -89,7 +89,7 @@ export default function PaintClient({ panels, onUpdateStatus }: PaintClientProps
                             </tr>
                         ) : (
                             panels.map((panel) => (
-                                <tr key={panel.id} className="hover:bg-muted/50 transition-colors">
+                                <tr key={panel.id} className="bg-card hover:bg-muted transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                         <div className="font-medium">{panel.device.barcode}</div>
                                         <div className="text-xs text-muted-foreground">{panel.device.brand} {panel.device.model}</div>

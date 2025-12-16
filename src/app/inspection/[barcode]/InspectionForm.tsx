@@ -183,35 +183,35 @@ export default function InspectionForm({
   const getStatusBgColor = (status: ChecklistStatus) => {
     switch (status) {
       case 'PASS':
-        return 'bg-green-50 border-green-200'
+        return 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
       case 'FAIL':
-        return 'bg-red-50 border-red-200'
+        return 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
       case 'NOT_APPLICABLE':
-        return 'bg-gray-50 border-gray-200'
+        return 'bg-muted border-default'
       default:
-        return 'bg-white border-gray-200'
+        return 'bg-card border-default'
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Summary Bar */}
-      <div className="bg-white p-4 rounded-lg shadow flex items-center justify-between flex-wrap gap-4">
+      <div className="bg-card p-4 rounded-lg shadow-soft border border-default flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-6">
           <div className="text-sm">
-            <span className="font-medium text-gray-700">Progress: </span>
-            <span className="text-gray-900">{items.length - pendingCount}/{items.length}</span>
+            <span className="font-medium text-muted-foreground">Progress: </span>
+            <span className="text-foreground">{items.length - pendingCount}/{items.length}</span>
           </div>
           <div className="flex gap-4 text-sm">
-            <span className="text-green-600">
+            <span className="text-green-600 dark:text-green-400">
               <CheckCircle className="inline mr-1" size={16} />
               {passCount}
             </span>
-            <span className="text-red-600">
+            <span className="text-red-600 dark:text-red-400">
               <XCircle className="inline mr-1" size={16} />
               {failCount}
             </span>
-            <span className="text-gray-500">
+            <span className="text-muted-foreground">
               <MinusCircle className="inline mr-1" size={16} />
               {naCount}
             </span>
@@ -221,14 +221,14 @@ export default function InspectionForm({
           <button
             type="button"
             onClick={() => setAllStatus('PASS')}
-            className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+            className="px-3 py-1 text-sm bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 rounded hover:bg-green-200 dark:hover:bg-green-500/30"
           >
             All Pass
           </button>
           <button
             type="button"
             onClick={() => setAllStatus('PENDING')}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+            className="px-3 py-1 text-sm bg-muted text-muted-foreground rounded hover:bg-gray-200 dark:hover:bg-gray-700"
           >
             Reset All
           </button>
@@ -236,22 +236,22 @@ export default function InspectionForm({
       </div>
 
       {/* Checklist Items */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-card rounded-lg shadow-soft border border-default">
         <div
-          className="p-4 border-b flex items-center justify-between cursor-pointer"
+          className="p-4 border-b border-default flex items-center justify-between cursor-pointer hover:bg-muted"
           onClick={() => setShowAllItems(!showAllItems)}
         >
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold text-foreground">
             {deviceCategory} Inspection Checklist
-            <span className="text-sm font-normal text-gray-500 ml-2">
+            <span className="text-sm font-normal text-muted-foreground ml-2">
               ({items.length} items)
             </span>
           </h2>
-          {showAllItems ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {showAllItems ? <ChevronUp size={20} className="text-foreground" /> : <ChevronDown size={20} className="text-foreground" />}
         </div>
 
         {showAllItems && (
-          <div className="divide-y">
+          <div className="divide-y divide-default">
             {items.map((item) => (
               <div
                 key={item.itemIndex}
@@ -259,12 +259,12 @@ export default function InspectionForm({
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-8 text-center">
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-sm font-medium text-muted-foreground">
                       {item.itemIndex}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-gray-800">{item.itemText}</p>
+                    <p className="text-foreground">{item.itemText}</p>
                     {/* Notes field - show if item has placeholder or if failed */}
                     {(item.notesPlaceholder || item.status === 'FAIL') && (
                       <input
@@ -272,7 +272,7 @@ export default function InspectionForm({
                         value={item.notes}
                         onChange={(e) => updateItemNotes(item.itemIndex, e.target.value)}
                         placeholder={item.notesPlaceholder || 'Add notes about the issue...'}
-                        className="mt-2 w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="mt-2 w-full p-2 text-sm border border-default rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-card text-foreground placeholder:text-muted-foreground"
                       />
                     )}
                   </div>
@@ -283,7 +283,7 @@ export default function InspectionForm({
                       className={`p-2 rounded-lg transition-colors ${
                         item.status === 'PASS'
                           ? 'bg-green-600 text-white'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-500/30'
                       }`}
                       title="Pass"
                     >
@@ -295,7 +295,7 @@ export default function InspectionForm({
                       className={`p-2 rounded-lg transition-colors ${
                         item.status === 'FAIL'
                           ? 'bg-red-600 text-white'
-                          : 'bg-red-100 text-red-700 hover:bg-red-200'
+                          : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30'
                       }`}
                       title="Fail"
                     >
@@ -306,8 +306,8 @@ export default function InspectionForm({
                       onClick={() => updateItemStatus(item.itemIndex, 'NOT_APPLICABLE')}
                       className={`p-2 rounded-lg transition-colors ${
                         item.status === 'NOT_APPLICABLE'
-                          ? 'bg-gray-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-gray-600 dark:bg-gray-500 text-white'
+                          : 'bg-muted text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                       title="Not Applicable"
                     >
@@ -322,40 +322,40 @@ export default function InspectionForm({
       </div>
 
       {/* Spares Requirement */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-4 border-b pb-2">Spares Requirement</h2>
+      <div className="bg-card p-6 rounded-lg shadow-soft border border-default">
+        <h2 className="text-lg font-semibold mb-4 border-b border-default pb-2 text-foreground">Spares Requirement</h2>
         <textarea
           value={sparesRequired}
           onChange={(e) => setSparesRequired(e.target.value)}
           rows={2}
-          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border border-default rounded-md focus:ring-2 focus:ring-blue-500 bg-card text-foreground placeholder:text-muted-foreground"
           placeholder="List required spares (Part Codes). Leave empty if none."
         />
       </div>
 
       {/* Paint Panel Selection */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-card rounded-lg shadow-soft border border-default">
         <div
-          className="p-4 border-b flex items-center justify-between cursor-pointer"
+          className="p-4 border-b border-default flex items-center justify-between cursor-pointer hover:bg-muted"
           onClick={() => setShowPaintSection(!showPaintSection)}
         >
           <div className="flex items-center gap-2">
-            <Paintbrush size={20} className="text-orange-600" />
-            <h2 className="text-lg font-semibold">
+            <Paintbrush size={20} className="text-orange-600 dark:text-orange-400" />
+            <h2 className="text-lg font-semibold text-foreground">
               Paint Required
               {selectedPaintPanels.length > 0 && (
-                <span className="ml-2 text-sm font-normal text-orange-600">
+                <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">
                   ({selectedPaintPanels.length} panel{selectedPaintPanels.length !== 1 ? 's' : ''} selected)
                 </span>
               )}
             </h2>
           </div>
-          {showPaintSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {showPaintSection ? <ChevronUp size={20} className="text-foreground" /> : <ChevronDown size={20} className="text-foreground" />}
         </div>
 
         {showPaintSection && (
           <div className="p-4">
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Select panels that need painting. Leave unchecked if no painting is required.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -364,8 +364,8 @@ export default function InspectionForm({
                   key={panel}
                   className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
                     selectedPaintPanels.includes(panel)
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-gray-200 hover:border-orange-300'
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10'
+                      : 'border-default hover:border-orange-300 dark:hover:border-orange-500/50'
                   }`}
                 >
                   <input
@@ -374,15 +374,15 @@ export default function InspectionForm({
                     onChange={() => togglePaintPanel(panel)}
                     className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                   />
-                  <span className={selectedPaintPanels.includes(panel) ? 'font-medium text-orange-700' : 'text-gray-700'}>
+                  <span className={selectedPaintPanels.includes(panel) ? 'font-medium text-orange-700 dark:text-orange-400' : 'text-foreground'}>
                     {panel}
                   </span>
                 </label>
               ))}
             </div>
             {selectedPaintPanels.length > 0 && (
-              <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-sm text-orange-800">
+              <div className="mt-4 p-3 bg-orange-50 dark:bg-orange-500/10 rounded-lg border border-orange-200 dark:border-orange-500/30">
+                <p className="text-sm text-orange-800 dark:text-orange-400">
                   <strong>Selected for painting:</strong> {selectedPaintPanels.join(', ')}
                 </p>
               </div>
@@ -392,13 +392,13 @@ export default function InspectionForm({
       </div>
 
       {/* Overall Notes */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-4 border-b pb-2">Additional Notes</h2>
+      <div className="bg-card p-6 rounded-lg shadow-soft border border-default">
+        <h2 className="text-lg font-semibold mb-4 border-b border-default pb-2 text-foreground">Additional Notes</h2>
         <textarea
           value={overallNotes}
           onChange={(e) => setOverallNotes(e.target.value)}
           rows={3}
-          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border border-default rounded-md focus:ring-2 focus:ring-blue-500 bg-card text-foreground placeholder:text-muted-foreground"
           placeholder="Any additional observations or notes about this device..."
         />
       </div>
@@ -407,7 +407,7 @@ export default function InspectionForm({
       <div className="flex justify-end gap-4">
         <a
           href="/inspection"
-          className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+          className="px-6 py-3 border border-default rounded-lg text-foreground hover:bg-muted"
         >
           Cancel
         </a>

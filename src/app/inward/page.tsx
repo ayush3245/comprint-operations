@@ -61,7 +61,7 @@ export default async function InwardPage() {
                                 </tr>
                             ) : (
                                 batches.map((batch) => (
-                                    <tr key={batch.id} className="hover:bg-muted/50 transition-colors duration-150">
+                                    <tr key={batch.id} className="bg-card hover:bg-muted transition-colors duration-150">
                                         <td className="px-6 py-4 whitespace-nowrap font-mono text-sm font-medium text-primary">
                                             <Link href={`/inward/${batch.batchId}`} className="hover:underline">
                                                 {batch.batchId}

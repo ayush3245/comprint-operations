@@ -62,30 +62,30 @@ const ROLES: { value: Role; label: string }[] = [
 function getRoleBadgeColor(role: Role): string {
     switch (role) {
         case 'SUPERADMIN':
-            return 'bg-purple-100 text-purple-700 border-purple-200'
+            return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30'
         case 'ADMIN':
-            return 'bg-red-100 text-red-700 border-red-200'
+            return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30'
         case 'MIS_WAREHOUSE_EXECUTIVE':
         case 'WAREHOUSE_MANAGER':
-            return 'bg-blue-100 text-blue-700 border-blue-200'
+            return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30'
         case 'INSPECTION_ENGINEER':
-            return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+            return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-500/20 dark:text-yellow-300 dark:border-yellow-500/30'
         case 'L2_ENGINEER':
-            return 'bg-orange-100 text-orange-700 border-orange-200'
+            return 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/30'
         case 'L3_ENGINEER':
-            return 'bg-indigo-100 text-indigo-700 border-indigo-200'
+            return 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30'
         case 'DISPLAY_TECHNICIAN':
-            return 'bg-cyan-100 text-cyan-700 border-cyan-200'
+            return 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/30'
         case 'BATTERY_TECHNICIAN':
-            return 'bg-lime-100 text-lime-700 border-lime-200'
+            return 'bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-500/20 dark:text-lime-300 dark:border-lime-500/30'
         case 'REPAIR_ENGINEER':
-            return 'bg-amber-100 text-amber-700 border-amber-200'
+            return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30'
         case 'PAINT_SHOP_TECHNICIAN':
-            return 'bg-pink-100 text-pink-700 border-pink-200'
+            return 'bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-500/20 dark:text-pink-300 dark:border-pink-500/30'
         case 'QC_ENGINEER':
-            return 'bg-green-100 text-green-700 border-green-200'
+            return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/20 dark:text-green-300 dark:border-green-500/30'
         default:
-            return 'bg-gray-100 text-gray-700 border-gray-200'
+            return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-500/20 dark:text-gray-300 dark:border-gray-500/30'
     }
 }
 
@@ -235,7 +235,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" suppressHydrationWarning>
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -261,8 +261,8 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         className={`mb-6 p-4 rounded-xl flex items-center gap-3 shadow-sm ${notification.type === 'success'
-                            ? 'bg-green-50 border border-green-200 text-green-700'
-                            : 'bg-red-50 border border-red-200 text-red-700'
+                            ? 'bg-green-50 border border-green-200 text-green-700 dark:bg-green-500/10 dark:border-green-500/30 dark:text-green-400'
+                            : 'bg-red-50 border border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-400'
                             }`}
                     >
                         {notification.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
@@ -309,7 +309,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
             {/* Users Table */}
             <GlassCard className="overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full bg-white">
                         <thead>
                             <tr className="border-b border-default bg-muted">
                                 <th className="px-6 py-5 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">User</th>
@@ -326,17 +326,17 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.05 }}
-                                    className="hover:bg-gray-50/80 transition-all duration-200"
+                                    className="bg-card hover:bg-muted transition-all duration-200"
                                 >
                                     <td className="px-6 py-5">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-bold text-white shadow-md">
                                                 {user.name.charAt(0).toUpperCase()}
                                             </div>
-                                            <span className="font-semibold text-gray-900 text-base">{user.name}</span>
+                                            <span className="font-semibold text-foreground text-base">{user.name}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-5 text-gray-600 font-medium">{user.email}</td>
+                                    <td className="px-6 py-5 text-muted-foreground font-medium">{user.email}</td>
                                     <td className="px-6 py-5">
                                         <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border ${getRoleBadgeColor(user.role)}`}>
                                             {user.role.replace(/_/g, ' ')}
@@ -347,8 +347,8 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                             onClick={() => handleToggleStatus(user)}
                                             disabled={isLoading}
                                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${user.active
-                                                ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'
-                                                : 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'
+                                                ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30 dark:border-green-500/30'
+                                                : 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/30 dark:border-red-500/30'
                                                 }`}
                                         >
                                             {user.active ? <ToggleRight size={16} strokeWidth={2.5} /> : <ToggleLeft size={16} strokeWidth={2.5} />}
@@ -360,7 +360,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                             <button
                                                 onClick={() => openPasswordModal(user)}
                                                 disabled={isLoading}
-                                                className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-all"
+                                                className="p-2 text-muted-foreground hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-500/20 rounded-lg transition-all"
                                                 title="Reset Password"
                                             >
                                                 <Key size={18} strokeWidth={2} />
@@ -368,7 +368,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                             <button
                                                 onClick={() => openEditModal(user)}
                                                 disabled={isLoading}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                className="p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded-lg transition-all"
                                                 title="Edit User"
                                             >
                                                 <Edit2 size={18} strokeWidth={2} />
@@ -376,7 +376,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                             <button
                                                 onClick={() => handleDelete(user)}
                                                 disabled={isLoading}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                className="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg transition-all"
                                                 title="Delete User"
                                             >
                                                 <Trash2 size={18} strokeWidth={2} />
@@ -391,11 +391,11 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
 
                 {filteredUsers.length === 0 && (
                     <div className="p-12 text-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Users className="text-gray-400" size={32} />
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Users className="text-muted-foreground" size={32} />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900">No users found</h3>
-                        <p className="text-gray-500 mt-1">Try adjusting your search or filters</p>
+                        <h3 className="text-lg font-semibold text-foreground">No users found</h3>
+                        <p className="text-muted-foreground mt-1">Try adjusting your search or filters</p>
                     </div>
                 )}
             </GlassCard>
@@ -403,20 +403,20 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 <GlassCard className="p-5 border-l-4 border-l-blue-500">
-                    <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Users</p>
-                    <p className="text-3xl font-black text-gray-800 mt-2">{users.length}</p>
+                    <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Total Users</p>
+                    <p className="text-3xl font-black text-foreground mt-2">{users.length}</p>
                 </GlassCard>
                 <GlassCard className="p-5 border-l-4 border-l-green-500">
-                    <p className="text-green-600 text-xs font-bold uppercase tracking-wider">Active</p>
-                    <p className="text-3xl font-black text-gray-800 mt-2">{users.filter(u => u.active).length}</p>
+                    <p className="text-green-600 dark:text-green-400 text-xs font-bold uppercase tracking-wider">Active</p>
+                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => u.active).length}</p>
                 </GlassCard>
                 <GlassCard className="p-5 border-l-4 border-l-red-500">
-                    <p className="text-red-600 text-xs font-bold uppercase tracking-wider">Inactive</p>
-                    <p className="text-3xl font-black text-gray-800 mt-2">{users.filter(u => !u.active).length}</p>
+                    <p className="text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider">Inactive</p>
+                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => !u.active).length}</p>
                 </GlassCard>
                 <GlassCard className="p-5 border-l-4 border-l-purple-500">
-                    <p className="text-purple-600 text-xs font-bold uppercase tracking-wider">Admins</p>
-                    <p className="text-3xl font-black text-gray-800 mt-2">{users.filter(u => u.role === 'SUPERADMIN' || u.role === 'ADMIN').length}</p>
+                    <p className="text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-wider">Admins</p>
+                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => u.role === 'SUPERADMIN' || u.role === 'ADMIN').length}</p>
                 </GlassCard>
             </div>
 
@@ -435,17 +435,17 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+                            className="bg-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
                         >
-                            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                                <h2 className="text-xl font-bold text-gray-800">
+                            <div className="px-6 py-4 border-b border-default flex items-center justify-between bg-muted/50">
+                                <h2 className="text-xl font-bold text-foreground">
                                     {modalMode === 'create' && 'Create New User'}
                                     {modalMode === 'edit' && 'Edit User'}
                                     {modalMode === 'password' && 'Reset Password'}
                                 </h2>
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                                 >
                                     <X size={20} />
                                 </button>
@@ -454,7 +454,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                             <form onSubmit={handleSubmit} className="p-6 space-y-5">
                                 {/* Error display inside modal for better visibility */}
                                 {modalError && (
-                                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-700">
+                                    <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl flex items-center gap-2 text-red-700 dark:text-red-400">
                                         <AlertCircle size={18} className="flex-shrink-0" />
                                         <span className="text-sm font-medium">{modalError}</span>
                                     </div>
@@ -463,14 +463,14 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                 {modalMode !== 'password' && (
                                     <>
                                         <div className="space-y-1">
-                                            <label className="block text-sm font-bold text-gray-700">Name</label>
+                                            <label className="block text-sm font-bold text-foreground">Name</label>
                                             <div className="relative">
-                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                                                 <input
                                                     type="text"
                                                     value={formData.name}
                                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-muted border border-input rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card transition-all"
                                                     placeholder="Enter full name"
                                                     required
                                                 />
@@ -478,14 +478,14 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="block text-sm font-bold text-gray-700">Email</label>
+                                            <label className="block text-sm font-bold text-foreground">Email</label>
                                             <div className="relative">
-                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                                                 <input
                                                     type="email"
                                                     value={formData.email}
                                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-muted border border-input rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card transition-all"
                                                     placeholder="Enter email address"
                                                     required
                                                 />
@@ -493,13 +493,13 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="block text-sm font-bold text-gray-700">Role</label>
+                                            <label className="block text-sm font-bold text-foreground">Role</label>
                                             <div className="relative">
-                                                <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                                <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                                                 <select
                                                     value={formData.role}
                                                     onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
-                                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all appearance-none"
+                                                    className="w-full pl-10 pr-4 py-2.5 bg-muted border border-input rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card transition-all appearance-none"
                                                     required
                                                 >
                                                     {ROLES.map(role => (
@@ -515,16 +515,16 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
 
                                 {(modalMode === 'create' || modalMode === 'password') && (
                                     <div className="space-y-1">
-                                        <label className="block text-sm font-bold text-gray-700">
+                                        <label className="block text-sm font-bold text-foreground">
                                             {modalMode === 'password' ? 'New Password' : 'Password'}
                                         </label>
                                         <div className="relative">
-                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                                             <input
                                                 type={showPassword ? 'text' : 'password'}
                                                 value={formData.password}
                                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                className="w-full pl-10 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                                                className="w-full pl-10 pr-12 py-2.5 bg-muted border border-input rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card transition-all"
                                                 placeholder="Min. 6 characters"
                                                 required={modalMode === 'create' || modalMode === 'password'}
                                                 minLength={6}
@@ -532,7 +532,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                             >
                                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
@@ -542,22 +542,22 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
 
                                 {modalMode === 'edit' && (
                                     <div className="space-y-1">
-                                        <label className="block text-sm font-bold text-gray-700">
-                                            New Password <span className="text-gray-400 font-normal">(leave blank to keep current)</span>
+                                        <label className="block text-sm font-bold text-foreground">
+                                            New Password <span className="text-muted-foreground font-normal">(leave blank to keep current)</span>
                                         </label>
                                         <div className="relative">
-                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                                             <input
                                                 type={showPassword ? 'text' : 'password'}
                                                 value={formData.password}
                                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                className="w-full pl-10 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                                                className="w-full pl-10 pr-12 py-2.5 bg-muted border border-input rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-card transition-all"
                                                 placeholder="Min. 6 characters"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                             >
                                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
@@ -566,8 +566,8 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                 )}
 
                                 {modalMode === 'password' && selectedUser && (
-                                    <p className="text-sm text-gray-500">
-                                        Resetting password for <span className="text-gray-900 font-bold">{selectedUser.name}</span>
+                                    <p className="text-sm text-muted-foreground">
+                                        Resetting password for <span className="text-foreground font-bold">{selectedUser.name}</span>
                                     </p>
                                 )}
 
@@ -575,7 +575,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                     <button
                                         type="button"
                                         onClick={() => setShowModal(false)}
-                                        className="flex-1 px-4 py-2.5 bg-gray-100 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                        className="flex-1 px-4 py-2.5 bg-muted border border-input text-foreground font-bold rounded-xl hover:bg-muted/80 transition-colors"
                                     >
                                         Cancel
                                     </button>
@@ -584,7 +584,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                         disabled={isLoading}
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 disabled:opacity-50 transition-all"
+                                        className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 disabled:opacity-50 transition-all"
                                     >
                                         {isLoading ? (
                                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
