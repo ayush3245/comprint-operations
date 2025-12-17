@@ -18,7 +18,7 @@ This document outlines completed features, known issues, and planned enhancement
 
 ### 1.2 Authentication & Authorization
 - [x] Cookie-based authentication system
-- [x] Role-based access control (8 roles)
+- [x] Role-based access control (11 roles including specialized technicians)
 - [x] SUPERADMIN bypass for all permissions
 - [x] Protected route middleware
 - [x] User management (CRUD for admins)
@@ -48,7 +48,7 @@ This document outlines completed features, known issues, and planned enhancement
 - [x] Issue spares to devices
 - [x] Automatic status update after spares issued
 
-### 1.6 Repair Station
+### 1.6 L2 Repair Station
 - [x] View repair queue (assigned + unassigned)
 - [x] Start repair with TAT tracking (5-day SLA)
 - [x] Maximum 10 concurrent jobs per engineer
@@ -56,6 +56,8 @@ This document outlines completed features, known issues, and planned enhancement
 - [x] QC rework indicator with context
 - [x] Collect from paint functionality
 - [x] TAT overdue highlighting
+- [x] Send to parallel work streams (L3, Display, Battery, Paint)
+- [x] Collect from parallel work streams when ready
 
 ### 1.7 Paint Shop
 - [x] View panels awaiting paint
@@ -88,6 +90,22 @@ This document outlines completed features, known issues, and planned enhancement
 - [x] Details display in confirmation popups (barcode, device info, status)
 - [x] Page transitions with Framer Motion
 - [x] Confetti effect on significant completions
+- [x] Dark mode / light mode support with system preference detection
+- [x] ThemeProvider component for theme state management
+- [x] ThemeToggle component in sidebar for manual theme switching
+- [x] Semantic CSS utility classes (text-foreground, bg-card, border-default, etc.)
+- [x] CSS custom properties for theme colors
+- [x] GlassCard UI component with glass-morphism effect
+
+### 1.12 L2/L3 Parallel Work System
+- [x] L2 Repair Station with device assignment and queue management
+- [x] L3 Repair queue for complex repairs (motherboard, BIOS lock, domain lock, power issues)
+- [x] Display Repair queue for screen/display component repairs
+- [x] Battery Boost station for battery reconditioning
+- [x] Parallel work coordination from L2 station
+- [x] Self-complete options for L2 engineers handling specialist tasks
+- [x] Status indicators for parallel work streams
+- [x] New user roles: L2_ENGINEER, L3_ENGINEER, DISPLAY_TECHNICIAN, BATTERY_TECHNICIAN
 
 ---
 
@@ -584,6 +602,8 @@ This document outlines completed features, known issues, and planned enhancement
 | 1.1.0 | 2025-12 | Added device categories (Server, Monitor, Storage, NIC) with dynamic form fields |
 | 1.1.1 | 2025-12 | Replaced toast notifications with dismissible confirmation popups for all workflow actions |
 | 1.1.2 | 2025-12 | Updated to Next.js 16, Prisma 7.0, added comprehensive documentation |
+| 1.2.0 | 2025-12 | L2/L3 parallel work system with specialized roles (L2_ENGINEER, L3_ENGINEER, DISPLAY_TECHNICIAN, BATTERY_TECHNICIAN) |
+| 1.2.1 | 2025-12 | Dark mode / light mode UI overhaul with ThemeProvider, semantic CSS classes, and full component theme support |
 
 ---
 

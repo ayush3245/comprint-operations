@@ -38,9 +38,14 @@ The application supports two primary business operations:
 | **MIS_WAREHOUSE_EXECUTIVE** | Handles inward receiving and batch creation | Inward, Inventory |
 | **WAREHOUSE_MANAGER** | Manages inventory and stock movements | Inventory, Reports, Outward |
 | **INSPECTION_ENGINEER** | Performs initial device inspection | Inspection module |
-| **REPAIR_ENGINEER** | Performs device repairs | Repair station |
+| **L2_ENGINEER** | L2 Repair Engineer - coordinates repair workflow | L2 Repair, parallel work coordination |
+| **L3_ENGINEER** | L3 Repair Specialist - handles complex repairs | L3 Repair (motherboard, BIOS, domain locks) |
+| **DISPLAY_TECHNICIAN** | Handles display/screen repairs | Display Repair queue |
+| **BATTERY_TECHNICIAN** | Handles battery reconditioning/boosting | Battery Boost queue |
 | **PAINT_SHOP_TECHNICIAN** | Handles cosmetic painting of panels | Paint shop |
 | **QC_ENGINEER** | Performs quality control checks | QC module |
+
+**Note:** `REPAIR_ENGINEER` is now deprecated in favor of the more specific L2/L3 engineer roles.
 
 ### 2.2 User Personas
 
@@ -57,12 +62,32 @@ The application supports two primary business operations:
 - Identifies required spare parts
 - Routes device to appropriate workflow
 
-**Repair Engineer (Suresh)**
+**L2 Repair Engineer (Suresh)**
 - Views queue of devices ready for repair
-- Starts work on devices (max 10 concurrent)
-- Records repair actions and notes
-- Handles QC rework items with context
-- Collects devices from paint shop when ready
+- Coordinates parallel work streams (display, battery, L3, paint)
+- Claims devices from available queue
+- Sends devices to specialists when needed
+- Collects devices from parallel work streams when ready
+- Sends completed devices to QC
+- Handles QC rework items with full context
+
+**L3 Repair Specialist (Vikram)**
+- Handles complex technical repairs
+- Specializes in motherboard issues, BIOS locks, domain locks
+- Receives devices from L2 engineers
+- Returns repaired devices to L2 for final assembly
+
+**Display Technician (Amit)**
+- Repairs screens and display components
+- Views display repair queue
+- Updates repair status and completion notes
+- Can self-complete repairs done by L2 engineers
+
+**Battery Technician (Priya)**
+- Handles battery reconditioning and boosting
+- Records initial and final capacity percentages
+- Targets 80%+ capacity for QC pass
+- Can self-complete if L2 handles the boost
 
 **Paint Shop Technician (Amit)**
 - Views panels awaiting painting
@@ -107,33 +132,59 @@ The application supports two primary business operations:
 
 **US-011**: As a Warehouse Manager, I want to mark spares as issued to a device, so that it can proceed to repair.
 
-### 3.4 Repair Station
+### 3.4 L2 Repair Station
 
-**US-012**: As a Repair Engineer, I want to see all devices in my repair queue, so that I know what work is pending.
+**US-012**: As an L2 Engineer, I want to see my assigned devices and available devices in separate tabs, so that I can manage my workload.
 
-**US-013**: As a Repair Engineer, I want to start working on a device with automatic TAT tracking, so that turnaround times are monitored.
+**US-013**: As an L2 Engineer, I want to claim devices from the available queue, so that I can start working on them.
 
-**US-014**: As a Repair Engineer, I want to record repair notes when completing work, so that there is documentation of work done.
+**US-014**: As an L2 Engineer, I want to see inspection summary with failed checklist items, so that I know what needs repair.
 
-**US-015**: As a Repair Engineer, I want to see QC failure remarks when a device returns for rework, so that I know exactly what needs fixing.
+**US-015**: As an L2 Engineer, I want to send devices to parallel work streams (Display, Battery, L3, Paint), so that specialized work happens concurrently.
 
-**US-016**: As a Repair Engineer, I want to collect devices from paint shop when panels are ready, so that I can complete the repair workflow.
+**US-016**: As an L2 Engineer, I want to see status indicators for all parallel work streams, so that I know when work is complete.
 
-### 3.5 Paint Shop
+**US-017**: As an L2 Engineer, I want to collect devices from parallel work streams when ready, so that I can proceed to QC.
 
-**US-017**: As a Paint Shop Technician, I want to see all panels awaiting painting, so that I know what work is pending.
+**US-018**: As an L2 Engineer, I want to see QC failure remarks when a device returns for rework, so that I know exactly what needs fixing.
 
-**US-018**: As a Paint Shop Technician, I want to update panel status through painting stages (Awaiting -> In Paint -> Ready for Collection), so that progress is tracked.
+### 3.5 L3 Repair Station
 
-**US-019**: As a Paint Shop Technician, I want panels to only appear after repair is completed (if repair was required), so that workflow sequence is maintained.
+**US-019**: As an L3 Engineer, I want to see a queue of complex repair jobs (motherboard, BIOS lock, domain lock, power issues), so that I can prioritize my work.
 
-### 3.6 Quality Control
+**US-020**: As an L3 Engineer, I want to start and complete repairs with resolution notes, so that L2 engineers know what was done.
 
-**US-020**: As a QC Engineer, I want to scan a device barcode to start QC inspection, so that I can quickly access the device record.
+### 3.6 Display Repair
 
-**US-021**: As a QC Engineer, I want to use a detailed checklist to verify functional and cosmetic aspects, so that inspection is consistent.
+**US-021**: As a Display Technician, I want to see pending and in-progress display repair jobs, so that I can manage the queue.
 
-**US-021a**: QC Checklist must include:
+**US-022**: As a Display Technician, I want to mark repairs complete with notes, so that the device can return to L2.
+
+**US-023**: As an L2 Engineer, I want the option to self-complete display repairs I did myself, so that I don't need to wait for the display queue.
+
+### 3.7 Battery Boost
+
+**US-024**: As a Battery Technician, I want to see pending battery boost jobs with initial capacity readings, so that I know the starting condition.
+
+**US-025**: As a Battery Technician, I want to record final capacity after boosting, so that QC can verify battery health.
+
+**US-026**: As an L2 Engineer, I want the option to self-complete battery boosts I did myself, so that I don't need to wait for the battery queue.
+
+### 3.8 Paint Shop
+
+**US-027**: As a Paint Shop Technician, I want to see all panels awaiting painting, so that I know what work is pending.
+
+**US-028**: As a Paint Shop Technician, I want to update panel status through painting stages (Awaiting -> In Paint -> Ready for Collection), so that progress is tracked.
+
+**US-029**: As a Paint Shop Technician, I want panels to only appear after repair is completed (if repair was required), so that workflow sequence is maintained.
+
+### 3.9 Quality Control
+
+**US-030**: As a QC Engineer, I want to scan a device barcode to start QC inspection, so that I can quickly access the device record.
+
+**US-031**: As a QC Engineer, I want to use a detailed checklist to verify functional and cosmetic aspects, so that inspection is consistent.
+
+**US-032**: QC Checklist must include:
 - Power-on & boot sequence
 - Display quality (dead pixels, backlight, brightness)
 - Keyboard functionality (all keys)
@@ -145,73 +196,73 @@ The application supports two primary business operations:
 - Stress test results
 - Cosmetic condition (panels, paint finish, logo, stickers)
 
-**US-022**: As a QC Engineer, I want to assign a grade (A or B only) to passed devices, so that quality is documented with a strict 2-option grading system.
+**US-033**: As a QC Engineer, I want to assign a grade (A or B only) to passed devices, so that quality is documented with a strict 2-option grading system.
 
-**US-023**: As a QC Engineer, I want to fail devices with detailed remarks, so that repair engineers know what needs rework.
+**US-034**: As a QC Engineer, I want to fail devices with detailed remarks, so that repair engineers know what needs rework.
 
-**US-023a**: As a QC Engineer, I want to attach photos, screenshots, or PDF reports to the QC record, so that there is visual evidence.
+**US-035**: As a QC Engineer, I want to attach photos, screenshots, or PDF reports to the QC record, so that there is visual evidence.
 
-**US-023b**: As a QC Engineer, I want the QC record to capture the inspection engineer name and repair engineer name from the workflow, so that the final report shows who did what.
+**US-036**: As a QC Engineer, I want the QC record to capture the inspection engineer name and repair engineer name from the workflow, so that the final report shows who did what.
 
-### 3.7 Inventory Management
+### 3.10 Inventory Management
 
-**US-024**: As a Warehouse Manager, I want to view all devices in the warehouse with their current status, so that I have visibility of inventory.
+**US-037**: As a Warehouse Manager, I want to view all devices in the warehouse with their current status, so that I have visibility of inventory.
 
-**US-025**: As a Warehouse Manager, I want to filter devices by status, category, grade, ownership type, and location, so that I can find specific devices.
+**US-038**: As a Warehouse Manager, I want to filter devices by status, category, grade, ownership type, and location, so that I can find specific devices.
 
-**US-026**: As a Warehouse Manager, I want to search devices by barcode, serial number, customer, PO/Invoice, or email reference ID, so that I can quickly locate specific items.
+**US-039**: As a Warehouse Manager, I want to search devices by barcode, serial number, customer, PO/Invoice, or email reference ID, so that I can quickly locate specific items.
 
-**US-027**: As a Warehouse Manager, I want to filter devices by age in process, so that I can identify stalled items.
+**US-040**: As a Warehouse Manager, I want to filter devices by age in process, so that I can identify stalled items.
 
-### 3.8 Outward - Sales Dispatch
+### 3.11 Outward - Sales Dispatch
 
-**US-028**: As a Warehouse Manager, I want to create a Sales Outward record with customer and invoice details, so that dispatch is documented.
+**US-041**: As a Warehouse Manager, I want to create a Sales Outward record with customer and invoice details, so that dispatch is documented.
 
-**US-029**: As a Warehouse Manager, I want to select multiple devices from inventory for a single outward, so that bulk dispatches are efficient.
+**US-042**: As a Warehouse Manager, I want to select multiple devices from inventory for a single outward, so that bulk dispatches are efficient.
 
-**US-030**: As a Warehouse Manager, I want to capture shipping details (carrier, tracking, address), so that shipments can be tracked.
+**US-043**: As a Warehouse Manager, I want to capture shipping details (carrier, tracking, address), so that shipments can be tracked.
 
-**US-031**: As a Warehouse Manager, I want to record who packed the order and who verified it, so that there is accountability.
+**US-044**: As a Warehouse Manager, I want to record who packed the order and who verified it, so that there is accountability.
 
-**US-032**: As a Warehouse Manager, I want device status to automatically update to STOCK_OUT_SOLD after dispatch, so that inventory is accurate.
+**US-045**: As a Warehouse Manager, I want device status to automatically update to STOCK_OUT_SOLD after dispatch, so that inventory is accurate.
 
-### 3.9 Outward - Rental Dispatch
+### 3.12 Outward - Rental Dispatch
 
-**US-033**: As a Warehouse Manager, I want to create a Rental Outward record with customer and rental reference, so that rental dispatches are tracked.
+**US-046**: As a Warehouse Manager, I want to create a Rental Outward record with customer and rental reference, so that rental dispatches are tracked.
 
-**US-034**: As a Warehouse Manager, I want device status to automatically update to STOCK_OUT_RENTAL after dispatch, so that inventory reflects rental assets.
+**US-047**: As a Warehouse Manager, I want device status to automatically update to STOCK_OUT_RENTAL after dispatch, so that inventory reflects rental assets.
 
-**US-035**: As a Warehouse Manager, I want all outward movements logged in the stock ledger, so that there is a complete audit trail.
+**US-048**: As a Warehouse Manager, I want all outward movements logged in the stock ledger, so that there is a complete audit trail.
 
-### 3.10 Rental Returns Reporting
+### 3.13 Rental Returns Reporting
 
-**US-036**: As a Warehouse Manager, I want to view all rental return batches for a given date range, so that I can track returns.
+**US-049**: As a Warehouse Manager, I want to view all rental return batches for a given date range, so that I can track returns.
 
-**US-037**: As a Warehouse Manager, I want to filter rental returns by customer, so that I can see all returns from a specific client.
+**US-050**: As a Warehouse Manager, I want to filter rental returns by customer, so that I can see all returns from a specific client.
 
-**US-038**: As a Warehouse Manager, I want to filter rental returns by email reference ID, so that I can answer "Show me all inventory returned on this email chain."
+**US-051**: As a Warehouse Manager, I want to filter rental returns by email reference ID, so that I can answer "Show me all inventory returned on this email chain."
 
-**US-039**: As a Warehouse Manager, I want to see device statuses (Pending Inspection, Under Repair, Ready for Stock, Scrapped) for returned devices, so that I can track progress.
+**US-052**: As a Warehouse Manager, I want to see device statuses (Pending Inspection, Under Repair, Ready for Stock, Scrapped) for returned devices, so that I can track progress.
 
-**US-040**: As a Warehouse Manager, I want to export rental return reports to Excel/CSV, so that I can share with stakeholders.
+**US-053**: As a Warehouse Manager, I want to export rental return reports to Excel/CSV, so that I can share with stakeholders.
 
-### 3.11 Dashboard & KPIs
+### 3.14 Dashboard & KPIs
 
-**US-041**: As a Manager, I want to see devices grouped by workflow stage, so that I have operational visibility.
+**US-054**: As a Manager, I want to see devices grouped by workflow stage, so that I have operational visibility.
 
-**US-042**: As a Manager, I want to see TAT breach count (repairs exceeding 5 days), so that I can address delays.
+**US-055**: As a Manager, I want to see TAT breach count (repairs exceeding 5 days), so that I can address delays.
 
-**US-043**: As a Manager, I want to see QC pass/fail rates by engineer and by batch, so that I can identify quality trends.
+**US-056**: As a Manager, I want to see QC pass/fail rates by engineer and by batch, so that I can identify quality trends.
 
-**US-044**: As a Manager, I want to see stock snapshot by grade (A/B), category, and location, so that I know available inventory.
+**US-057**: As a Manager, I want to see stock snapshot by grade (A/B), category, and location, so that I know available inventory.
 
-### 3.12 Administration
+### 3.15 Administration
 
-**US-045**: As an Admin, I want to manage user accounts (create, edit, activate/deactivate), so that system access is controlled.
+**US-058**: As an Admin, I want to manage user accounts (create, edit, activate/deactivate), so that system access is controlled.
 
-**US-046**: As an Admin, I want to assign roles to users, so that they have appropriate access levels.
+**US-059**: As an Admin, I want to assign roles to users, so that they have appropriate access levels.
 
-**US-047**: As an Admin, I want to configure repair stations, so that workload can be distributed.
+**US-060**: As an Admin, I want to configure repair stations, so that workload can be distributed.
 
 ---
 
@@ -496,6 +547,8 @@ The application supports two primary business operations:
 - Mobile-responsive design
 - Clear visual indicators for device status
 - Consistent color coding for statuses
+- Dark mode and light mode support with system preference detection
+- Theme toggle accessible from all pages
 
 ### 7.4 Reliability
 - Activity logging for audit trail
@@ -517,3 +570,8 @@ The application supports two primary business operations:
 | **Spares** | Replacement parts required for repair |
 | **Device Category** | Type of IT asset: LAPTOP, DESKTOP, WORKSTATION, SERVER, MONITOR, STORAGE, NETWORKING_CARD |
 | **Confirmation Popup** | Dismissible modal notification confirming user actions with relevant details |
+| **L2 Repair** | Standard repair tasks coordinated by L2 Engineers |
+| **L3 Repair** | Complex technical repairs (motherboard, BIOS lock, domain lock, power issues) |
+| **Parallel Work** | Work streams (Display, Battery, L3, Paint) that can happen concurrently, coordinated by L2 Engineer |
+| **Battery Boost** | Process of reconditioning battery to achieve 80%+ capacity |
+| **Display Repair** | Screen/display component repairs handled by Display Technicians |

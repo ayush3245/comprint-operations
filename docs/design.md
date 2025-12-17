@@ -209,7 +209,10 @@ comprint-operations/
 │   │   │   ├── page.tsx       # Scanner interface
 │   │   │   └── [barcode]/     # Inspection form
 │   │   ├── spares/            # Spare parts management
-│   │   ├── repair/            # Repair station
+│   │   ├── repair/            # L2 Repair station
+│   │   ├── l3-repair/         # L3 Repair (complex issues)
+│   │   ├── display-repair/    # Display/screen repairs
+│   │   ├── battery/           # Battery boost station
 │   │   ├── paint/             # Paint shop
 │   │   ├── qc/                # Quality control
 │   │   │   ├── page.tsx       # Scanner interface
@@ -225,8 +228,11 @@ comprint-operations/
 │   │   ├── BarcodePrintButton.tsx   # Print labels
 │   │   ├── DynamicDeviceForm.tsx    # Category-aware device form
 │   │   ├── Providers.tsx            # Toast/popup context provider
+│   │   ├── ThemeProvider.tsx        # Dark/light mode provider
+│   │   ├── ThemeToggle.tsx          # Theme switcher component
 │   │   └── ui/
-│   │       └── Toast.tsx            # Confirmation popup component
+│   │       ├── Toast.tsx            # Confirmation popup component
+│   │       └── GlassCard.tsx        # Animated glass-morphism card
 │   └── lib/
 │       ├── actions.ts         # Server actions
 │       ├── auth.ts            # Authentication
@@ -245,7 +251,10 @@ comprint-operations/
 | `/inward/*` | MIS_WAREHOUSE_EXECUTIVE, WAREHOUSE_MANAGER, ADMIN |
 | `/inspection/*` | INSPECTION_ENGINEER, ADMIN |
 | `/spares` | WAREHOUSE_MANAGER, ADMIN |
-| `/repair` | REPAIR_ENGINEER, ADMIN |
+| `/repair` | L2_ENGINEER, ADMIN |
+| `/l3-repair` | L3_ENGINEER, ADMIN |
+| `/display-repair` | DISPLAY_TECHNICIAN, ADMIN |
+| `/battery` | BATTERY_TECHNICIAN, ADMIN |
 | `/paint` | PAINT_SHOP_TECHNICIAN, ADMIN |
 | `/qc/*` | QC_ENGINEER, ADMIN |
 | `/inventory` | WAREHOUSE_MANAGER, ADMIN |
@@ -253,7 +262,7 @@ comprint-operations/
 | `/reports/*` | WAREHOUSE_MANAGER, ADMIN |
 | `/admin/*` | ADMIN |
 
-*Note: SUPERADMIN has access to all routes*
+*Note: SUPERADMIN has access to all routes. REPAIR_ENGINEER is deprecated in favor of L2_ENGINEER.*
 
 ---
 
@@ -625,7 +634,50 @@ interface QCAttachments {
 
 ## 6. Component Architecture
 
-### 6.1 Sidebar Component
+### 6.1 Theme System
+
+**ThemeProvider:** `src/components/ThemeProvider.tsx`
+
+The application supports light and dark mode with system preference detection.
+
+**CSS Custom Properties:** `src/app/globals.css`
+
+```css
+:root {
+  /* Light mode defaults */
+  --color-foreground: theme(colors.slate.900);
+  --color-muted-foreground: theme(colors.slate.600);
+  --color-background: theme(colors.slate.50);
+  --color-card: theme(colors.white);
+  --color-muted: theme(colors.slate.100);
+  --color-border: theme(colors.slate.200);
+  --shadow-soft: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  --color-foreground: theme(colors.slate.100);
+  --color-muted-foreground: theme(colors.slate.400);
+  --color-background: theme(colors.slate.950);
+  --color-card: theme(colors.slate.900);
+  --color-muted: theme(colors.slate.800);
+  --color-border: theme(colors.slate.700);
+  --shadow-soft: 0 2px 8px -2px rgba(0, 0, 0, 0.3);
+}
+```
+
+**Semantic Utility Classes:**
+- `text-foreground` - Primary text color
+- `text-muted-foreground` - Secondary/muted text
+- `bg-card` - Card backgrounds
+- `bg-muted` - Muted backgrounds
+- `border-default` - Standard borders
+- `shadow-soft` - Subtle elevation
+
+**ThemeToggle:** `src/components/ThemeToggle.tsx`
+
+Provides a toggle button in the sidebar for switching between light/dark modes.
+
+### 6.2 Sidebar Component
 
 **Location:** `src/components/Sidebar.tsx`
 
@@ -634,23 +686,27 @@ interface QCAttachments {
 - Active route highlighting
 - Collapsible menu sections
 - User info display
+- Theme toggle integration
 - Logout functionality
 
 **Role-based Menu Items:**
 ```typescript
 const menuConfig = {
   SUPERADMIN: [/* all items */],
-  ADMIN: ['dashboard', 'inward', 'inspection', 'spares', 'repair', 'paint', 'qc', 'inventory', 'admin'],
+  ADMIN: ['dashboard', 'inward', 'inspection', 'spares', 'repair', 'l3-repair', 'display-repair', 'battery', 'paint', 'qc', 'inventory', 'admin'],
   MIS_WAREHOUSE_EXECUTIVE: ['dashboard', 'inward', 'inventory'],
   WAREHOUSE_MANAGER: ['dashboard', 'inward', 'spares', 'inventory', 'reports'],
   INSPECTION_ENGINEER: ['dashboard', 'inspection'],
-  REPAIR_ENGINEER: ['dashboard', 'repair'],
+  L2_ENGINEER: ['dashboard', 'repair'],
+  L3_ENGINEER: ['dashboard', 'l3-repair'],
+  DISPLAY_TECHNICIAN: ['dashboard', 'display-repair'],
+  BATTERY_TECHNICIAN: ['dashboard', 'battery'],
   PAINT_SHOP_TECHNICIAN: ['dashboard', 'paint'],
   QC_ENGINEER: ['dashboard', 'qc'],
 }
 ```
 
-### 6.2 BarcodeScanner Component
+### 6.3 BarcodeScanner Component
 
 **Location:** `src/components/BarcodeScanner.tsx`
 
@@ -668,7 +724,7 @@ interface BarcodeScannerProps {
 }
 ```
 
-### 6.3 BarcodePrintButton Component
+### 6.4 BarcodePrintButton Component
 
 **Location:** `src/components/BarcodePrintButton.tsx`
 
