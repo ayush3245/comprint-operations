@@ -69,7 +69,7 @@ export default function BarcodePrintButton({
     return (
       <button
         onClick={handlePrint}
-        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+        className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
         title="Print Barcode Label"
       >
         <Printer size={18} />
@@ -77,10 +77,10 @@ export default function BarcodePrintButton({
     )
   }
 
-  const baseClasses = "flex items-center gap-2 px-4 py-2 rounded-md font-medium"
+  const baseClasses = "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors"
   const variantClasses = variant === 'primary'
-    ? "bg-blue-600 text-white hover:bg-blue-700"
-    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+    : "bg-card text-foreground border border-default hover:bg-muted"
 
   return (
     <div className="flex gap-2">
@@ -93,7 +93,7 @@ export default function BarcodePrintButton({
       </button>
       <button
         onClick={handleDownload}
-        className="px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md text-sm"
+        className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg text-sm transition-colors"
         title="Download PDF"
       >
         Download

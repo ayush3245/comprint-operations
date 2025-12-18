@@ -637,7 +637,7 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 gap-8">
-                <GlassCard className="p-8" gradient>
+                <GlassCard className="p-8">
                     <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                         <div className="w-2 h-8 bg-purple-500 rounded-full" />
                         Quick Actions

@@ -52,3 +52,5 @@ nul
 # Serena MCP cache (local only)
 .serena/cache/
 changes/
+
+nexus-wms/

@@ -16,6 +16,27 @@ export function formatDate(date: Date | string) {
 }
 
 /**
+ * Format a date as relative time (e.g., "2 hours ago", "yesterday")
+ */
+export function formatRelativeTime(date: Date | string): string {
+    const now = new Date()
+    const target = new Date(date)
+    const diffMs = now.getTime() - target.getTime()
+    const diffSecs = Math.floor(diffMs / 1000)
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffSecs < 60) return 'just now'
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+    if (diffDays === 1) return 'yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`
+    return formatDate(date)
+}
+
+/**
  * Parsed reported issues structure
  */
 export interface ParsedIssues {

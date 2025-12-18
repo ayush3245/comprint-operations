@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { useToast } from '@/components/ui/Toast'
 import {
     Wrench, Monitor, Battery, Cpu, Paintbrush, CheckCircle,
     Download, Send, Play, ChevronDown, ChevronUp, AlertCircle,
-    Package, FileText, User
+    Package, FileText, User, AlertTriangle, RotateCcw
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { L3IssueType } from '@prisma/client'
 import ReportedIssuesDisplay from '@/components/ReportedIssuesDisplay'
 
@@ -244,7 +246,18 @@ export default function L2RepairClient({
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <h1 className="text-xl md:text-2xl font-bold text-foreground">L2 Repair Coordination</h1>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-xl md:text-2xl font-bold text-foreground">L2 Repair Coordination</h1>
+                    {/* Capacity Indicator Badge */}
+                    <span className={cn(
+                        "px-3 py-1 rounded-full text-sm font-medium",
+                        assignedDevices.length >= 10
+                            ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
+                            : "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
+                    )}>
+                        {assignedDevices.length} / 10 active
+                    </span>
+                </div>
                 <span className="text-sm text-muted-foreground">Engineer: {userName}</span>
             </div>
 
@@ -661,7 +674,15 @@ export default function L2RepairClient({
 
             {/* Available Devices */}
             {activeTab === 'available' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <motion.div
+                    initial="hidden"
+                    animate="show"
+                    variants={{
+                        hidden: { opacity: 0 },
+                        show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+                    }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
                     {availableDevices.length === 0 ? (
                         <div className="col-span-full text-center py-10 text-muted-foreground">
                             No devices available for claiming.
@@ -672,7 +693,14 @@ export default function L2RepairClient({
                             const failedItems = device.inspectionChecklist.filter(i => i.status === 'FAIL')
 
                             return (
-                                <div key={device.id} className="bg-card rounded-lg shadow-soft p-4 border border-default border-t-4 border-t-blue-500">
+                                <motion.div
+                                    key={device.id}
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20 },
+                                        show: { opacity: 1, y: 0 }
+                                    }}
+                                    className="bg-card rounded-lg shadow-soft p-4 border border-default border-t-4 border-t-blue-500"
+                                >
                                     <div className="mb-4">
                                         <h3 className="font-bold text-lg text-foreground">{device.barcode}</h3>
                                         <p className="text-sm text-muted-foreground">
@@ -711,16 +739,24 @@ export default function L2RepairClient({
                                         <Play size={16} />
                                         {isPending ? 'Claiming...' : 'Claim Device'}
                                     </button>
-                                </div>
+                                </motion.div>
                             )
                         })
                     )}
-                </div>
+                </motion.div>
             )}
 
             {/* Completed Devices */}
             {activeTab === 'completed' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <motion.div
+                    initial="hidden"
+                    animate="show"
+                    variants={{
+                        hidden: { opacity: 0 },
+                        show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+                    }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
                     {completedDevices.length === 0 ? (
                         <div className="col-span-full text-center py-10 text-muted-foreground">
                             No completed devices yet.
@@ -731,7 +767,14 @@ export default function L2RepairClient({
                             const qcRecord = device.qcRecords[0]
 
                             return (
-                                <div key={device.id} className="bg-card rounded-lg shadow-soft p-4 border border-default border-t-4 border-t-green-500">
+                                <motion.div
+                                    key={device.id}
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20 },
+                                        show: { opacity: 1, y: 0 }
+                                    }}
+                                    className="bg-card rounded-lg shadow-soft p-4 border border-default border-t-4 border-t-green-500"
+                                >
                                     <div className="mb-3">
                                         <h3 className="font-bold text-lg text-foreground">{device.barcode}</h3>
                                         <p className="text-sm text-muted-foreground">
@@ -786,11 +829,11 @@ export default function L2RepairClient({
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                </motion.div>
                             )
                         })
                     )}
-                </div>
+                </motion.div>
             )}
 
             {/* Spares Request Modal */}

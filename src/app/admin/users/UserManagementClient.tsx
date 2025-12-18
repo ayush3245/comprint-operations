@@ -309,7 +309,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
             {/* Users Table */}
             <GlassCard className="overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full bg-white">
+                    <table className="w-full bg-card">
                         <thead>
                             <tr className="border-b border-default bg-muted">
                                 <th className="px-6 py-5 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">User</th>

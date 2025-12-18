@@ -462,3 +462,82 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ========================================
+   MOBILE OPTIMIZATIONS
+   ======================================== */
+
+/* Touch target optimization - minimum 44px for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-target {
+    min-height: 44px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* Ensure adequate spacing between touch targets */
+  nav a,
+  nav button {
+    margin-bottom: 4px;
+  }
+}
+
+/* iOS zoom prevention - use 16px minimum font size on inputs */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Remove default iOS styling */
+input,
+select,
+textarea,
+button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Safe area support for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Prevent tap highlight on mobile */
+button,
+a,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling for touch devices */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Mobile-optimized scrollbars */
+@media (max-width: 768px) {
+  *::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}

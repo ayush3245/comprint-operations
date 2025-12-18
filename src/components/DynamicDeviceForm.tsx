@@ -134,16 +134,20 @@ export default function DynamicDeviceForm({ onSubmit, batchType }: DynamicDevice
     })
   }
 
+  const inputClasses = "w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors"
+  const selectClasses = "w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors"
+  const labelClasses = "block text-sm font-medium text-foreground mb-1"
+
   return (
     <form id="device-form" action={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+        <label className={labelClasses}>Category</label>
         <select
           name="category"
           required
           value={category}
           onChange={(e) => setCategory(e.target.value as DeviceCategory)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+          className={selectClasses}
         >
           {Object.entries(categoryConfig).map(([key, config]) => (
             <option key={key} value={key}>
@@ -154,12 +158,12 @@ export default function DynamicDeviceForm({ onSubmit, batchType }: DynamicDevice
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Brand *</label>
+        <label className={labelClasses}>Brand *</label>
         <input
           type="text"
           name="brand"
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          className={inputClasses}
           placeholder={category === 'SERVER' ? 'e.g. HPE, Dell, Lenovo' :
                        category === 'MONITOR' ? 'e.g. Dell, LG, Samsung' :
                        category === 'STORAGE' ? 'e.g. Seagate, Samsung, Micron' :
@@ -169,12 +173,12 @@ export default function DynamicDeviceForm({ onSubmit, batchType }: DynamicDevice
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Model *</label>
+        <label className={labelClasses}>Model *</label>
         <input
           type="text"
           name="model"
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          className={inputClasses}
           placeholder={category === 'SERVER' ? 'e.g. ProLiant DL380 Gen10' :
                        category === 'MONITOR' ? 'e.g. P2419H' :
                        category === 'STORAGE' ? 'e.g. 870 EVO' :
@@ -186,13 +190,13 @@ export default function DynamicDeviceForm({ onSubmit, batchType }: DynamicDevice
       {/* Dynamic fields based on category */}
       {currentConfig.fields.map((field) => (
         <div key={field.name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className={labelClasses}>
             {field.label} {field.required && '*'}
           </label>
           {field.type === 'select' && field.options ? (
             <select
               name={field.name}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+              className={selectClasses}
             >
               <option value="">{field.placeholder}</option>
               {field.options.map(opt => (
@@ -204,7 +208,7 @@ export default function DynamicDeviceForm({ onSubmit, batchType }: DynamicDevice
               type="text"
               name={field.name}
               required={field.required}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className={inputClasses}
               placeholder={field.placeholder}
             />
           )}
@@ -214,7 +218,7 @@ export default function DynamicDeviceForm({ onSubmit, batchType }: DynamicDevice
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:bg-blue-400"
+        className="w-full bg-primary text-primary-foreground py-2 rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground transition-colors"
       >
         {isPending ? 'Adding...' : 'Add Device'}
       </button>

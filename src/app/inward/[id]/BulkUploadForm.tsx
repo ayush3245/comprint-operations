@@ -310,20 +310,20 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 transition-colors"
       >
         <Upload size={18} />
         Bulk Upload
       </button>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-semibold">Bulk Upload Devices</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-default">
+            <div className="flex justify-between items-center p-6 border-b border-default">
+              <h2 className="text-xl font-semibold text-foreground">Bulk Upload Devices</h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X size={24} />
               </button>
@@ -331,17 +331,17 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
 
             <div className="p-6 space-y-6">
               {/* Download Template */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <Download className="text-blue-600 mt-1" size={20} />
+                  <Download className="text-blue-600 dark:text-blue-400 mt-1" size={20} />
                   <div className="flex-1">
-                    <h3 className="font-medium text-blue-900 mb-1">Step 1: Download Template</h3>
-                    <p className="text-sm text-blue-700 mb-3">
+                    <h3 className="font-medium text-blue-900 dark:text-blue-300 mb-1">Step 1: Download Template</h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-400 mb-3">
                       Download the Excel template, fill in your device details, and upload it back.
                     </p>
                     <button
                       onClick={downloadTemplate}
-                      className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                      className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                     >
                       Download Template
                     </button>
@@ -351,8 +351,8 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
 
               {/* Upload File */}
               <div className="space-y-3">
-                <h3 className="font-medium text-gray-900">Step 2: Upload Filled Template</h3>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <h3 className="font-medium text-foreground">Step 2: Upload Filled Template</h3>
+                <div className="border-2 border-dashed border-default rounded-lg p-6 text-center">
                   <input
                     type="file"
                     accept=".xlsx,.xls,.csv"
@@ -364,8 +364,8 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
                     htmlFor="file-upload"
                     className="cursor-pointer flex flex-col items-center gap-2"
                   >
-                    <Upload size={32} className="text-gray-400" />
-                    <span className="text-sm text-gray-600">
+                    <Upload size={32} className="text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
                       {file ? file.name : 'Click to select Excel file (.xlsx, .xls, .csv)'}
                     </span>
                   </label>
@@ -376,7 +376,7 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
               <button
                 onClick={handleUpload}
                 disabled={!file || uploading}
-                className="w-full bg-green-600 text-white py-3 rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-colors"
               >
                 {uploading ? 'Uploading...' : 'Upload Devices'}
               </button>
@@ -385,15 +385,15 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
               {result && (
                 <div className="space-y-4">
                   <div className="flex gap-4">
-                    <div className="flex-1 bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center gap-2 text-green-700">
+                    <div className="flex-1 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                         <CheckCircle size={20} />
                         <span className="font-medium">Success: {result.success}</span>
                       </div>
                     </div>
                     {result.failed > 0 && (
-                      <div className="flex-1 bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div className="flex items-center gap-2 text-red-700">
+                      <div className="flex-1 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
                           <AlertCircle size={20} />
                           <span className="font-medium">Failed: {result.failed}</span>
                         </div>
@@ -424,8 +424,8 @@ export default function BulkUploadForm({ batchId, onUpload }: BulkUploadFormProp
               )}
 
               {/* Instructions */}
-              <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-                <h4 className="font-medium text-gray-900 mb-2">Instructions:</h4>
+              <div className="bg-muted rounded-lg p-4 text-sm text-muted-foreground">
+                <h4 className="font-medium text-foreground mb-2">Instructions:</h4>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Valid categories: LAPTOP, DESKTOP, WORKSTATION, SERVER, MONITOR, STORAGE, NETWORKING_CARD</li>
                   <li>Brand and Model are required for all device types</li>

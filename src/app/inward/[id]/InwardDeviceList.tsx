@@ -248,69 +248,69 @@ export default function InwardDeviceList({ devices }: Props) {
             {/* Edit Modal */}
             {editingDevice && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-800">
+                    <div className="bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-default">
+                        <div className="px-6 py-4 border-b border-default flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-foreground">
                                 Edit Device: {editingDevice.barcode}
                             </h2>
                             <button
                                 onClick={closeEditModal}
-                                className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                                className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
                         <div className="p-6 space-y-4">
-                            <div className="text-sm text-gray-500 mb-4">
-                                Category: <span className="font-medium text-gray-700">{editingDevice.category.replace('_', ' ')}</span>
+                            <div className="text-sm text-muted-foreground mb-4">
+                                Category: <span className="font-medium text-foreground">{editingDevice.category.replace('_', ' ')}</span>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1">Brand</label>
                                     <input
                                         type="text"
                                         value={formData.brand || ''}
                                         onChange={(e) => handleInputChange('brand', e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1">Model</label>
                                     <input
                                         type="text"
                                         value={formData.model || ''}
                                         onChange={(e) => handleInputChange('model', e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors"
                                     />
                                 </div>
                             </div>
 
                             {categoryFields[editingDevice.category]?.map((field) => (
                                 <div key={field.name}>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1">{field.label}</label>
                                     <input
                                         type="text"
                                         value={formData[field.name] || ''}
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors"
                                     />
                                 </div>
                             ))}
                         </div>
 
-                        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                        <div className="px-6 py-4 border-t border-default flex justify-end gap-3">
                             <button
                                 onClick={closeEditModal}
-                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                className="px-4 py-2 border border-default rounded-lg text-foreground hover:bg-muted transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSave}
                                 disabled={isPending}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2 transition-colors"
                             >
                                 {isPending && <Loader2 size={16} className="animate-spin" />}
                                 {isPending ? 'Saving...' : 'Save Changes'}

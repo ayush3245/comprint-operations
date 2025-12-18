@@ -19,12 +19,10 @@ export default function GlassCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             className={cn(
-                'relative overflow-hidden rounded-2xl shadow-soft backdrop-blur-xl',
+                'relative overflow-hidden rounded-2xl shadow-soft',
                 'border border-default',
-                // Light mode
-                gradient
-                    ? 'bg-gradient-to-br from-white/80 to-white/40 dark:from-slate-800/80 dark:to-slate-900/40'
-                    : 'bg-white/70 dark:bg-slate-800/70',
+                'bg-card text-card-foreground',
+                gradient && 'bg-gradient-to-br from-indigo-50/50 to-violet-50/50 dark:from-indigo-950/30 dark:to-violet-950/30',
                 className
             )}
             {...props}
