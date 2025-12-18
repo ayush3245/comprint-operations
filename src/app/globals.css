@@ -1,6 +1,9 @@
 /* Fonts loaded via next/font in layout.tsx for better performance */
 @import "tailwindcss";
 
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ========================================
    TAILWIND v4 THEME EXTENSIONS
    ======================================== */

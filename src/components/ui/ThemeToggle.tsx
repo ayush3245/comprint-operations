@@ -46,8 +46,9 @@ export default function ThemeToggle() {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'p-2 rounded-lg transition-all duration-200',
-          'text-slate-400 hover:text-white hover:bg-white/10',
-          'focus:outline-none focus:ring-2 focus:ring-indigo-500/50'
+          'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white',
+          'hover:bg-gray-100 dark:hover:bg-white/10',
+          'focus:outline-none focus:ring-2 focus:ring-blue-500/50'
         )}
         aria-label="Toggle theme"
         aria-expanded={isOpen}
@@ -60,7 +61,7 @@ export default function ThemeToggle() {
         <div
           className={cn(
             'absolute right-0 mt-2 w-36 py-1 z-50',
-            'bg-slate-800 border border-slate-700 rounded-lg shadow-xl',
+            'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl',
             'animate-scale-in origin-top-right'
           )}
           role="menu"
@@ -80,15 +81,15 @@ export default function ThemeToggle() {
                 className={cn(
                   'w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors',
                   isActive
-                    ? 'text-indigo-400 bg-indigo-500/10'
-                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
                 )}
                 role="menuitem"
               >
                 <Icon size={16} />
                 <span>{option.label}</span>
                 {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
                 )}
               </button>
             )
