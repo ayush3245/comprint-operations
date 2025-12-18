@@ -91,12 +91,12 @@ export default function Sidebar({ user }: SidebarProps) {
     // Shared sidebar content
     const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
         <>
-            {/* Logo Area - Nexus Style */}
-            <div className="h-16 md:h-20 flex items-center justify-between px-4 md:px-6 border-b border-white/10">
+            {/* Logo Area - Theme Aware */}
+            <div className="h-16 md:h-20 flex items-center justify-between px-4 md:px-6 border-b border-gray-200 dark:border-white/10">
                 <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
-                    <Box className="w-6 h-6 md:w-8 md:h-8 text-emerald-400 mr-2 md:mr-3" />
+                    <Box className="w-6 h-6 md:w-8 md:h-8 text-emerald-500 dark:text-emerald-400 mr-2 md:mr-3" />
                     <div className="text-left">
-                        <h1 className="font-brand font-bold text-lg md:text-xl tracking-tighter uppercase leading-none text-white">
+                        <h1 className="font-brand font-bold text-lg md:text-xl tracking-tighter uppercase leading-none text-gray-900 dark:text-white">
                             COMPRINT
                         </h1>
                         <span className="font-display text-[9px] md:text-[10px] text-gray-500 tracking-[0.15em] uppercase">
@@ -107,7 +107,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 {isMobile ? (
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                        className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-all"
                     >
                         <X size={20} />
                     </button>
@@ -118,7 +118,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 )}
             </div>
 
-            {/* Navigation - Nexus Style */}
+            {/* Navigation - Theme Aware */}
             <nav className="flex-1 py-3 md:py-4 px-2 md:px-3 space-y-1 overflow-y-auto">
                 {filteredLinks.map((link) => {
                     const Icon = link.icon
@@ -131,8 +131,8 @@ export default function Sidebar({ user }: SidebarProps) {
                             className={cn(
                                 "w-full flex items-center px-3 py-2 md:py-2.5 rounded-lg transition-all duration-200 group",
                                 isActive
-                                    ? "bg-white/10 text-white shadow-lg border border-white/20 backdrop-blur-sm"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5 hover:scale-[1.02] active:bg-white/10 active:scale-[0.98]"
+                                    ? "bg-blue-50 dark:bg-white/10 text-blue-600 dark:text-white shadow-sm border border-blue-100 dark:border-white/20"
+                                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 hover:scale-[1.02] active:scale-[0.98]"
                             )}
                         >
                             <Icon
@@ -140,8 +140,8 @@ export default function Sidebar({ user }: SidebarProps) {
                                 className={cn(
                                     "mr-2 md:mr-3 transition-colors",
                                     isActive
-                                        ? "text-blue-400"
-                                        : "text-gray-500 group-hover:text-white"
+                                        ? "text-blue-500 dark:text-blue-400"
+                                        : "text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-white"
                                 )}
                             />
                             <span className={cn("text-sm", isActive && "font-medium")}>
@@ -150,7 +150,7 @@ export default function Sidebar({ user }: SidebarProps) {
                             {isActive && (
                                 <motion.div
                                     layoutId={isMobile ? "activeIndicatorMobile" : "activeIndicator"}
-                                    className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]"
+                                    className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.8)]"
                                 />
                             )}
                         </Link>
@@ -158,20 +158,20 @@ export default function Sidebar({ user }: SidebarProps) {
                 })}
             </nav>
 
-            {/* User Section - Nexus Style */}
-            <div className="p-3 md:p-4 border-t border-white/10">
+            {/* User Section - Theme Aware */}
+            <div className="p-3 md:p-4 border-t border-gray-200 dark:border-white/10">
                 <div className="flex items-center mb-3 md:mb-4 px-2">
                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-blue-500 to-emerald-400 flex items-center justify-center font-brand font-bold text-xs md:text-sm text-white shadow-lg">
                         {getInitials(user.name)}
                     </div>
                     <div className="ml-2 md:ml-3 flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate text-white">{user.name}</p>
+                        <p className="text-sm font-medium truncate text-gray-900 dark:text-white">{user.name}</p>
                         <p className="text-xs text-gray-500 truncate">{user.role.replace(/_/g, ' ')}</p>
                     </div>
                 </div>
                 <button
                     onClick={() => logout()}
-                    className="w-full flex items-center justify-center px-3 md:px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 active:bg-red-500/30 transition-all text-sm font-medium border border-red-500/20 hover:border-red-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full flex items-center justify-center px-3 md:px-4 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-700 dark:hover:text-red-300 active:bg-red-200 dark:active:bg-red-500/30 transition-all text-sm font-medium border border-red-200 dark:border-red-500/20 hover:border-red-300 dark:hover:border-red-500/40 hover:scale-[1.02] active:scale-[0.98]"
                 >
                     <LogOut size={16} className="mr-2" />
                     Sign Out
@@ -182,17 +182,17 @@ export default function Sidebar({ user }: SidebarProps) {
 
     return (
         <>
-            {/* Mobile Header - Nexus Style */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0A0A0A] z-40 flex items-center justify-between px-4 border-b border-white/10 shadow-lg">
+            {/* Mobile Header - Theme Aware */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-[#0A0A0A] z-40 flex items-center justify-between px-4 border-b border-gray-200 dark:border-white/10 shadow-sm dark:shadow-lg">
                 <div className="flex items-center">
                     <button
                         onClick={() => setIsOpen(true)}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                        className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                     >
                         <Menu size={24} />
                     </button>
-                    <Box className="ml-3 w-6 h-6 text-emerald-400" />
-                    <span className="ml-2 text-lg font-brand font-bold text-white tracking-tight uppercase">
+                    <Box className="ml-3 w-6 h-6 text-emerald-500 dark:text-emerald-400" />
+                    <span className="ml-2 text-lg font-brand font-bold text-gray-900 dark:text-white tracking-tight uppercase">
                         COMPRINT
                     </span>
                 </div>
@@ -209,16 +209,16 @@ export default function Sidebar({ user }: SidebarProps) {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+                            className="md:hidden fixed inset-0 bg-black/40 dark:bg-black/60 z-40 backdrop-blur-sm"
                             onClick={() => setIsOpen(false)}
                         />
-                        {/* Mobile Sidebar - Nexus Style */}
+                        {/* Mobile Sidebar - Theme Aware */}
                         <motion.aside
                             initial={{ x: '-100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="md:hidden fixed left-0 top-0 h-screen w-64 bg-[#0A0A0A] border-r border-white/10 text-white shadow-2xl z-50 flex flex-col"
+                            className="md:hidden fixed left-0 top-0 h-screen w-64 bg-white dark:bg-[#0A0A0A] border-r border-gray-200 dark:border-white/10 shadow-2xl z-50 flex flex-col"
                         >
                             <SidebarContent isMobile />
                         </motion.aside>
@@ -226,8 +226,8 @@ export default function Sidebar({ user }: SidebarProps) {
                 )}
             </AnimatePresence>
 
-            {/* Desktop Sidebar - Nexus Style (Always Dark) */}
-            <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-[#0A0A0A] border-r border-white/10 text-white shadow-2xl z-50 flex-col">
+            {/* Desktop Sidebar - Theme Aware */}
+            <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-white dark:bg-[#0A0A0A] border-r border-gray-200 dark:border-white/10 shadow-sm dark:shadow-2xl z-50 flex-col">
                 <SidebarContent />
             </aside>
         </>
