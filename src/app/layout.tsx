@@ -1,9 +1,31 @@
 import type { Metadata } from "next";
+import { Inter, Chakra_Petch, Rajdhani } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import { getCurrentUser } from "@/lib/auth";
 import { Providers } from "@/components/Providers";
 import { ThemeProvider } from "@/components/ThemeProvider";
+
+// Optimized font loading with next/font
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const chakraPetch = Chakra_Petch({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-chakra-petch",
+  display: "swap",
+});
+
+const rajdhani = Rajdhani({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-rajdhani",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Comprint Operations",
@@ -36,7 +58,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning={true} className="font-body antialiased">
+      <body suppressHydrationWarning={true} className={`${inter.variable} ${chakraPetch.variable} ${rajdhani.variable} font-body antialiased`}>
         <ThemeProvider>
           <Providers>
             {user ? (

@@ -2,25 +2,25 @@ import { requireUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import DashboardClient from './DashboardClient'
 
+// Cache dashboard data for 60 seconds
+export const revalidate = 60
+
 export default async function DashboardPage() {
     const user = await requireUser()
 
-    // Fetch basic stage counts
-    const [
-        pendingInspection,
-        underRepair,
-        inPaint,
-        awaitingQC,
-        readyForStock,
-        waitingForSpares
-    ] = await Promise.all([
-        prisma.device.count({ where: { status: 'PENDING_INSPECTION' } }),
-        prisma.device.count({ where: { status: 'UNDER_REPAIR' } }),
-        prisma.device.count({ where: { status: 'IN_PAINT_SHOP' } }),
-        prisma.device.count({ where: { status: 'AWAITING_QC' } }),
-        prisma.device.count({ where: { status: 'READY_FOR_STOCK' } }),
-        prisma.device.count({ where: { status: 'WAITING_FOR_SPARES' } })
-    ])
+    // OPTIMIZED: Single groupBy query instead of 6 separate count queries
+    const deviceStatusCounts = await prisma.device.groupBy({
+        by: ['status'],
+        _count: { id: true }
+    })
+    const statusMap = new Map(deviceStatusCounts.map(s => [s.status, s._count.id]))
+
+    const pendingInspection = statusMap.get('PENDING_INSPECTION') || 0
+    const underRepair = statusMap.get('UNDER_REPAIR') || 0
+    const inPaint = statusMap.get('IN_PAINT_SHOP') || 0
+    const awaitingQC = statusMap.get('AWAITING_QC') || 0
+    const readyForStock = statusMap.get('READY_FOR_STOCK') || 0
+    const waitingForSpares = statusMap.get('WAITING_FOR_SPARES') || 0
 
     // TAT breaches count
     const tatBreaches = await prisma.repairJob.count({
@@ -30,7 +30,7 @@ export default async function DashboardPage() {
         }
     })
 
-    // QC pass/fail rates by engineer
+    // QC pass/fail rates by engineer - optimized with Map lookup
     const qcByEngineer = await prisma.qCRecord.groupBy({
         by: ['qcEngId', 'status'],
         _count: { id: true }
@@ -42,15 +42,20 @@ export default async function DashboardPage() {
         where: { id: { in: qcEngIds } },
         select: { id: true, name: true }
     })
-    const qcEngMap = Object.fromEntries(qcEngineers.map(e => [e.id, e.name]))
+    const qcEngMap = new Map(qcEngineers.map(e => [e.id, e.name]))
 
-    // Process QC by engineer data
+    // OPTIMIZED: Use Map for O(1) lookup instead of O(n) .find()
+    const qcDataMap = new Map<string, number>()
+    qcByEngineer.forEach(q => {
+        qcDataMap.set(`${q.qcEngId}-${q.status}`, q._count.id)
+    })
+
     const qcEngineerStats = qcEngIds.map(engId => {
-        const passed = qcByEngineer.find(q => q.qcEngId === engId && q.status === 'PASSED')?._count.id || 0
-        const failed = qcByEngineer.find(q => q.qcEngId === engId && q.status === 'FAILED_REWORK')?._count.id || 0
+        const passed = qcDataMap.get(`${engId}-PASSED`) || 0
+        const failed = qcDataMap.get(`${engId}-FAILED_REWORK`) || 0
         const total = passed + failed
         return {
-            name: qcEngMap[engId] || 'Unknown',
+            name: qcEngMap.get(engId) || 'Unknown',
             passed,
             failed,
             total,
@@ -58,16 +63,17 @@ export default async function DashboardPage() {
         }
     }).filter(e => e.total > 0)
 
-    // Stock by grade
+    // Stock by grade - optimized with Map
     const stockByGrade = await prisma.device.groupBy({
         by: ['grade'],
         where: { status: 'READY_FOR_STOCK', grade: { not: null } },
         _count: { id: true }
     })
+    const gradeMap = new Map(stockByGrade.map(g => [g.grade, g._count.id]))
 
     const gradeStats = {
-        gradeA: stockByGrade.find(g => g.grade === 'A')?._count.id || 0,
-        gradeB: stockByGrade.find(g => g.grade === 'B')?._count.id || 0
+        gradeA: gradeMap.get('A') || 0,
+        gradeB: gradeMap.get('B') || 0
     }
 
     // Stock by category
@@ -98,10 +104,10 @@ export default async function DashboardPage() {
         where: { id: { in: repairEngIds } },
         select: { id: true, name: true }
     })
-    const repairEngMap = Object.fromEntries(repairEngineers.map(e => [e.id, e.name]))
+    const repairEngMap = new Map(repairEngineers.map(e => [e.id, e.name]))
 
     const workloadStats = repairWorkload.map(r => ({
-        name: repairEngMap[r.repairEngId!] || 'Unknown',
+        name: repairEngMap.get(r.repairEngId!) || 'Unknown',
         activeJobs: r._count.id,
         capacity: 10
     }))
@@ -154,7 +160,7 @@ export default async function DashboardPage() {
         completed: count
     }))
 
-    // Batch completion stats
+    // OPTIMIZED: Batch completion stats - only fetch status counts, not all devices
     const batches = await prisma.inwardBatch.findMany({
         orderBy: { createdAt: 'desc' },
         take: 5,
@@ -162,20 +168,25 @@ export default async function DashboardPage() {
             batchId: true,
             _count: {
                 select: { devices: true }
-            },
-            devices: {
-                select: { status: true }
             }
         }
     })
 
+    // Get completion counts separately with aggregation
+    const batchIds = batches.map(b => b.batchId)
+    const completedCounts = await prisma.device.groupBy({
+        by: ['batchId'],
+        where: {
+            batchId: { in: batchIds },
+            status: { in: ['READY_FOR_STOCK', 'STOCK_OUT_SOLD', 'STOCK_OUT_RENTAL'] }
+        },
+        _count: { id: true }
+    })
+    const completedMap = new Map(completedCounts.map(c => [c.batchId, c._count.id]))
+
     const batchStats = batches.map(batch => {
         const total = batch._count.devices
-        const completed = batch.devices.filter(d =>
-            d.status === 'READY_FOR_STOCK' ||
-            d.status === 'STOCK_OUT_SOLD' ||
-            d.status === 'STOCK_OUT_RENTAL'
-        ).length
+        const completed = completedMap.get(batch.batchId) || 0
         return {
             batchId: batch.batchId,
             total,

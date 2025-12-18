@@ -1,6 +1,4 @@
-/* Google Fonts - must be first */
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&display=swap');
-
+/* Fonts loaded via next/font in layout.tsx for better performance */
 @import "tailwindcss";
 
 /* ========================================
@@ -17,10 +15,10 @@
   --color-nexus-surface: #FFFFFF;
   --color-nexus-subtle: #F5F5F7;
 
-  /* Font Families */
-  --font-brand: 'Chakra Petch', sans-serif;
-  --font-display: 'Rajdhani', sans-serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  /* Font Families - using CSS variables from next/font */
+  --font-brand: var(--font-chakra-petch), 'Chakra Petch', sans-serif;
+  --font-display: var(--font-rajdhani), 'Rajdhani', sans-serif;
+  --font-sans: var(--font-inter), 'Inter', system-ui, sans-serif;
 
   /* Custom Shadows */
   --shadow-soft: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 4px 12px -4px rgba(0, 0, 0, 0.05);

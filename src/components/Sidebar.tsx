@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -79,14 +79,18 @@ export default function Sidebar({ user }: SidebarProps) {
             { href: '/outward', label: 'Outward', icon: Truck, roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'] },
         ]
 
-    const filteredLinks = baseLinks.filter(link =>
-        link.roles.length === 0 || link.roles.includes(user.role)
+    // Memoize filtered links to avoid recalculating on every render
+    const filteredLinks = useMemo(() =>
+        baseLinks.filter(link =>
+            link.roles.length === 0 || link.roles.includes(user.role)
+        ),
+        [user.role]
     )
 
-    // Get initials from name
-    const getInitials = (name: string): string => {
+    // Memoize getInitials function
+    const getInitials = useCallback((name: string): string => {
         return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-    }
+    }, [])
 
     // Shared sidebar content
     const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -96,9 +100,9 @@ export default function Sidebar({ user }: SidebarProps) {
                 <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
                     <Box className="w-6 h-6 md:w-8 md:h-8 text-emerald-500 dark:text-emerald-400 mr-2 md:mr-3" />
                     <div className="text-left">
-                        <h1 className="font-brand font-bold text-lg md:text-xl tracking-tighter uppercase leading-none text-gray-900 dark:text-white">
+                        <h3 className="font-brand font-bold text-lg md:text-xl tracking-tighter uppercase leading-none text-gray-900 dark:text-white">
                             COMPRINT
-                        </h1>
+                        </h3>
                         <span className="font-display text-[9px] md:text-[10px] text-gray-500 tracking-[0.15em] uppercase">
                             Operations
                         </span>

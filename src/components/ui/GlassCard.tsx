@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { motion, HTMLMotionProps } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
@@ -8,7 +9,7 @@ interface GlassCardProps extends HTMLMotionProps<"div"> {
     hover?: boolean
 }
 
-export default function GlassCard({
+const GlassCard = React.memo(function GlassCard({
     className,
     children,
     gradient = false,
@@ -42,4 +43,6 @@ export default function GlassCard({
             </div>
         </motion.div>
     )
-}
+})
+
+export default GlassCard

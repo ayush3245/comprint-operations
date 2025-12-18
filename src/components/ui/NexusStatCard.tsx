@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { LucideIcon } from 'lucide-react'
@@ -20,7 +21,7 @@ interface NexusStatCardProps {
   delay?: number
 }
 
-export default function NexusStatCard({
+const NexusStatCard = React.memo(function NexusStatCard({
   label,
   value,
   icon: Icon,
@@ -97,7 +98,9 @@ export default function NexusStatCard({
       )}
     </motion.div>
   )
-}
+})
+
+export default NexusStatCard
 
 // Alert variant for important stats like TAT breaches
 interface NexusAlertCardProps {
@@ -142,7 +145,7 @@ const variantStyles = {
   }
 }
 
-export function NexusAlertCard({
+export const NexusAlertCard = React.memo(function NexusAlertCard({
   label,
   value,
   icon: Icon,
@@ -193,4 +196,4 @@ export function NexusAlertCard({
       )}
     </motion.div>
   )
-}
+})
