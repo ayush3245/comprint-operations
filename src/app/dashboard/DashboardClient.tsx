@@ -318,7 +318,7 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
                         Workflow Pipeline
                     </h3>
                     <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                             <BarChart data={repairVolumeData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: chartColors.text, fontSize: 11 }} />
@@ -347,7 +347,7 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
                         Weekly Throughput (QC Passed)
                     </h3>
                     <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                             <LineChart data={analytics.throughputData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.grid} />
                                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: chartColors.text, fontSize: 12 }} />
@@ -386,7 +386,7 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
                         </h3>
                         {gradeData.length > 0 ? (
                             <div className="h-48 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minHeight={150}>
                                     <PieChart>
                                         <Pie
                                             data={gradeData}
@@ -508,7 +508,7 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
                         </h3>
                         {analytics.workloadStats.length > 0 ? (
                             <div className="h-64 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                                     <BarChart data={analytics.workloadStats} layout="vertical">
                                         <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={chartColors.grid} />
                                         <XAxis type="number" domain={[0, 10]} axisLine={false} tickLine={false} tick={{ fill: chartColors.text, fontSize: 12 }} />
