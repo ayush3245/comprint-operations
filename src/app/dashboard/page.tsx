@@ -165,6 +165,7 @@ export default async function DashboardPage() {
         orderBy: { createdAt: 'desc' },
         take: 5,
         select: {
+            id: true,
             batchId: true,
             _count: {
                 select: { devices: true }
@@ -172,21 +173,21 @@ export default async function DashboardPage() {
         }
     })
 
-    // Get completion counts separately with aggregation
-    const batchIds = batches.map(b => b.batchId)
+    // Get completion counts separately with aggregation using internal IDs
+    const batchInternalIds = batches.map(b => b.id)
     const completedCounts = await prisma.device.groupBy({
-        by: ['batchId'],
+        by: ['inwardBatchId'],
         where: {
-            batchId: { in: batchIds },
+            inwardBatchId: { in: batchInternalIds },
             status: { in: ['READY_FOR_STOCK', 'STOCK_OUT_SOLD', 'STOCK_OUT_RENTAL'] }
         },
         _count: { id: true }
     })
-    const completedMap = new Map(completedCounts.map(c => [c.batchId, c._count.id]))
+    const completedMap = new Map(completedCounts.map(c => [c.inwardBatchId, c._count.id]))
 
     const batchStats = batches.map(batch => {
         const total = batch._count.devices
-        const completed = completedMap.get(batch.batchId) || 0
+        const completed = completedMap.get(batch.id) || 0
         return {
             batchId: batch.batchId,
             total,
