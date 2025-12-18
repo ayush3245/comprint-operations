@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import GlassCard from '@/components/ui/GlassCard'
+import NexusStatCard, { NexusAlertCard } from '@/components/ui/NexusStatCard'
 import {
     ClipboardList,
     Wrench,
@@ -22,6 +23,8 @@ import Link from 'next/link'
 import {
     BarChart,
     Bar,
+    AreaChart,
+    Area,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -106,88 +109,83 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
 
     const isAdmin = ['ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN'].includes(user.role)
 
-    // Chart colors based on theme
+    // Chart colors based on theme - Nexus style
     const chartColors = {
-        grid: isDark ? '#334155' : '#E5E7EB',
-        text: isDark ? '#94a3b8' : '#6B7280',
+        grid: isDark ? 'rgba(255,255,255,0.1)' : '#f3f4f6',
+        text: isDark ? '#9ca3af' : '#6B7280',
         tooltip: {
-            bg: isDark ? '#1e293b' : '#ffffff',
-            border: isDark ? '#334155' : '#e2e8f0'
+            bg: isDark ? '#171717' : '#ffffff',
+            border: isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb'
         },
-        bar: isDark ? '#818cf8' : '#4f46e5',
-        line: isDark ? '#34d399' : '#10B981',
-        orange: isDark ? '#fb923c' : '#F97316'
+        bar: isDark ? '#60a5fa' : '#3B82F6',        // Nexus accent blue
+        line: isDark ? '#34d399' : '#10B981',       // Nexus highlight green
+        orange: isDark ? '#fb923c' : '#F97316',
+        area: {
+            blue: { stroke: '#3B82F6', fill: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.1)' },
+            green: { stroke: '#10B981', fill: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.1)' }
+        }
     }
 
+    // Nexus-style stat items with clean design
     const statItems = [
         {
             label: 'Pending Inspection',
             value: stats.pendingInspection,
             icon: ClipboardList,
-            iconColor: 'text-indigo-600 dark:text-indigo-300',
-            cardBg: 'bg-gradient-to-br from-indigo-100 to-indigo-200/80 dark:from-indigo-900/60 dark:to-indigo-800/40',
-            iconBg: 'bg-indigo-200/80 dark:bg-indigo-700/50',
-            borderColor: 'border-indigo-200 dark:border-indigo-700/50',
+            iconColor: 'text-indigo-500',
+            iconBgColor: 'bg-indigo-50 dark:bg-indigo-500/20',
             roles: ['INSPECTION_ENGINEER', 'ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
         {
             label: 'Waiting for Spares',
             value: stats.waitingForSpares,
             icon: Clock,
-            iconColor: 'text-amber-600 dark:text-amber-300',
-            cardBg: 'bg-gradient-to-br from-amber-100 to-amber-200/80 dark:from-amber-900/60 dark:to-amber-800/40',
-            iconBg: 'bg-amber-200/80 dark:bg-amber-700/50',
-            borderColor: 'border-amber-200 dark:border-amber-700/50',
+            iconColor: 'text-amber-500',
+            iconBgColor: 'bg-amber-50 dark:bg-amber-500/20',
             roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN', 'SUPERADMIN']
         },
         {
             label: 'Under Repair',
             value: stats.underRepair,
             icon: Wrench,
-            iconColor: 'text-orange-600 dark:text-orange-300',
-            cardBg: 'bg-gradient-to-br from-orange-100 to-orange-200/80 dark:from-orange-900/60 dark:to-orange-800/40',
-            iconBg: 'bg-orange-200/80 dark:bg-orange-700/50',
-            borderColor: 'border-orange-200 dark:border-orange-700/50',
+            iconColor: 'text-orange-500',
+            iconBgColor: 'bg-orange-50 dark:bg-orange-500/20',
             roles: ['REPAIR_ENGINEER', 'ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
         {
             label: 'In Paint Shop',
             value: stats.inPaint,
             icon: PaintBucket,
-            iconColor: 'text-purple-600 dark:text-purple-300',
-            cardBg: 'bg-gradient-to-br from-purple-100 to-purple-200/80 dark:from-purple-900/60 dark:to-purple-800/40',
-            iconBg: 'bg-purple-200/80 dark:bg-purple-700/50',
-            borderColor: 'border-purple-200 dark:border-purple-700/50',
+            iconColor: 'text-purple-500',
+            iconBgColor: 'bg-purple-50 dark:bg-purple-500/20',
             roles: ['PAINT_SHOP_TECHNICIAN', 'ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
         {
             label: 'Awaiting QC',
             value: stats.awaitingQC,
             icon: CheckCircle,
-            iconColor: 'text-yellow-600 dark:text-yellow-300',
-            cardBg: 'bg-gradient-to-br from-yellow-100 to-yellow-200/80 dark:from-yellow-900/60 dark:to-yellow-800/40',
-            iconBg: 'bg-yellow-200/80 dark:bg-yellow-700/50',
-            borderColor: 'border-yellow-200 dark:border-yellow-700/50',
+            iconColor: 'text-cyan-500',
+            iconBgColor: 'bg-cyan-50 dark:bg-cyan-500/20',
             roles: ['QC_ENGINEER', 'ADMIN', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
         {
             label: 'Ready for Stock',
             value: stats.readyForStock,
             icon: Package,
-            iconColor: 'text-green-600 dark:text-green-300',
-            cardBg: 'bg-gradient-to-br from-green-100 to-green-200/80 dark:from-green-900/60 dark:to-green-800/40',
-            iconBg: 'bg-green-200/80 dark:bg-green-700/50',
-            borderColor: 'border-green-200 dark:border-green-700/50',
+            iconColor: 'text-emerald-500',
+            iconBgColor: 'bg-emerald-50 dark:bg-emerald-500/20',
             roles: ['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN', 'SUPERADMIN']
         },
+    ]
+
+    // Alert cards (TAT Breaches shown separately)
+    const alertItems = [
         {
             label: 'TAT Breaches',
             value: stats.tatBreaches,
             icon: AlertTriangle,
-            iconColor: 'text-red-600 dark:text-red-300',
-            cardBg: 'bg-gradient-to-br from-red-100 to-red-200/80 dark:from-red-900/60 dark:to-red-800/40',
-            iconBg: 'bg-red-200/80 dark:bg-red-700/50',
-            borderColor: 'border-red-200 dark:border-red-700/50',
+            variant: 'danger' as const,
+            subtitle: 'Repairs exceeding 5-day TAT',
             roles: ['ADMIN', 'REPAIR_ENGINEER', 'WAREHOUSE_MANAGER', 'SUPERADMIN']
         },
     ]
@@ -220,6 +218,7 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
     ]
 
     const filteredStats = statItems.filter(item => item.roles.includes(user.role))
+    const filteredAlerts = alertItems.filter(item => item.roles.includes(user.role))
     const filteredActions = quickActions.filter(action => action.roles.includes(user.role))
 
     const container = {
@@ -278,29 +277,37 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
                 </p>
             </motion.div>
 
-            {/* Stage Stats Cards */}
-            <motion.div
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-            >
-                {filteredStats.map((stat) => (
-                    <motion.div key={stat.label} variants={item}>
-                        <div className={`p-6 h-full rounded-2xl border shadow-soft hover:shadow-xl transition-all duration-300 ${stat.cardBg} ${stat.borderColor}`}>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-semibold uppercase tracking-wider mb-1 text-slate-600 dark:text-slate-300">{stat.label}</p>
-                                    <h3 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">{stat.value}</h3>
-                                </div>
-                                <div className={`p-4 rounded-2xl ${stat.iconBg} ${stat.iconColor}`}>
-                                    <stat.icon size={28} />
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
+            {/* Stage Stats Cards - Nexus Style */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {filteredStats.map((stat, index) => (
+                    <NexusStatCard
+                        key={stat.label}
+                        label={stat.label}
+                        value={stat.value}
+                        icon={stat.icon}
+                        iconColor={stat.iconColor}
+                        iconBgColor={stat.iconBgColor}
+                        delay={index}
+                    />
                 ))}
-            </motion.div>
+            </div>
+
+            {/* Alert Cards Row */}
+            {filteredAlerts.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {filteredAlerts.map((alert, index) => (
+                        <NexusAlertCard
+                            key={alert.label}
+                            label={alert.label}
+                            value={alert.value}
+                            icon={alert.icon}
+                            variant={alert.variant}
+                            subtitle={alert.subtitle}
+                            delay={index}
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* Main Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

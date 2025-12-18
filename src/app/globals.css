@@ -1,30 +1,59 @@
 /* Google Fonts - must be first */
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&display=swap');
 
 @import "tailwindcss";
+
+/* ========================================
+   TAILWIND v4 THEME EXTENSIONS
+   ======================================== */
+
+@theme {
+  /* Nexus Brand Colors */
+  --color-nexus-black: #0A0A0A;
+  --color-nexus-dark: #171717;
+  --color-nexus-gray: #262626;
+  --color-nexus-accent: #3B82F6;
+  --color-nexus-highlight: #10B981;
+  --color-nexus-surface: #FFFFFF;
+  --color-nexus-subtle: #F5F5F7;
+
+  /* Font Families */
+  --font-brand: 'Chakra Petch', sans-serif;
+  --font-display: 'Rajdhani', sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Custom Shadows */
+  --shadow-soft: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --shadow-premium: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+  --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.3);
+  --shadow-glow-green: 0 0 20px rgba(16, 185, 129, 0.3);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-lift: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
 
 /* ========================================
    THEME SYSTEM - CSS Variables
    ======================================== */
 
 :root {
-  /* Backgrounds */
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* Backgrounds - Nexus style */
+  --background: #F5F5F7;
+  --foreground: #171717;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #171717;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #171717;
 
-  /* Primary (Indigo) */
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
+  /* Primary (Electric Blue - Nexus accent) */
+  --primary: #3B82F6;
+  --primary-hover: #2563EB;
   --primary-foreground: #ffffff;
 
   /* Secondary */
   --secondary: #f1f5f9;
   --secondary-hover: #e2e8f0;
-  --secondary-foreground: #0f172a;
+  --secondary-foreground: #171717;
 
   /* Muted */
   --muted: #f1f5f9;
@@ -32,15 +61,15 @@
 
   /* Accent */
   --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  --accent-foreground: #171717;
 
   /* Destructive */
   --destructive: #ef4444;
   --destructive-hover: #dc2626;
   --destructive-foreground: #ffffff;
 
-  /* Success */
-  --success: #10b981;
+  /* Success (Nexus highlight) */
+  --success: #10B981;
   --success-foreground: #ffffff;
 
   /* Warning */
@@ -48,66 +77,74 @@
   --warning-foreground: #ffffff;
 
   /* Border & Input */
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #4f46e5;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #3B82F6;
 
   /* Shadows */
-  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 15px rgba(79, 70, 229, 0.3);
+  --shadow-soft: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.3);
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1);
 
   /* Sidebar (always dark) */
-  --sidebar-bg: #0f172a;
+  --sidebar-bg: #0A0A0A;
   --sidebar-foreground: #f8fafc;
-  --sidebar-muted: #94a3b8;
-  --sidebar-border: #1e293b;
-  --sidebar-accent: #4f46e5;
+  --sidebar-muted: #9ca3af;
+  --sidebar-border: #262626;
+  --sidebar-accent: #3B82F6;
 
   /* Radius */
   --radius: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
 }
 
-/* Dark Mode */
+/* Dark Mode - Nexus Style */
 .dark {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --card: #0f172a;
-  --card-foreground: #f8fafc;
-  --popover: #0f172a;
-  --popover-foreground: #f8fafc;
+  /* Deep black backgrounds like Nexus */
+  --background: #0A0A0A;
+  --foreground: #ffffff;
+  --card: #171717;
+  --card-foreground: #ffffff;
+  --popover: #171717;
+  --popover-foreground: #ffffff;
 
-  --primary: #818cf8;
-  --primary-hover: #6366f1;
-  --primary-foreground: #0f172a;
+  /* Electric blue primary */
+  --primary: #3B82F6;
+  --primary-hover: #60A5FA;
+  --primary-foreground: #ffffff;
 
-  --secondary: #1e293b;
-  --secondary-hover: #334155;
-  --secondary-foreground: #f8fafc;
+  /* Dark surfaces */
+  --secondary: #262626;
+  --secondary-hover: #333333;
+  --secondary-foreground: #ffffff;
 
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
+  --muted: #262626;
+  --muted-foreground: #9ca3af;
 
-  --accent: #1e293b;
-  --accent-foreground: #f8fafc;
+  --accent: #262626;
+  --accent-foreground: #ffffff;
 
+  /* Status colors for dark mode */
   --destructive: #f87171;
   --destructive-hover: #ef4444;
-  --destructive-foreground: #0f172a;
+  --destructive-foreground: #ffffff;
 
   --success: #34d399;
-  --success-foreground: #0f172a;
+  --success-foreground: #0A0A0A;
 
   --warning: #fbbf24;
-  --warning-foreground: #0f172a;
+  --warning-foreground: #0A0A0A;
 
-  --border: #334155;
-  --input: #334155;
-  --ring: #818cf8;
+  /* Subtle borders */
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #3B82F6;
 
-  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+  /* Dark shadows */
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.4);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* ========================================
@@ -431,6 +468,152 @@ body {
 
 .dark .table-row:hover {
   background-color: var(--secondary);
+}
+
+/* ========================================
+   NEXUS-STYLE HOVER & INTERACTION EFFECTS
+   ======================================== */
+
+/* Hover lift effect for cards */
+.hover-lift {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Touch-aware hover */
+@media (hover: hover) {
+  .hover-lift-smart:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+@media (hover: none) {
+  .hover-lift-smart:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Button scale effect */
+.btn-scale {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.btn-scale:hover {
+  transform: scale(1.02);
+}
+
+.btn-scale:active {
+  transform: scale(0.98);
+}
+
+/* Stat card Nexus style */
+.stat-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: all 200ms ease;
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+}
+
+.dark .stat-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .stat-card:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Glass card effect */
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-glass);
+}
+
+.dark .glass-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Semi-transparent card for dark mode */
+.card-transparent {
+  background-color: var(--card);
+}
+
+.dark .card-transparent {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Active indicator glow */
+.active-glow {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+}
+
+/* Status badge colors - Nexus style */
+.badge-pending {
+  background-color: rgb(254 249 195);
+  color: rgb(161 98 7);
+}
+.dark .badge-pending {
+  background-color: rgba(234, 179, 8, 0.2);
+  color: rgb(253 224 71);
+}
+
+.badge-active {
+  background-color: rgb(199 210 254);
+  color: rgb(67 56 202);
+}
+.dark .badge-active {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: rgb(165 180 252);
+}
+
+.badge-success {
+  background-color: rgb(209 250 229);
+  color: rgb(4 120 87);
+}
+.dark .badge-success {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: rgb(52 211 153);
+}
+
+.badge-danger {
+  background-color: rgb(254 226 226);
+  color: rgb(185 28 28);
+}
+.dark .badge-danger {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: rgb(252 165 165);
+}
+
+.badge-warning {
+  background-color: rgb(255 237 213);
+  color: rgb(194 65 12);
+}
+.dark .badge-warning {
+  background-color: rgba(249, 115, 22, 0.2);
+  color: rgb(251 146 60);
+}
+
+.badge-info {
+  background-color: rgb(219 234 254);
+  color: rgb(29 78 216);
+}
+.dark .badge-info {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: rgb(147 197 253);
 }
 
 /* ========================================
