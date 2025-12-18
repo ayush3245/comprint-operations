@@ -315,24 +315,31 @@ QC Engineer        Browser           Server Action       Database
     |<--Redirect------|                    |                 |
 ```
 
-### 4.3 Paint and Collect Flow
+### 4.3 Paint Panel Send and Collect Flow
 
 ```
-Paint Tech         Repair Eng        Server Action       Database
+L2 Engineer        Paint Tech        Server Action       Database
     |                 |                    |                 |
-    |--Mark Ready---->|                    |                 |
+    |--Send to Paint->|                    |                 |
+    |                 |--sendPanelsToPaint()--------------->|
+    |                 |                    |--Create PaintPanel records
+    |                 |                    |--Set paintRequired=true
+    |                 |                    |                 |
+    |                 |--Mark In Paint--->|                 |
+    |                 |--updatePanelStatus()--------------->|
+    |                 |                    |--Update Panel status
+    |                 |                    |                 |
+    |                 |--Mark Ready------>|                 |
     |                 |--updatePanelStatus()--------------->|
     |                 |                    |--Update Panel---|
-    |                 |                    |--Check All Panels
+    |                 |                    |--Check All Panels Ready
     |                 |                    |                 |
-    |                 |   [ALL READY, REPAIR REQUIRED]      |
-    |                 |                    |--Keep Device IN_PAINT_SHOP
+    |<--Panel Ready Notification-------------------------|
     |                 |                    |                 |
-    |                 |<--Panel Ready Notification----------|
-    |                 |                    |                 |
-    |                 |--Collect from Paint--------------->|
-    |                 |                    |--collectFromPaint()
+    |--Collect from Paint--------------->|                 |
+    |                 |--collectFromPaint()--------------->|
     |                 |                    |--Update Panels to FITTED
+    |                 |                    |--Set paintCompleted=true
     |                 |                    |--Check Repair Status
     |                 |                    |                 |
     |                 |   [REPAIR COMPLETED]                |
@@ -340,6 +347,13 @@ Paint Tech         Repair Eng        Server Action       Database
     |                 |   [REPAIR NOT DONE]                 |
     |                 |                    |--Move to UNDER_REPAIR
 ```
+
+**Note:** Paint panels are created by L2 Engineer using `sendPanelsToPaint()`, NOT during inspection.
+Inspection only saves paint panel recommendations in the RepairJob record.
+
+**Legacy Data Migration:** For devices created before this workflow change (where inspection auto-created paint panels), use the migration tool at `/admin/migrations` to:
+- Delete orphaned paint panels that were auto-created at inspection
+- Reset paintRequired/paintCompleted flags on affected devices
 
 ### 4.4 Sales Outward Flow
 
@@ -482,9 +496,11 @@ Submits inspection findings and routes device.
 
 **Side Effects:**
 - Creates RepairJob if repair needed
-- Creates PaintPanel records if paint needed
+- Saves paint panel recommendations (does NOT create PaintPanel records)
 - Updates device workflow flags
 - Creates activity log
+
+**Note:** Paint panels are only created when L2 Engineer explicitly sends them to paint shop using `sendPanelsToPaint()`. Inspection only saves recommendations.
 
 ---
 

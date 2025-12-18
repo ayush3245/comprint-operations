@@ -10,7 +10,7 @@ A comprehensive operations management portal for end-to-end IT asset lifecycle m
 - QC pass/fail rates by engineer with interactive charts
 - Stock distribution by grade (A/B) and category
 - Daily throughput and trend analysis
-- Personalized statistics per user
+- User-specific stats: pending shows queue size, in-progress/completed show user's own counts
 
 ### Inward Processing
 - Create batches for Refurb Purchases or Rental Returns
@@ -70,6 +70,7 @@ A comprehensive operations management portal for end-to-end IT asset lifecycle m
 - Track panels requiring painting (Top Cover, Bottom Cover, Palmrest, Bezel, etc.)
 - Status updates: Awaiting Paint → In Paint → Ready for Collection → Fitted
 - Integration with repair workflow for panel collection
+- Panels created only when L2 Engineer explicitly sends them (inspection saves recommendations only)
 
 ### Quality Control (QC)
 - Final device verification with category-aware checklists
@@ -106,6 +107,9 @@ A comprehensive operations management portal for end-to-end IT asset lifecycle m
 - Barcode printing functionality
 - PDF export capabilities
 - Animated UI with page transitions
+- Dark mode / light mode support with system preference detection
+- Consistent hover effects across all interactive elements
+- Legacy data migration tool at `/admin/migrations` for fixing pre-update records
 
 ## Tech Stack
 

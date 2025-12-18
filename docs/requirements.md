@@ -120,7 +120,7 @@ The application supports two primary business operations:
 
 **US-006**: As an Inspection Engineer, I want to document functional issues found during inspection, so that repair engineers know what to fix.
 
-**US-007**: As an Inspection Engineer, I want to mark which panels need painting, so that the paint shop knows what work is required.
+**US-007**: As an Inspection Engineer, I want to mark which panels need painting (as recommendations), so that L2 engineers can decide which panels to send to paint shop.
 
 **US-008**: As an Inspection Engineer, I want to specify spare parts required, so that the warehouse can issue them before repair.
 
@@ -145,6 +145,8 @@ The application supports two primary business operations:
 **US-016**: As an L2 Engineer, I want to see status indicators for all parallel work streams, so that I know when work is complete.
 
 **US-017**: As an L2 Engineer, I want to collect devices from parallel work streams when ready, so that I can proceed to QC.
+
+**US-017a**: As an L2 Engineer, I want to explicitly send specific panels to the paint shop (based on inspection recommendations or my own assessment), so that paint work only happens when I decide it's needed.
 
 **US-018**: As an L2 Engineer, I want to see QC failure remarks when a device returns for rework, so that I know exactly what needs fixing.
 
@@ -463,7 +465,7 @@ The application supports two primary business operations:
 
 **BR-001**: A device cannot proceed to QC unless both repair (if required) and paint (if required) are completed.
 
-**BR-002**: Paint panels should only be visible in paint shop after repair is completed (if repair was required).
+**BR-002**: Paint panels are only created when L2 Engineer explicitly sends them to paint shop. Inspection only saves recommendations; it does not create actual paint panel records.
 
 **BR-003**: A repair engineer can have maximum 10 active (UNDER_REPAIR status) jobs simultaneously.
 
@@ -474,6 +476,8 @@ The application supports two primary business operations:
 **BR-006**: Repair job must be closed (REPAIR_CLOSED status) when QC passes to prevent it from showing in repair queue.
 
 **BR-007**: When collecting from paint, if repair is not completed, device returns to repair station (not QC).
+
+**BR-007a**: Dashboard stats show the queue size for pending items but show user-specific counts for in-progress and completed items (not application-wide totals).
 
 ### 6.2 Barcode Rules
 

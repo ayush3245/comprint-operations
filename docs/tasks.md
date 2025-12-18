@@ -120,6 +120,14 @@ This document outlines completed features, known issues, and planned enhancement
 | READY_FOR_COLLECTION panels appearing in paint shop | Fixed | Changed query from `NOT FITTED` to explicit `IN ['AWAITING_PAINT', 'IN_PAINT']` |
 | Clear data script failing with PrismaClient error | Fixed | Added pg adapter initialization to match main application |
 | QC context not visible on rework | Fixed | Added QC records to repair job query and UI indicator |
+| Paint panels auto-created at inspection | Fixed | Inspection now saves recommendations; L2 must send panels explicitly |
+| Legacy paint panel records blocking workflow | Fixed | Added migration tool at `/admin/migrations` to fix pre-fix data |
+| Send to QC failing when paint panels complete | Fixed | Updated l2SendToQC to check actual panel status, not just paintCompleted flag |
+| Devices not moving to Completed tab after QC | Fixed | Added AWAITING_QC to exclusion list in getL2AssignedDevices |
+| QC grade radio buttons invisible in dark mode | Fixed | Replaced native radio inputs with custom styled button cards |
+| Stats showing zeros for ADMIN users | Fixed | Updated QC, Inspection, L2 pages to calculate stats directly |
+| Stats not user-specific | Fixed | Stats now show user's own in-progress/completed counts |
+| Buttons missing hover effects | Fixed | Added hover effects to L2RepairClient modals, OutwardClient |
 
 ### 2.2 Known Technical Debt
 | Item | Priority | Description |
@@ -604,6 +612,8 @@ This document outlines completed features, known issues, and planned enhancement
 | 1.1.2 | 2025-12 | Updated to Next.js 16, Prisma 7.0, added comprehensive documentation |
 | 1.2.0 | 2025-12 | L2/L3 parallel work system with specialized roles (L2_ENGINEER, L3_ENGINEER, DISPLAY_TECHNICIAN, BATTERY_TECHNICIAN) |
 | 1.2.1 | 2025-12 | Dark mode / light mode UI overhaul with ThemeProvider, semantic CSS classes, and full component theme support |
+| 1.2.2 | 2025-12 | Paint workflow fix (inspection saves recommendations, L2 sends panels), legacy data migration tool, user-specific stats |
+| 1.2.3 | 2025-12 | QC grade selection dark mode fix, button hover effects, Send to QC validation fix |
 
 ---
 
