@@ -163,14 +163,14 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
 
                     {/* Type Selection */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Dispatch Type</label>
+                        <label className="block text-sm font-medium text-foreground mb-2">Dispatch Type</label>
                         <div className="flex gap-4">
                             <button
                                 type="button"
                                 onClick={() => setType('SALES')}
-                                className={`px-4 py-2 rounded-md border ${type === 'SALES'
-                                    ? 'bg-blue-50 border-blue-500 text-blue-700'
-                                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                className={`px-4 py-2 rounded-md border transition-colors ${type === 'SALES'
+                                    ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-400'
+                                    : 'bg-card border-default text-foreground hover:bg-muted'
                                     }`}
                             >
                                 Sales Outward
@@ -178,9 +178,9 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                             <button
                                 type="button"
                                 onClick={() => setType('RENTAL')}
-                                className={`px-4 py-2 rounded-md border ${type === 'RENTAL'
-                                    ? 'bg-blue-50 border-blue-500 text-blue-700'
-                                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                className={`px-4 py-2 rounded-md border transition-colors ${type === 'RENTAL'
+                                    ? 'bg-blue-50 dark:bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-400'
+                                    : 'bg-card border-default text-foreground hover:bg-muted'
                                     }`}
                             >
                                 Rental Outward
@@ -335,7 +335,7 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                     setShowForm(false)
                                     setSelectedDevices([])
                                 }}
-                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                className="px-4 py-2 border border-default rounded-md text-foreground hover:bg-muted transition-colors"
                             >
                                 Cancel
                             </button>
@@ -432,22 +432,22 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
             {/* Edit Modal */}
             {editingRecord && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-800">
+                    <div className="bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-default">
+                        <div className="px-6 py-4 border-b border-default flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-foreground">
                                 Edit: {editingRecord.outwardId}
                             </h2>
                             <button
                                 onClick={closeEditModal}
-                                className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                                className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
                         <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
-                            <div className="text-sm text-gray-500 mb-4">
-                                Type: <span className={`font-medium ${editingRecord.type === 'SALES' ? 'text-green-600' : 'text-purple-600'}`}>
+                            <div className="text-sm text-muted-foreground mb-4">
+                                Type: <span className={`font-medium ${editingRecord.type === 'SALES' ? 'text-green-600 dark:text-green-400' : 'text-purple-600 dark:text-purple-400'}`}>
                                     {editingRecord.type}
                                 </span>
                                 <span className="mx-2">•</span>
@@ -455,18 +455,18 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Customer Name *</label>
                                 <input
                                     type="text"
                                     value={editFormData.customer}
                                     onChange={(e) => setEditFormData({ ...editFormData, customer: e.target.value })}
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-md focus:ring-2 focus:ring-primary/50 focus:outline-none transition-colors"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                     {editingRecord.type === 'SALES' ? 'Invoice Number *' : 'Rental Reference *'}
                                 </label>
                                 <input
@@ -474,27 +474,27 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                     value={editFormData.reference}
                                     onChange={(e) => setEditFormData({ ...editFormData, reference: e.target.value })}
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-md focus:ring-2 focus:ring-primary/50 focus:outline-none transition-colors"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Details</label>
+                                <label className="block text-sm font-medium text-foreground mb-1">Shipping Details</label>
                                 <textarea
                                     value={editFormData.shippingDetails}
                                     onChange={(e) => setEditFormData({ ...editFormData, shippingDetails: e.target.value })}
                                     rows={2}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-md focus:ring-2 focus:ring-primary/50 focus:outline-none transition-colors"
                                 />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Packed By</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1">Packed By</label>
                                     <select
                                         value={editFormData.packedById}
                                         onChange={(e) => setEditFormData({ ...editFormData, packedById: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-md focus:ring-2 focus:ring-primary/50 focus:outline-none transition-colors"
                                     >
                                         <option value="">Select...</option>
                                         {users.map(user => (
@@ -503,11 +503,11 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Checked By</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1">Checked By</label>
                                     <select
                                         value={editFormData.checkedById}
                                         onChange={(e) => setEditFormData({ ...editFormData, checkedById: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-md focus:ring-2 focus:ring-primary/50 focus:outline-none transition-colors"
                                     >
                                         <option value="">Select...</option>
                                         {users.map(user => (
@@ -521,7 +521,7 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                 <button
                                     type="button"
                                     onClick={closeEditModal}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                    className="flex-1 px-4 py-2 border border-default rounded-md text-foreground hover:bg-muted transition-colors"
                                 >
                                     Cancel
                                 </button>

@@ -499,7 +499,7 @@ export default function L2RepairClient({
                                                     ) : (
                                                         <button
                                                             onClick={() => setShowDisplayModal(device.id)}
-                                                            className="text-xs bg-blue-500 text-white px-2 py-1 rounded"
+                                                            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
                                                         >
                                                             <Send size={12} className="inline mr-1" />
                                                             Send
@@ -544,7 +544,7 @@ export default function L2RepairClient({
                                                     ) : (
                                                         <button
                                                             onClick={() => setShowBatteryModal(device.id)}
-                                                            className="text-xs bg-blue-500 text-white px-2 py-1 rounded"
+                                                            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
                                                         >
                                                             <Send size={12} className="inline mr-1" />
                                                             Send
@@ -577,7 +577,7 @@ export default function L2RepairClient({
                                                                 })
                                                             }}
                                                             disabled={isPending}
-                                                            className="text-xs bg-yellow-500 text-white px-2 py-1 rounded"
+                                                            className="text-xs bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 transition-colors"
                                                         >
                                                             <Download size={12} className="inline mr-1" />
                                                             Collect
@@ -589,7 +589,7 @@ export default function L2RepairClient({
                                                     ) : (
                                                         <button
                                                             onClick={() => setShowL3Modal(device.id)}
-                                                            className="text-xs bg-blue-500 text-white px-2 py-1 rounded"
+                                                            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
                                                         >
                                                             <Send size={12} className="inline mr-1" />
                                                             Send
@@ -669,7 +669,7 @@ export default function L2RepairClient({
                                                             )}
                                                             <button
                                                                 onClick={() => setShowPaintModal({ deviceId: device.id, recommendedPanels: status.paint.recommendedPanels })}
-                                                                className="text-xs bg-purple-500 text-white px-2 py-1 rounded w-full"
+                                                                className="text-xs bg-purple-500 text-white px-2 py-1 rounded w-full hover:bg-purple-600 transition-colors"
                                                             >
                                                                 <Send size={12} className="inline mr-1" />
                                                                 Send to Paint
@@ -678,7 +678,7 @@ export default function L2RepairClient({
                                                     ) : !status.paint.required ? (
                                                         <button
                                                             onClick={() => setShowPaintModal({ deviceId: device.id, recommendedPanels: [] })}
-                                                            className="text-xs bg-purple-500 text-white px-2 py-1 rounded"
+                                                            className="text-xs bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600 transition-colors"
                                                         >
                                                             <Send size={12} className="inline mr-1" />
                                                             Send
@@ -914,7 +914,7 @@ export default function L2RepairClient({
                                 <button type="button" onClick={() => setShowSparesModal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
-                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-orange-600 text-white rounded">
+                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 transition-colors">
                                     {isPending ? 'Requesting...' : 'Request Spares'}
                                 </button>
                             </div>
@@ -960,7 +960,7 @@ export default function L2RepairClient({
                                 <button type="button" onClick={() => setShowL3Modal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
-                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded">
+                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors">
                                     {isPending ? 'Sending...' : 'Send'}
                                 </button>
                             </div>
@@ -1026,7 +1026,7 @@ export default function L2RepairClient({
                                 <button type="button" onClick={() => setShowPaintModal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
-                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-purple-600 text-white rounded">
+                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 transition-colors">
                                     {isPending ? 'Sending...' : 'Send to Paint'}
                                 </button>
                             </div>
@@ -1108,7 +1108,7 @@ export default function L2RepairClient({
                                 <button type="button" onClick={() => setShowBatteryModal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
-                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded">
+                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors">
                                     {isPending ? 'Processing...' : 'Submit'}
                                 </button>
                             </div>
@@ -1182,7 +1182,7 @@ export default function L2RepairClient({
                                 <button type="button" onClick={() => setShowDisplayModal(null)} className="flex-1 py-2 border border-default rounded text-foreground hover:bg-muted">
                                     Cancel
                                 </button>
-                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded">
+                                <button type="submit" disabled={isPending} className="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-colors">
                                     {isPending ? 'Processing...' : 'Submit'}
                                 </button>
                             </div>
