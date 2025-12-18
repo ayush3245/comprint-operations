@@ -2,6 +2,7 @@ import { prisma } from './db'
 
 export type ActivityAction =
     | 'CREATED_INWARD'
+    | 'UPDATED_BATCH'
     | 'COMPLETED_INSPECTION'
     | 'UPDATED_REPAIR'
     | 'COMPLETED_REPAIR'
@@ -39,6 +40,8 @@ export type ActivityAction =
     | 'REQUESTED_SPARES'
     // Warehouse spares actions
     | 'ISSUED_SPARES'
+    // Admin actions
+    | 'MIGRATION'
 
 interface LogActivityParams {
     action: ActivityAction

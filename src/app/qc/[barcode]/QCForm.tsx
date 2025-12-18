@@ -77,6 +77,7 @@ export default function QCForm({
   const toast = useToast()
   const [showChecklist, setShowChecklist] = useState(true)
   const [decision, setDecision] = useState<'PASSED' | 'FAILED' | null>(null)
+  const [grade, setGrade] = useState<'A' | 'B' | null>(null)
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
 
   const handleToggleStatus = async (itemId: string, newStatus: 'PASS' | 'FAIL' | 'NOT_APPLICABLE') => {
@@ -120,8 +121,6 @@ export default function QCForm({
   const canPass = pendingCount === 0 && parallelWorkErrors.length === 0
 
   const handleSubmit = async (formData: FormData) => {
-    const grade = formData.get('grade') as 'A' | 'B' | null
-
     if (decision === 'PASSED' && !canPass) {
       if (pendingCount > 0) {
         toast.error(`Cannot pass: ${pendingCount} checklist items are still PENDING`)
@@ -485,18 +484,46 @@ export default function QCForm({
 
         {decision === 'PASSED' && canPass && (
           <div className="mt-6">
-            <label className="block text-sm font-medium text-muted-foreground mb-2">Final Grade *</label>
+            <label className="block text-sm font-medium text-muted-foreground mb-3">Final Grade *</label>
             <div className="flex gap-4">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="radio" name="grade" value="A" className="text-blue-600 focus:ring-blue-500" required />
-                <span className="font-bold text-foreground">Grade A</span>
-                <span className="text-xs text-muted-foreground">(Excellent condition)</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="radio" name="grade" value="B" className="text-blue-600 focus:ring-blue-500" />
-                <span className="font-bold text-foreground">Grade B</span>
-                <span className="text-xs text-muted-foreground">(Good condition)</span>
-              </label>
+              <button
+                type="button"
+                onClick={() => setGrade('A')}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${
+                  grade === 'A'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500/50'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  grade === 'A'
+                    ? 'border-blue-500 bg-blue-500'
+                    : 'border-gray-400 dark:border-gray-500'
+                }`}>
+                  {grade === 'A' && <div className="w-2 h-2 rounded-full bg-white" />}
+                </div>
+                <span className={`font-bold ${grade === 'A' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground'}`}>Grade A</span>
+                <span className="text-xs text-muted-foreground">(Excellent)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGrade('B')}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${
+                  grade === 'B'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500/50'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  grade === 'B'
+                    ? 'border-blue-500 bg-blue-500'
+                    : 'border-gray-400 dark:border-gray-500'
+                }`}>
+                  {grade === 'B' && <div className="w-2 h-2 rounded-full bg-white" />}
+                </div>
+                <span className={`font-bold ${grade === 'B' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground'}`}>Grade B</span>
+                <span className="text-xs text-muted-foreground">(Good)</span>
+              </button>
             </div>
           </div>
         )}

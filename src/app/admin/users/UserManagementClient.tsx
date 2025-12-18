@@ -54,7 +54,6 @@ const ROLES: { value: Role; label: string }[] = [
     { value: 'L3_ENGINEER', label: 'L3 Engineer (Major Repairs)' },
     { value: 'DISPLAY_TECHNICIAN', label: 'Display Technician' },
     { value: 'BATTERY_TECHNICIAN', label: 'Battery Technician' },
-    { value: 'REPAIR_ENGINEER', label: 'Repair Engineer (Legacy)' },
     { value: 'PAINT_SHOP_TECHNICIAN', label: 'Paint Shop Technician' },
     { value: 'QC_ENGINEER', label: 'QC Engineer' },
 ]
@@ -78,8 +77,6 @@ function getRoleBadgeColor(role: Role): string {
             return 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/30'
         case 'BATTERY_TECHNICIAN':
             return 'bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-500/20 dark:text-lime-300 dark:border-lime-500/30'
-        case 'REPAIR_ENGINEER':
-            return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30'
         case 'PAINT_SHOP_TECHNICIAN':
             return 'bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-500/20 dark:text-pink-300 dark:border-pink-500/30'
         case 'QC_ENGINEER':
@@ -253,6 +250,26 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                 </div>
             </motion.div>
 
+            {/* Stats Cards - Positioned at top for visibility */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <GlassCard className="p-5 border-l-4 border-l-blue-500">
+                    <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Total Users</p>
+                    <p className="text-3xl font-black text-foreground mt-2">{users.length}</p>
+                </GlassCard>
+                <GlassCard className="p-5 border-l-4 border-l-green-500">
+                    <p className="text-green-600 dark:text-green-400 text-xs font-bold uppercase tracking-wider">Active</p>
+                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => u.active).length}</p>
+                </GlassCard>
+                <GlassCard className="p-5 border-l-4 border-l-red-500">
+                    <p className="text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider">Inactive</p>
+                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => !u.active).length}</p>
+                </GlassCard>
+                <GlassCard className="p-5 border-l-4 border-l-purple-500">
+                    <p className="text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-wider">Admins</p>
+                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => u.role === 'SUPERADMIN' || u.role === 'ADMIN').length}</p>
+                </GlassCard>
+            </div>
+
             {/* Notification */}
             <AnimatePresence>
                 {notification && (
@@ -399,26 +416,6 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                     </div>
                 )}
             </GlassCard>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                <GlassCard className="p-5 border-l-4 border-l-blue-500">
-                    <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Total Users</p>
-                    <p className="text-3xl font-black text-foreground mt-2">{users.length}</p>
-                </GlassCard>
-                <GlassCard className="p-5 border-l-4 border-l-green-500">
-                    <p className="text-green-600 dark:text-green-400 text-xs font-bold uppercase tracking-wider">Active</p>
-                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => u.active).length}</p>
-                </GlassCard>
-                <GlassCard className="p-5 border-l-4 border-l-red-500">
-                    <p className="text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider">Inactive</p>
-                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => !u.active).length}</p>
-                </GlassCard>
-                <GlassCard className="p-5 border-l-4 border-l-purple-500">
-                    <p className="text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-wider">Admins</p>
-                    <p className="text-3xl font-black text-foreground mt-2">{users.filter(u => u.role === 'SUPERADMIN' || u.role === 'ADMIN').length}</p>
-                </GlassCard>
-            </div>
 
             {/* Modal */}
             <AnimatePresence>

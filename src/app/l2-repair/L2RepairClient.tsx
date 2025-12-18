@@ -46,6 +46,7 @@ interface AssignedDevice {
     reportedIssues: string | null
     sparesRequired: string | null
     sparesIssued: string | null
+    recommendedPaintPanels: string | null // JSON array of panel names from inspection
     inspectionEng: { name: string } | null
     device: {
         id: string
@@ -158,7 +159,7 @@ export default function L2RepairClient({
 
     // Modal states
     const [showL3Modal, setShowL3Modal] = useState<string | null>(null)
-    const [showPaintModal, setShowPaintModal] = useState<string | null>(null)
+    const [showPaintModal, setShowPaintModal] = useState<{ deviceId: string; recommendedPanels: string[] } | null>(null)
     const [showBatteryModal, setShowBatteryModal] = useState<string | null>(null)
     const [showDisplayModal, setShowDisplayModal] = useState<string | null>(null)
     const [showSparesModal, setShowSparesModal] = useState<string | null>(null)
@@ -192,7 +193,7 @@ export default function L2RepairClient({
         })
     }
 
-    const getParallelWorkStatus = (device: AssignedDevice['device']) => {
+    const getParallelWorkStatus = (device: AssignedDevice['device'], job: AssignedDevice) => {
         // Only consider paint complete if there are panels AND they're all done
         // (every() returns true for empty arrays, so we need the length check)
         const allPaintComplete = device.paintPanels.length > 0 && device.paintPanels.every(
@@ -202,6 +203,16 @@ export default function L2RepairClient({
         const displayJob = device.displayRepairJobs[0]
         const batteryJob = device.batteryBoostJobs[0]
         const l3Jobs = device.l3RepairJobs
+
+        // Parse recommended paint panels from inspection (JSON array)
+        let recommendedPanels: string[] = []
+        if (job.recommendedPaintPanels) {
+            try {
+                recommendedPanels = JSON.parse(job.recommendedPaintPanels)
+            } catch {
+                recommendedPanels = []
+            }
+        }
 
         return {
             display: {
@@ -229,6 +240,8 @@ export default function L2RepairClient({
                 required: device.paintRequired,
                 completed: device.paintCompleted || allPaintComplete,
                 panels: device.paintPanels,
+                recommendedPanels, // Panels recommended by inspection
+                panelsSent: device.paintPanels.length > 0, // Whether L2 has sent panels to paint
                 readyToCollect: allPaintComplete && !device.paintCompleted && device.paintPanels.length > 0
             },
             readyForQC: (
@@ -303,7 +316,7 @@ export default function L2RepairClient({
                         assignedDevices.map((job) => {
                             const device = job.device
                             const isExpanded = expandedDevice === device.id
-                            const status = getParallelWorkStatus(device)
+                            const status = getParallelWorkStatus(device, job)
                             const failedItems = device.inspectionChecklist.filter(i => i.status === 'FAIL')
 
                             return (
@@ -597,6 +610,11 @@ export default function L2RepairClient({
                                                                 {status.paint.panels.length} panel{status.paint.panels.length !== 1 ? 's' : ''}
                                                             </span>
                                                         )}
+                                                        {status.paint.required && !status.paint.panelsSent && status.paint.recommendedPanels.length > 0 && (
+                                                            <span className="text-xs bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-full">
+                                                                Recommended
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     {status.paint.required && status.paint.completed ? (
                                                         <span className="text-xs text-green-600 dark:text-green-400">All panels completed</span>
@@ -636,9 +654,30 @@ export default function L2RepairClient({
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                    ) : status.paint.required && !status.paint.panelsSent ? (
+                                                        // Paint required but L2 hasn't sent panels yet - show recommendations
+                                                        <div className="space-y-2">
+                                                            {status.paint.recommendedPanels.length > 0 && (
+                                                                <div className="space-y-1">
+                                                                    <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">Inspection recommended:</span>
+                                                                    {status.paint.recommendedPanels.map((panel, idx) => (
+                                                                        <div key={idx} className="text-xs text-purple-700 dark:text-purple-400">
+                                                                            • {panel}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                            <button
+                                                                onClick={() => setShowPaintModal({ deviceId: device.id, recommendedPanels: status.paint.recommendedPanels })}
+                                                                className="text-xs bg-purple-500 text-white px-2 py-1 rounded w-full"
+                                                            >
+                                                                <Send size={12} className="inline mr-1" />
+                                                                Send to Paint
+                                                            </button>
+                                                        </div>
                                                     ) : !status.paint.required ? (
                                                         <button
-                                                            onClick={() => setShowPaintModal(device.id)}
+                                                            onClick={() => setShowPaintModal({ deviceId: device.id, recommendedPanels: [] })}
                                                             className="text-xs bg-purple-500 text-white px-2 py-1 rounded"
                                                         >
                                                             <Send size={12} className="inline mr-1" />
@@ -935,6 +974,13 @@ export default function L2RepairClient({
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
                         <h3 className="text-lg font-bold mb-4 text-foreground">Send Panels to Paint</h3>
+                        {showPaintModal.recommendedPanels.length > 0 && (
+                            <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-500/10 rounded border border-orange-200 dark:border-orange-500/30">
+                                <p className="text-sm text-orange-700 dark:text-orange-400">
+                                    <strong>Inspection recommended:</strong> {showPaintModal.recommendedPanels.join(', ')}
+                                </p>
+                            </div>
+                        )}
                         <form onSubmit={(e) => {
                             e.preventDefault()
                             const form = e.target as HTMLFormElement
@@ -950,7 +996,7 @@ export default function L2RepairClient({
                             }
                             startTransition(async () => {
                                 try {
-                                    await onSendToPaint(showPaintModal, selectedPanels)
+                                    await onSendToPaint(showPaintModal.deviceId, selectedPanels)
                                     toast.success('Sent to Paint Shop')
                                     setShowPaintModal(null)
                                     router.refresh()
@@ -961,8 +1007,17 @@ export default function L2RepairClient({
                         }}>
                             <div className="mb-4 grid grid-cols-2 gap-2">
                                 {PaintPanelOptions.map(panel => (
-                                    <label key={panel} className="flex items-center gap-2 p-2 border border-default rounded hover:bg-muted cursor-pointer">
-                                        <input type="checkbox" name={panel} />
+                                    <label key={panel} className={cn(
+                                        "flex items-center gap-2 p-2 border rounded hover:bg-muted cursor-pointer",
+                                        showPaintModal.recommendedPanels.includes(panel)
+                                            ? "border-orange-300 dark:border-orange-500/50 bg-orange-50 dark:bg-orange-500/10"
+                                            : "border-default"
+                                    )}>
+                                        <input
+                                            type="checkbox"
+                                            name={panel}
+                                            defaultChecked={showPaintModal.recommendedPanels.includes(panel)}
+                                        />
                                         <span className="text-sm text-foreground">{panel}</span>
                                     </label>
                                 ))}

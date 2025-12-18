@@ -1,14 +1,42 @@
 import { getDeviceForQC, submitQC, updateChecklistItemStatus } from '@/lib/actions'
 import { checkRole } from '@/lib/auth'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Search } from 'lucide-react'
 import QCForm from './QCForm'
+import Link from 'next/link'
 
 export default async function QCFormPage({ params }: { params: Promise<{ barcode: string }> }) {
     const { barcode } = await params
     const device = await getDeviceForQC(barcode)
     const user = await checkRole(['QC_ENGINEER', 'ADMIN'])
 
-    if (!device) return <div className="p-8 text-center text-red-600">Device not found</div>
+    if (!device) {
+        return (
+            <div className="max-w-md mx-auto mt-10 p-6 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl text-center animate-fade-in">
+                <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center">
+                    <AlertCircle className="text-red-500 dark:text-red-400" size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-red-700 dark:text-red-300 mb-2">
+                    Device Not Found
+                </h2>
+                <p className="text-red-600 dark:text-red-400 mb-2">
+                    No device found with barcode:
+                </p>
+                <p className="font-mono text-lg font-bold text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-500/20 px-4 py-2 rounded-lg mb-4">
+                    {barcode}
+                </p>
+                <p className="text-sm text-red-500 dark:text-red-400 mb-6">
+                    Please verify the barcode is correct and the device has been registered in the system.
+                </p>
+                <Link
+                    href="/qc"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+                >
+                    <Search size={18} />
+                    Scan Another Device
+                </Link>
+            </div>
+        )
+    }
 
     // Allow QC only if AWAITING_QC
     if (device.status !== 'AWAITING_QC') {

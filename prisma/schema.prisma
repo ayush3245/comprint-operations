@@ -309,6 +309,10 @@ model RepairJob {
   sparesRequired  String?      // JSON list of part codes
   sparesIssued    String?      // JSON list
 
+  // Recommended paint panels from inspection (JSON array of panel names)
+  // These are suggestions - L2 Engineer must explicitly send to paint
+  recommendedPaintPanels String?
+
   station         String?
 
   repairStartDate DateTime?

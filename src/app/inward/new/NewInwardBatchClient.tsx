@@ -17,6 +17,7 @@ export default function NewInwardBatchClient() {
         try {
             const data = {
                 type,
+                date: formData.get('date') as string,
                 poInvoiceNo: formData.get('poInvoiceNo') as string,
                 supplier: formData.get('supplier') as string,
                 customer: formData.get('customer') as string,
@@ -68,6 +69,19 @@ export default function NewInwardBatchClient() {
                 </div>
 
                 <form action={handleSubmit} className="space-y-4">
+                    {/* Receipt Date Field */}
+                    <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                            Receipt Date
+                        </label>
+                        <input
+                            type="date"
+                            name="date"
+                            defaultValue={new Date().toISOString().split('T')[0]}
+                            className="w-full px-3 py-2 bg-muted border border-input rounded-lg text-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                        />
+                    </div>
+
                     {type === 'REFURB_PURCHASE' ? (
                         <>
                             <div>

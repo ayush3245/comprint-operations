@@ -15,22 +15,27 @@ import {
     collectFromL3Repair,
     collectFromPaint,
     l2SendToQC,
-    l2RequestSpares,
-    getUserDashboardStats
+    l2RequestSpares
 } from '@/lib/actions'
 import L2RepairClient from './L2RepairClient'
 import DashboardStats from '@/components/DashboardStats'
 import type { L3IssueType } from '@prisma/client'
 
 export default async function L2RepairPage() {
-    const user = await checkRole(['L2_ENGINEER', 'REPAIR_ENGINEER', 'ADMIN', 'SUPERADMIN'])
+    const user = await checkRole(['L2_ENGINEER', 'ADMIN', 'SUPERADMIN'])
 
-    const [assignedDevices, availableDevices, completedDevices, stats] = await Promise.all([
+    const [assignedDevices, availableDevices, completedDevices] = await Promise.all([
         getL2AssignedDevices(user.id),
         getDevicesReadyForL2(),
-        getL2CompletedDevices(user.id),
-        getUserDashboardStats(user.id, user.role)
+        getL2CompletedDevices(user.id)
     ])
+
+    // Derive stats from the fetched arrays - always user-specific
+    const stats = {
+        pending: availableDevices.length,    // Queue size (available to claim)
+        inProgress: assignedDevices.length,  // User's active jobs
+        completed: completedDevices.length   // User's completed jobs
+    }
 
     // Server actions
     async function handleClaimDevice(deviceId: string) {
@@ -107,7 +112,7 @@ export default async function L2RepairPage() {
                 labels={{
                     pending: 'Available to Claim',
                     inProgress: 'My Active Jobs',
-                    completed: 'Handed Over'
+                    completed: 'My Completed'
                 }}
             />
             <L2RepairClient

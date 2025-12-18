@@ -12,6 +12,7 @@ import { notifySparesRequested, notifyQCFailed, notifyPaintReady } from './notif
 
 export async function createInwardBatch(data: {
   type: InwardType
+  date?: string  // ISO date string from date input
   poInvoiceNo?: string
   supplier?: string
   customer?: string
@@ -26,10 +27,20 @@ export async function createInwardBatch(data: {
   const count = await prisma.inwardBatch.count()
   const batchId = `BATCH-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`
 
+  // Parse date or use current date
+  const batchDate = data.date ? new Date(data.date) : new Date()
+
   const batch = await prisma.inwardBatch.create({
     data: {
       batchId,
-      ...data,
+      type: data.type,
+      date: batchDate,
+      poInvoiceNo: data.poInvoiceNo,
+      supplier: data.supplier,
+      customer: data.customer,
+      rentalRef: data.rentalRef,
+      emailSubject: data.emailSubject,
+      emailThreadId: data.emailThreadId,
       createdById: user.id
     }
   })
@@ -44,6 +55,53 @@ export async function createInwardBatch(data: {
   })
 
   return batch
+}
+
+export async function updateInwardBatch(
+  batchId: string,
+  data: {
+    date?: string
+    poInvoiceNo?: string
+    supplier?: string
+    customer?: string
+    rentalRef?: string
+    emailSubject?: string
+  }
+) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify batch exists
+  const batch = await prisma.inwardBatch.findUnique({
+    where: { batchId }
+  })
+  if (!batch) throw new Error('Batch not found')
+
+  // Parse date if provided
+  const updateData: Record<string, unknown> = {}
+  if (data.date) updateData.date = new Date(data.date)
+  if (data.poInvoiceNo !== undefined) updateData.poInvoiceNo = data.poInvoiceNo
+  if (data.supplier !== undefined) updateData.supplier = data.supplier
+  if (data.customer !== undefined) updateData.customer = data.customer
+  if (data.rentalRef !== undefined) updateData.rentalRef = data.rentalRef
+  if (data.emailSubject !== undefined) updateData.emailSubject = data.emailSubject
+
+  const updated = await prisma.inwardBatch.update({
+    where: { batchId },
+    data: updateData
+  })
+
+  await logActivity({
+    action: 'UPDATED_BATCH',
+    details: `Updated batch ${batchId}`,
+    userId: user.id,
+    metadata: { batchId: batch.id, changes: data }
+  })
+
+  revalidatePath('/inward')
+  revalidatePath(`/inward/${batchId}`)
+
+  return updated
 }
 
 export async function addDeviceToBatch(batchId: string, data: {
@@ -373,6 +431,8 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
   }
 
   // Update device with workflow flags and status
+  // Note: paintRequired flag is set but NO panels are created yet
+  // L2 Engineer must explicitly send panels to paint
   await prisma.device.update({
     where: { id: deviceId },
     data: {
@@ -384,16 +444,9 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
     }
   })
 
-  // Create paint panels if any were selected
-  if (paintRequired && data.paintPanels) {
-    await prisma.paintPanel.createMany({
-      data: data.paintPanels.map(panel => ({
-        deviceId,
-        panelType: panel,
-        status: 'AWAITING_PAINT'
-      }))
-    })
-  }
+  // Note: Paint panels are NOT created here - they are only created when
+  // L2 Engineer explicitly sends them via sendPanelsToPaint()
+  // The recommended panels are stored in the repair job for L2 to review
 
   // Create repair job if repair or paint is needed
   let repairJob = null
@@ -416,6 +469,8 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
           notes: data.overallNotes
         }),
         sparesRequired: data.sparesRequired,
+        // Store recommended paint panels as JSON for L2 to review and send
+        recommendedPaintPanels: paintRequired ? JSON.stringify(data.paintPanels) : null,
         status: data.sparesRequired ? 'WAITING_FOR_SPARES' : 'READY_FOR_REPAIR'
       }
     })
@@ -495,33 +550,32 @@ export async function submitInspection(deviceId: string, data: {
   const paintRequired = data.paintRequired && data.paintPanels.length > 0
 
   // Determine next status based on workflow logic
+  // Paint is now parallel work coordinated by L2, so device goes to L2 first
   let nextStatus: DeviceStatus
-  if (repairRequired) {
-    // If repair is needed, check if spares are required first
+  if (repairRequired || paintRequired) {
+    // If repair or paint is needed, L2 Engineer coordinates
     nextStatus = data.sparesRequired ? DeviceStatus.WAITING_FOR_SPARES : DeviceStatus.READY_FOR_REPAIR
-  } else if (paintRequired) {
-    // If no repair but paint is needed, go to paint
-    nextStatus = DeviceStatus.IN_PAINT_SHOP
   } else {
     // If neither repair nor paint needed, go directly to QC
     nextStatus = DeviceStatus.AWAITING_QC
   }
 
   // Update device with workflow flags and status
+  // Note: paintRequired flag is set but NO panels are created yet
   await prisma.device.update({
     where: { id: deviceId },
     data: {
       status: nextStatus,
-      repairRequired,
+      repairRequired: repairRequired || paintRequired,
       paintRequired,
-      repairCompleted: !repairRequired, // If not required, mark as completed
-      paintCompleted: !paintRequired    // If not required, mark as completed
+      repairCompleted: !(repairRequired || paintRequired),
+      paintCompleted: !paintRequired
     }
   })
 
-  // Only create repair job if repair is actually needed
+  // Create repair job if repair or paint is needed (L2 coordinates all)
   let repairJob = null
-  if (repairRequired) {
+  if (repairRequired || paintRequired) {
     const count = await prisma.repairJob.count()
     const jobId = `JOB-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`
 
@@ -535,21 +589,15 @@ export async function submitInspection(deviceId: string, data: {
           cosmetic: data.cosmeticIssues
         }),
         sparesRequired: data.sparesRequired,
+        // Store recommended paint panels for L2 to review and send
+        recommendedPaintPanels: paintRequired ? JSON.stringify(data.paintPanels) : null,
         status: data.sparesRequired ? 'WAITING_FOR_SPARES' : 'READY_FOR_REPAIR'
       }
     })
   }
 
-  // Create paint panels if painting is required
-  if (paintRequired) {
-    await prisma.paintPanel.createMany({
-      data: data.paintPanels.map(panel => ({
-        deviceId,
-        panelType: panel,
-        status: 'AWAITING_PAINT'
-      }))
-    })
-  }
+  // Note: Paint panels are NOT created here - they are only created when
+  // L2 Engineer explicitly sends them via sendPanelsToPaint()
 
   revalidatePath(`/inspection`)
 
@@ -871,17 +919,23 @@ export async function completeRepair(jobId: string, notes: string) {
     data: { repairCompleted: true }
   })
 
-  // Determine next status based on paint requirement
+  // Determine next status
+  // Note: Paint is now parallel work coordinated by L2, NOT a separate stage
+  // Device only goes to QC when ALL parallel work (including paint) is complete
   const device = job.device
   let nextDeviceStatus: DeviceStatus
   let nextJobStatus: string
 
-  if (device.paintRequired && !device.paintCompleted) {
-    // Paint is required and not yet completed, send to paint shop
-    nextDeviceStatus = DeviceStatus.IN_PAINT_SHOP
-    nextJobStatus = 'IN_PAINT_SHOP'
+  // Check if paint is required but not yet sent/completed
+  const paintPending = device.paintRequired && !device.paintCompleted
+
+  if (paintPending) {
+    // Paint is still pending - device stays UNDER_REPAIR for L2 to coordinate
+    // L2 must send panels to paint and collect them before sending to QC
+    nextDeviceStatus = DeviceStatus.UNDER_REPAIR
+    nextJobStatus = 'UNDER_REPAIR'
   } else {
-    // Paint not required or already completed, go to QC
+    // No paint pending or paint already completed, go to QC
     nextDeviceStatus = DeviceStatus.AWAITING_QC
     nextJobStatus = 'AWAITING_QC'
   }
@@ -897,38 +951,39 @@ export async function completeRepair(jobId: string, notes: string) {
 
   await prisma.device.update({
     where: { id: job.deviceId },
-    data: { status: nextDeviceStatus }
+    data: {
+      status: nextDeviceStatus,
+      repairCompleted: true  // Mark repair work as done
+    }
   })
 
   revalidatePath('/repair')
+  revalidatePath('/l2-repair')
 
   const user = await getCurrentUser()
   if (user) {
-    const destination = nextDeviceStatus === DeviceStatus.IN_PAINT_SHOP ? 'paint shop' : 'QC'
+    const destination = paintPending ? 'L2 for paint coordination' : 'QC'
     await logActivity({
       action: 'COMPLETED_REPAIR',
-      details: `Completed repair, sent to ${destination}`,
+      details: `Completed repair, ${paintPending ? 'awaiting paint work' : 'sent to QC'}`,
       userId: user.id,
-      metadata: { jobId, nextStatus: nextDeviceStatus }
+      metadata: { jobId, nextStatus: nextDeviceStatus, paintPending }
     })
   }
 }
 
+/**
+ * @deprecated Use sendPanelsToPaint instead
+ * Legacy function - kept for backward compatibility
+ * Note: Device status no longer changes to IN_PAINT_SHOP
+ * Paint is parallel work, device stays UNDER_REPAIR
+ */
 export async function sendToPaint(jobId: string) {
-  await prisma.repairJob.update({
-    where: { id: jobId },
-    data: { status: 'IN_PAINT_SHOP' }
-  })
-
-  const job = await prisma.repairJob.findUnique({ where: { id: jobId } })
-  if (job) {
-    await prisma.device.update({
-      where: { id: job.deviceId },
-      data: { status: 'IN_PAINT_SHOP' }
-    })
-  }
-
+  // Note: We no longer change status to IN_PAINT_SHOP
+  // Paint is parallel work coordinated by L2
+  // The actual panels should be sent via sendPanelsToPaint
   revalidatePath('/repair')
+  revalidatePath('/l2-repair')
 }
 
 export async function collectFromPaint(jobId: string) {
@@ -1065,7 +1120,8 @@ export async function getL2AssignedDevices(l2EngineerId?: string) {
   return await prisma.repairJob.findMany({
     where: {
       l2EngineerId: engineerId,
-      status: { notIn: [RepairStatus.REPAIR_CLOSED] }
+      // Exclude jobs that are already sent to QC or closed
+      status: { notIn: [RepairStatus.AWAITING_QC, RepairStatus.REPAIR_CLOSED] }
     },
     include: {
       inspectionEng: { select: { name: true } },
@@ -1484,11 +1540,17 @@ export async function l2SendToQC(deviceId: string) {
         where: { l2EngineerId: user.id },
         orderBy: { createdAt: 'desc' },
         take: 1
-      }
+      },
+      paintPanels: true
     }
   })
 
   if (!device) throw new Error('Device not found')
+
+  // Check if all paint panels are complete (READY_FOR_COLLECTION or FITTED)
+  const allPaintPanelsComplete = device.paintPanels.length > 0 &&
+    device.paintPanels.every(p => p.status === 'READY_FOR_COLLECTION' || p.status === 'FITTED')
+  const paintComplete = device.paintCompleted || allPaintPanelsComplete
 
   // Validate all parallel work is complete
   const errors: string[] = []
@@ -1502,7 +1564,7 @@ export async function l2SendToQC(deviceId: string) {
   if (device.l3RepairRequired && !device.l3RepairCompleted) {
     errors.push('L3 repair not completed')
   }
-  if (device.paintRequired && !device.paintCompleted) {
+  if (device.paintRequired && !paintComplete) {
     errors.push('Paint work not completed')
   }
 
@@ -1510,12 +1572,21 @@ export async function l2SendToQC(deviceId: string) {
     throw new Error(`Cannot send to QC: ${errors.join(', ')}`)
   }
 
+  // If paint panels are complete but flag not set, update it now
+  if (device.paintRequired && allPaintPanelsComplete && !device.paintCompleted) {
+    await prisma.paintPanel.updateMany({
+      where: { deviceId },
+      data: { status: 'FITTED' }
+    })
+  }
+
   // Update device status
   await prisma.device.update({
     where: { id: deviceId },
     data: {
       status: DeviceStatus.AWAITING_QC,
-      repairCompleted: true
+      repairCompleted: true,
+      paintCompleted: device.paintRequired ? true : device.paintCompleted
     }
   })
 
@@ -2193,7 +2264,9 @@ export async function getDevicesReadyForL2() {
 // --- Paint Actions ---
 
 export async function getPaintPanels() {
-  const panels = await prisma.paintPanel.findMany({
+  // Paint is parallel work - show all panels that need painting
+  // regardless of repair status (L2 coordinates when to send panels)
+  return await prisma.paintPanel.findMany({
     where: {
       status: { in: ['AWAITING_PAINT', 'IN_PAINT'] }
     },
@@ -2201,15 +2274,6 @@ export async function getPaintPanels() {
       device: true
     },
     orderBy: { createdAt: 'asc' }
-  })
-
-  // Filter out panels where device requires repair but repair is not yet completed
-  return panels.filter(panel => {
-    const device = panel.device
-    // Only show in paint shop if:
-    // 1. Repair is NOT required, OR
-    // 2. Repair IS required AND repair is completed
-    return !device.repairRequired || device.repairCompleted
   })
 }
 
@@ -2529,6 +2593,97 @@ export async function getInventory() {
     },
     orderBy: { updatedAt: 'desc' }
   })
+}
+
+export async function searchInventory(params: {
+  search?: string
+  category?: string
+  ownership?: string
+  status?: string
+  grade?: string
+  sortBy?: 'barcode' | 'brand' | 'model' | 'updatedAt' | 'createdAt'
+  sortOrder?: 'asc' | 'desc'
+  page?: number
+  limit?: number
+}) {
+  const {
+    search = '',
+    category,
+    ownership,
+    status,
+    grade,
+    sortBy = 'updatedAt',
+    sortOrder = 'desc',
+    page = 1,
+    limit = 25
+  } = params
+
+  // Build where clause
+  const where: any = {
+    status: {
+      notIn: [
+        DeviceStatus.STOCK_OUT_SOLD,
+        DeviceStatus.STOCK_OUT_RENTAL,
+        DeviceStatus.SCRAPPED
+      ]
+    }
+  }
+
+  // Search filter
+  if (search) {
+    where.OR = [
+      { barcode: { contains: search, mode: 'insensitive' } },
+      { brand: { contains: search, mode: 'insensitive' } },
+      { model: { contains: search, mode: 'insensitive' } },
+      { location: { contains: search, mode: 'insensitive' } }
+    ]
+  }
+
+  // Category filter
+  if (category) {
+    where.category = category
+  }
+
+  // Ownership filter
+  if (ownership) {
+    where.ownership = ownership
+  }
+
+  // Status filter (override default exclusion)
+  if (status) {
+    where.status = status
+  }
+
+  // Grade filter
+  if (grade) {
+    where.grade = grade
+  }
+
+  // Execute queries in parallel
+  const [devices, total] = await Promise.all([
+    prisma.device.findMany({
+      where,
+      include: {
+        inwardBatch: true,
+        repairJobs: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      },
+      orderBy: { [sortBy]: sortOrder },
+      skip: (page - 1) * limit,
+      take: limit
+    }),
+    prisma.device.count({ where })
+  ])
+
+  return {
+    devices,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit)
+  }
 }
 
 // --- Outward Actions ---
@@ -2996,5 +3151,121 @@ export async function getUserDashboardStats(userId: string, role: Role): Promise
     default:
       // For admin and other roles, return zeros
       return { pending: 0, inProgress: 0, completed: 0 }
+  }
+}
+
+/**
+ * Migration: Fix legacy paint panels that were auto-created by inspection
+ *
+ * Before the paint workflow fix, inspection would create PaintPanel records directly.
+ * Now, inspection only stores recommendations and L2 must explicitly send panels.
+ *
+ * This function:
+ * 1. Finds devices with AWAITING_PAINT panels that were auto-created
+ * 2. Moves panel types to recommendedPaintPanels on the repair job
+ * 3. Deletes the premature paint panel records
+ */
+export async function migrateLegacyPaintPanels() {
+  const user = await getCurrentUser()
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN')) {
+    throw new Error('Unauthorized - Admin only')
+  }
+
+  // Find all paint panels that are in AWAITING_PAINT status
+  // These are likely auto-created by the old inspection flow
+  const awaitingPanels = await prisma.paintPanel.findMany({
+    where: {
+      status: 'AWAITING_PAINT'
+    },
+    include: {
+      device: {
+        include: {
+          repairJobs: {
+            where: {
+              status: { notIn: ['REPAIR_CLOSED'] }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          }
+        }
+      }
+    }
+  })
+
+  // Group panels by device
+  const devicePanels = new Map<string, { deviceId: string; panels: string[]; repairJobId: string | null }>()
+
+  for (const panel of awaitingPanels) {
+    const existing = devicePanels.get(panel.deviceId)
+    const repairJobId = panel.device.repairJobs[0]?.id || null
+
+    if (existing) {
+      existing.panels.push(panel.panelType)
+    } else {
+      devicePanels.set(panel.deviceId, {
+        deviceId: panel.deviceId,
+        panels: [panel.panelType],
+        repairJobId
+      })
+    }
+  }
+
+  let migratedCount = 0
+  const migratedDevices: string[] = []
+
+  // Process each device
+  for (const [deviceId, data] of devicePanels) {
+    if (!data.repairJobId) continue
+
+    // Check if repair job already has recommendedPaintPanels
+    const repairJob = await prisma.repairJob.findUnique({
+      where: { id: data.repairJobId },
+      select: { recommendedPaintPanels: true }
+    })
+
+    // Only migrate if recommendedPaintPanels is not already set
+    if (!repairJob?.recommendedPaintPanels) {
+      // Store panel types in recommendedPaintPanels
+      await prisma.repairJob.update({
+        where: { id: data.repairJobId },
+        data: {
+          recommendedPaintPanels: JSON.stringify(data.panels)
+        }
+      })
+    }
+
+    // Delete the premature paint panel records
+    await prisma.paintPanel.deleteMany({
+      where: {
+        deviceId,
+        status: 'AWAITING_PAINT'
+      }
+    })
+
+    // Get device barcode for logging
+    const device = await prisma.device.findUnique({
+      where: { id: deviceId },
+      select: { barcode: true }
+    })
+
+    migratedCount++
+    migratedDevices.push(device?.barcode || deviceId)
+  }
+
+  // Log the migration
+  await logActivity({
+    action: 'MIGRATION',
+    details: `Migrated ${migratedCount} devices from legacy paint panel flow`,
+    userId: user.id,
+    metadata: { migratedDevices }
+  })
+
+  revalidatePath('/l2-repair')
+  revalidatePath('/paint')
+
+  return {
+    success: true,
+    migratedCount,
+    migratedDevices
   }
 }

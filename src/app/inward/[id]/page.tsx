@@ -8,6 +8,9 @@ import BulkUploadForm from './BulkUploadForm'
 import BarcodePrintButton from '@/components/BarcodePrintButton'
 import DynamicDeviceForm from '@/components/DynamicDeviceForm'
 import InwardDeviceList from './InwardDeviceList'
+import EditBatchModal from './EditBatchModal'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 
 export default async function BatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     await checkRole(['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'])
@@ -107,6 +110,15 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
 
     return (
         <div className="space-y-6">
+            {/* Back Navigation */}
+            <Link
+                href="/inward"
+                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+            >
+                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                <span>Back to Batches</span>
+            </Link>
+
             <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                 <div>
                     <h1 className="text-xl md:text-2xl font-bold text-foreground">Batch: {batch.batchId}</h1>
@@ -122,6 +134,7 @@ export default async function BatchDetailsPage({ params }: { params: Promise<{ i
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    <EditBatchModal batch={batch} />
                     {batch.devices.length > 0 && (
                         <BarcodePrintButton
                             devices={batch.devices.map(d => ({
