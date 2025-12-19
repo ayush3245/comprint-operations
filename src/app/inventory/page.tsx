@@ -1,17 +1,24 @@
-import { searchInventory } from '@/lib/actions'
-import { checkRole } from '@/lib/auth'
+import { searchInventory, getRacks } from '@/lib/actions'
+import { checkRole, getCurrentUser } from '@/lib/auth'
 import InventoryClient from './InventoryClient'
 
 export default async function InventoryPage() {
     await checkRole(['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN'])
+    const user = await getCurrentUser()
 
     // Fetch initial data with default parameters
-    const initialData = await searchInventory({
-        page: 1,
-        limit: 25,
-        sortBy: 'updatedAt',
-        sortOrder: 'desc'
-    })
+    const [initialData, racks] = await Promise.all([
+        searchInventory({
+            page: 1,
+            limit: 25,
+            sortBy: 'updatedAt',
+            sortOrder: 'desc'
+        }),
+        getRacks()
+    ])
+
+    // Determine if user can manage racks (warehouse roles, admin, superadmin)
+    const canManageRacks = user && ['WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'ADMIN', 'SUPERADMIN'].includes(user.role)
 
     return (
         <div>
@@ -23,7 +30,11 @@ export default async function InventoryPage() {
                     </p>
                 </div>
             </div>
-            <InventoryClient initialData={initialData} />
+            <InventoryClient
+                initialData={initialData}
+                racks={racks}
+                canManageRacks={canManageRacks ?? false}
+            />
         </div>
     )
 }

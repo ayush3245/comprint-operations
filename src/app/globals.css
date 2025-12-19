@@ -154,7 +154,7 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--muted-foreground) transparent;
+  scrollbar-color: rgba(100, 116, 139, 0.3) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -167,12 +167,26 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: var(--muted-foreground);
+  background-color: rgba(100, 116, 139, 0.3);
   border-radius: 3px;
+  transition: background-color 0.2s ease;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: var(--foreground);
+  background-color: rgba(100, 116, 139, 0.5);
+}
+
+/* Dark mode scrollbars - even more subtle */
+.dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 html {

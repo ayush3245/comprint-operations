@@ -22,11 +22,10 @@ export default async function QCPage() {
         <div className="p-6">
             <DashboardStats
                 pending={pending}
-                inProgress={0}
                 completed={completed}
+                hideInProgress={true}
                 labels={{
                     pending: 'Awaiting QC',
-                    inProgress: 'In Progress',
                     completed: 'My Completed'
                 }}
             />

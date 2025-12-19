@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from './db'
-import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus, OutwardType, ChecklistStatus, ChecklistStage, L3IssueType, ParallelWorkStatus } from '@prisma/client'
+import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus, OutwardType, ChecklistStatus, ChecklistStage, L3IssueType, ParallelWorkStatus, RackStage } from '@prisma/client'
 import { getChecklistForCategory } from './checklist-definitions'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from './auth'
@@ -175,6 +175,9 @@ export async function addDeviceToBatch(batchId: string, data: {
       toLocation: 'Receiving Area'
     }
   })
+
+  // Auto-assign device to appropriate rack based on status
+  await autoAssignDeviceToRack(device.id)
 
   revalidatePath(`/inward/${batchId}`)
   return device
@@ -476,6 +479,9 @@ export async function submitInspectionWithChecklist(deviceId: string, data: {
     })
   }
 
+  // Auto-assign device to appropriate rack based on new status
+  await autoAssignDeviceToRack(deviceId)
+
   revalidatePath('/inspection')
   revalidatePath('/l2-repair')
 
@@ -598,6 +604,9 @@ export async function submitInspection(deviceId: string, data: {
 
   // Note: Paint panels are NOT created here - they are only created when
   // L2 Engineer explicitly sends them via sendPanelsToPaint()
+
+  // Auto-assign device to appropriate rack based on new status
+  await autoAssignDeviceToRack(deviceId)
 
   revalidatePath(`/inspection`)
 
@@ -834,6 +843,9 @@ export async function issueSpares(jobId: string, sparesIssued: string) {
     }
   })
 
+  // Auto-assign device to appropriate rack based on new status
+  await autoAssignDeviceToRack(job.deviceId)
+
   revalidatePath('/spares')
   revalidatePath('/l2-repair')
 }
@@ -900,6 +912,8 @@ export async function startRepair(jobId: string, userId: string) {
       where: { id: job.deviceId },
       data: { status: 'UNDER_REPAIR' }
     })
+    // Auto-assign device to appropriate rack based on new status
+    await autoAssignDeviceToRack(job.deviceId)
   }
 
   revalidatePath('/repair')
@@ -1094,6 +1108,9 @@ export async function claimDeviceForL2(deviceId: string) {
     where: { id: deviceId },
     data: { status: DeviceStatus.UNDER_REPAIR }
   })
+
+  // Auto-assign device to appropriate rack based on new status
+  await autoAssignDeviceToRack(deviceId)
 
   revalidatePath('/l2-repair')
   revalidatePath('/repair')
@@ -1602,6 +1619,9 @@ export async function l2SendToQC(deviceId: string) {
     })
   }
 
+  // Auto-assign device to appropriate rack based on new status
+  await autoAssignDeviceToRack(deviceId)
+
   revalidatePath('/l2-repair')
   revalidatePath('/qc')
 
@@ -1809,6 +1829,9 @@ export async function l2RequestSpares(
       status: DeviceStatus.WAITING_FOR_SPARES
     }
   })
+
+  // Auto-assign device to appropriate rack based on new status
+  await autoAssignDeviceToRack(deviceId)
 
   revalidatePath('/l2-repair')
   revalidatePath('/inventory')
@@ -2379,6 +2402,16 @@ export async function updatePanelStatus(panelId: string, status: 'IN_PAINT' | 'R
   revalidatePath('/qc')
 }
 
+export async function bulkUpdatePanelStatus(panelIds: string[], status: 'IN_PAINT' | 'READY_FOR_COLLECTION') {
+  // Process each panel individually to ensure proper device status updates
+  for (const panelId of panelIds) {
+    await updatePanelStatus(panelId, status)
+  }
+
+  revalidatePath('/paint')
+  return { success: true, count: panelIds.length }
+}
+
 // --- QC Actions ---
 
 export async function submitQC(deviceId: string, data: {
@@ -2444,6 +2477,9 @@ export async function submitQC(deviceId: string, data: {
         data: { status: RepairStatus.REPAIR_CLOSED }
       })
     }
+
+    // Auto-assign device to appropriate rack based on new status
+    await autoAssignDeviceToRack(deviceId)
   } else {
     // QC Failed - reset workflow flags and send back to inspection/repair
     await prisma.device.update({
@@ -2473,6 +2509,9 @@ export async function submitQC(deviceId: string, data: {
         }
       })
     }
+
+    // Auto-assign device to appropriate rack based on new status
+    await autoAssignDeviceToRack(deviceId)
   }
 
   revalidatePath('/qc')
@@ -2668,6 +2707,13 @@ export async function searchInventory(params: {
         repairJobs: {
           orderBy: { createdAt: 'desc' },
           take: 1
+        },
+        rack: {
+          select: {
+            id: true,
+            rackCode: true,
+            stage: true
+          }
         }
       },
       orderBy: { [sortBy]: sortOrder },
@@ -2796,6 +2842,9 @@ export async function createOutward(data: {
         userId: user.id
       }
     })
+
+    // Remove device from rack (it's leaving the system)
+    await autoAssignDeviceToRack(device.id)
   }
 
   revalidatePath('/outward')
@@ -3268,4 +3317,757 @@ export async function migrateLegacyPaintPanels() {
     migratedCount,
     migratedDevices
   }
+}
+
+// --- Device History Actions ---
+
+export type DeviceHistoryEvent = {
+  type: string
+  description: string
+  user: { id: string; name: string; role: string } | null
+  date: Date
+  details?: Record<string, unknown>
+}
+
+export type DeviceHistory = {
+  device: {
+    id: string
+    barcode: string
+    brand: string
+    model: string
+    category: string
+    status: string
+    grade: string | null
+    ownership: string
+    cpu: string | null
+    ram: string | null
+    ssd: string | null
+    gpu: string | null
+    screenSize: string | null
+    createdAt: Date
+    updatedAt: Date
+  }
+  timeline: DeviceHistoryEvent[]
+}
+
+/**
+ * Get complete device history with all users who worked on it
+ */
+export async function getDeviceHistory(deviceId: string): Promise<DeviceHistory | null> {
+  const device = await prisma.device.findUnique({
+    where: { id: deviceId },
+    include: {
+      inwardBatch: {
+        include: {
+          createdBy: { select: { id: true, name: true, role: true } }
+        }
+      },
+      repairJobs: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          inspectionEng: { select: { id: true, name: true, role: true } },
+          repairEng: { select: { id: true, name: true, role: true } },
+          l2Engineer: { select: { id: true, name: true, role: true } }
+        }
+      },
+      displayRepairJobs: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          assignedTo: { select: { id: true, name: true, role: true } }
+        }
+      },
+      batteryBoostJobs: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          assignedTo: { select: { id: true, name: true, role: true } }
+        }
+      },
+      l3RepairJobs: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          assignedTo: { select: { id: true, name: true, role: true } }
+        }
+      },
+      paintPanels: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          technician: { select: { id: true, name: true, role: true } }
+        }
+      },
+      qcRecords: {
+        orderBy: { completedAt: 'asc' },
+        include: {
+          qcEng: { select: { id: true, name: true, role: true } }
+        }
+      },
+      movements: {
+        orderBy: { date: 'asc' },
+        include: {
+          user: { select: { id: true, name: true, role: true } }
+        }
+      }
+    }
+  })
+
+  if (!device) return null
+
+  // Build timeline of events
+  const timeline: DeviceHistoryEvent[] = []
+
+  // 1. Device received (inward batch creation)
+  timeline.push({
+    type: 'RECEIVED',
+    description: `Device received via batch ${device.inwardBatch.batchId}`,
+    user: device.inwardBatch.createdBy,
+    date: device.inwardBatch.createdAt,
+    details: {
+      batchId: device.inwardBatch.batchId,
+      batchType: device.inwardBatch.type
+    }
+  })
+
+  // 2. Repair jobs (inspection and L2 work)
+  for (const job of device.repairJobs) {
+    if (job.inspectionEng) {
+      timeline.push({
+        type: 'INSPECTED',
+        description: 'Device inspected',
+        user: job.inspectionEng,
+        date: job.createdAt,
+        details: {
+          jobId: job.jobId,
+          reportedIssues: job.reportedIssues
+        }
+      })
+    }
+
+    if (job.l2Engineer && job.repairStartDate) {
+      timeline.push({
+        type: 'L2_REPAIR_STARTED',
+        description: 'L2 Engineer started repair',
+        user: job.l2Engineer,
+        date: job.repairStartDate,
+        details: { jobId: job.jobId }
+      })
+    }
+
+    if (job.l2Engineer && job.repairEndDate) {
+      timeline.push({
+        type: 'L2_REPAIR_COMPLETED',
+        description: 'L2 Engineer completed repair',
+        user: job.l2Engineer,
+        date: job.repairEndDate,
+        details: { jobId: job.jobId }
+      })
+    }
+  }
+
+  // 3. Display repair jobs
+  for (const job of device.displayRepairJobs) {
+    if (job.startedAt && job.assignedTo) {
+      timeline.push({
+        type: 'DISPLAY_REPAIR_STARTED',
+        description: 'Display repair started',
+        user: job.assignedTo,
+        date: job.startedAt,
+        details: { reportedIssues: job.reportedIssues }
+      })
+    }
+    if (job.completedAt && job.assignedTo) {
+      timeline.push({
+        type: 'DISPLAY_REPAIR_COMPLETED',
+        description: job.completedByL2 ? 'Display repair completed by L2' : 'Display repair completed',
+        user: job.assignedTo,
+        date: job.completedAt,
+        details: { notes: job.notes }
+      })
+    }
+  }
+
+  // 4. Battery boost jobs
+  for (const job of device.batteryBoostJobs) {
+    if (job.startedAt && job.assignedTo) {
+      timeline.push({
+        type: 'BATTERY_BOOST_STARTED',
+        description: `Battery boost started (Initial: ${job.initialCapacity})`,
+        user: job.assignedTo,
+        date: job.startedAt,
+        details: { initialCapacity: job.initialCapacity, targetCapacity: job.targetCapacity }
+      })
+    }
+    if (job.completedAt && job.assignedTo) {
+      timeline.push({
+        type: 'BATTERY_BOOST_COMPLETED',
+        description: `Battery boost completed (Final: ${job.finalCapacity})`,
+        user: job.assignedTo,
+        date: job.completedAt,
+        details: { finalCapacity: job.finalCapacity, notes: job.notes }
+      })
+    }
+  }
+
+  // 5. L3 repair jobs
+  for (const job of device.l3RepairJobs) {
+    if (job.startedAt && job.assignedTo) {
+      timeline.push({
+        type: 'L3_REPAIR_STARTED',
+        description: `L3 repair started (${job.issueType.replace(/_/g, ' ')})`,
+        user: job.assignedTo,
+        date: job.startedAt,
+        details: { issueType: job.issueType, description: job.description }
+      })
+    }
+    if (job.completedAt && job.assignedTo) {
+      timeline.push({
+        type: 'L3_REPAIR_COMPLETED',
+        description: `L3 repair completed (${job.issueType.replace(/_/g, ' ')})`,
+        user: job.assignedTo,
+        date: job.completedAt,
+        details: { resolution: job.resolution, notes: job.notes }
+      })
+    }
+  }
+
+  // 6. Paint work
+  const paintByTechnician = new Map<string, { user: typeof device.paintPanels[0]['technician']; panels: string[]; date: Date }>()
+  for (const panel of device.paintPanels) {
+    if (panel.technician && panel.completedAt) {
+      const key = panel.technician.id
+      if (paintByTechnician.has(key)) {
+        paintByTechnician.get(key)!.panels.push(panel.panelType)
+      } else {
+        paintByTechnician.set(key, {
+          user: panel.technician,
+          panels: [panel.panelType],
+          date: panel.completedAt
+        })
+      }
+    }
+  }
+  for (const [, data] of paintByTechnician) {
+    timeline.push({
+      type: 'PAINT_COMPLETED',
+      description: `Paint completed for: ${data.panels.join(', ')}`,
+      user: data.user,
+      date: data.date,
+      details: { panels: data.panels }
+    })
+  }
+
+  // 7. QC records
+  for (const qc of device.qcRecords) {
+    timeline.push({
+      type: qc.status === 'PASSED' ? 'QC_PASSED' : 'QC_FAILED',
+      description: qc.status === 'PASSED'
+        ? `QC passed - Grade ${qc.finalGrade}`
+        : 'QC failed - Sent for rework',
+      user: qc.qcEng,
+      date: qc.completedAt,
+      details: {
+        grade: qc.finalGrade,
+        status: qc.status,
+        remarks: qc.remarks
+      }
+    })
+  }
+
+  // 8. Stock movements
+  for (const movement of device.movements) {
+    timeline.push({
+      type: `MOVEMENT_${movement.type}`,
+      description: `${movement.type.replace(/_/g, ' ')}: ${movement.fromLocation || 'N/A'} → ${movement.toLocation || 'N/A'}`,
+      user: movement.user,
+      date: movement.date,
+      details: {
+        type: movement.type,
+        fromLocation: movement.fromLocation,
+        toLocation: movement.toLocation,
+        reference: movement.reference
+      }
+    })
+  }
+
+  // Sort timeline by date
+  timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  return {
+    device: {
+      id: device.id,
+      barcode: device.barcode,
+      brand: device.brand,
+      model: device.model,
+      category: device.category,
+      status: device.status,
+      grade: device.grade,
+      ownership: device.ownership,
+      cpu: device.cpu,
+      ram: device.ram,
+      ssd: device.ssd,
+      gpu: device.gpu,
+      screenSize: device.screenSize,
+      createdAt: device.createdAt,
+      updatedAt: device.updatedAt
+    },
+    timeline
+  }
+}
+
+/**
+ * Get device history by barcode
+ */
+export async function getDeviceHistoryByBarcode(barcode: string): Promise<DeviceHistory | null> {
+  const device = await prisma.device.findUnique({
+    where: { barcode },
+    select: { id: true }
+  })
+  if (!device) return null
+  return getDeviceHistory(device.id)
+}
+
+// --- Profile Actions ---
+
+export async function getUserProfile() {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  return await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      profilePicture: true,
+      role: true,
+      createdAt: true
+    }
+  })
+}
+
+export async function updateUserProfile(data: {
+  name?: string
+  phone?: string
+  profilePicture?: string
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Only allow updating name, phone, and profilePicture
+  const updateData: { name?: string; phone?: string; profilePicture?: string } = {}
+
+  if (data.name !== undefined && data.name.trim().length > 0) {
+    updateData.name = data.name.trim()
+  }
+  if (data.phone !== undefined) {
+    updateData.phone = data.phone.trim() || null
+  }
+  if (data.profilePicture !== undefined) {
+    updateData.profilePicture = data.profilePicture || null
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      profilePicture: true,
+      role: true
+    }
+  })
+
+  await logActivity({
+    action: 'UPDATED_PROFILE',
+    details: `Updated profile settings`,
+    userId: user.id,
+    metadata: { updatedFields: Object.keys(updateData) }
+  })
+
+  revalidatePath('/profile')
+  return updatedUser
+}
+
+// --- Rack Management Actions ---
+
+const RACK_STAGE_PREFIX: Record<RackStage, string> = {
+  RECEIVED: 'RCV',
+  WAITING_FOR_REPAIR: 'WFR',
+  UNDER_REPAIR: 'URP',
+  AWAITING_QC: 'AQC',
+  READY_FOR_DISPATCH: 'RFD'
+}
+
+/**
+ * Get all racks with their device counts
+ */
+export async function getRacks() {
+  return await prisma.rack.findMany({
+    include: {
+      _count: {
+        select: { devices: true }
+      }
+    },
+    orderBy: [{ stage: 'asc' }, { rackCode: 'asc' }]
+  })
+}
+
+/**
+ * Get racks by stage with detailed device info
+ */
+export async function getRacksByStage(stage: RackStage) {
+  return await prisma.rack.findMany({
+    where: { stage, isActive: true },
+    include: {
+      devices: {
+        select: {
+          id: true,
+          barcode: true,
+          brand: true,
+          model: true,
+          category: true,
+          status: true
+        }
+      },
+      _count: {
+        select: { devices: true }
+      }
+    },
+    orderBy: { rackCode: 'asc' }
+  })
+}
+
+/**
+ * Get a single rack with all devices
+ */
+export async function getRackById(rackId: string) {
+  return await prisma.rack.findUnique({
+    where: { id: rackId },
+    include: {
+      devices: {
+        select: {
+          id: true,
+          barcode: true,
+          brand: true,
+          model: true,
+          category: true,
+          status: true,
+          grade: true
+        }
+      }
+    }
+  })
+}
+
+/**
+ * Create a new rack
+ */
+export async function createRack(data: {
+  stage: RackStage
+  location?: string
+  capacity?: number
+}) {
+  const user = await getCurrentUser()
+  if (!user || !['ADMIN', 'SUPERADMIN', 'WAREHOUSE_MANAGER'].includes(user.role)) {
+    throw new Error('Unauthorized - Admin only')
+  }
+
+  // Generate rack code based on stage
+  const prefix = RACK_STAGE_PREFIX[data.stage]
+  const existingCount = await prisma.rack.count({
+    where: { stage: data.stage }
+  })
+  const rackCode = `${prefix}-${(existingCount + 1).toString().padStart(3, '0')}`
+
+  const rack = await prisma.rack.create({
+    data: {
+      rackCode,
+      stage: data.stage,
+      location: data.location,
+      capacity: data.capacity || 10
+    }
+  })
+
+  await logActivity({
+    action: 'CREATED_RACK',
+    details: `Created rack ${rackCode} for stage ${data.stage}`,
+    userId: user.id,
+    metadata: { rackId: rack.id, stage: data.stage }
+  })
+
+  revalidatePath('/admin/racks')
+  return rack
+}
+
+/**
+ * Update a rack
+ */
+export async function updateRack(rackId: string, data: {
+  location?: string
+  capacity?: number
+  isActive?: boolean
+}) {
+  const user = await getCurrentUser()
+  if (!user || !['ADMIN', 'SUPERADMIN', 'WAREHOUSE_MANAGER'].includes(user.role)) {
+    throw new Error('Unauthorized - Admin only')
+  }
+
+  const rack = await prisma.rack.update({
+    where: { id: rackId },
+    data
+  })
+
+  await logActivity({
+    action: 'UPDATED_RACK',
+    details: `Updated rack ${rack.rackCode}`,
+    userId: user.id,
+    metadata: { rackId, changes: data }
+  })
+
+  revalidatePath('/admin/racks')
+  return rack
+}
+
+/**
+ * Delete a rack (only if empty)
+ */
+export async function deleteRack(rackId: string) {
+  const user = await getCurrentUser()
+  if (!user || !['ADMIN', 'SUPERADMIN', 'WAREHOUSE_MANAGER'].includes(user.role)) {
+    throw new Error('Unauthorized - Admin only')
+  }
+
+  const rack = await prisma.rack.findUnique({
+    where: { id: rackId },
+    include: { _count: { select: { devices: true } } }
+  })
+
+  if (!rack) throw new Error('Rack not found')
+  if (rack._count.devices > 0) {
+    throw new Error('Cannot delete rack with devices. Please move devices first.')
+  }
+
+  await prisma.rack.delete({
+    where: { id: rackId }
+  })
+
+  await logActivity({
+    action: 'DELETED_RACK',
+    details: `Deleted rack ${rack.rackCode}`,
+    userId: user.id,
+    metadata: { rackId, rackCode: rack.rackCode }
+  })
+
+  revalidatePath('/admin/racks')
+}
+
+/**
+ * Assign device to a rack
+ */
+export async function assignDeviceToRack(deviceId: string, rackId: string | null) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const device = await prisma.device.findUnique({
+    where: { id: deviceId },
+    include: { rack: true }
+  })
+  if (!device) throw new Error('Device not found')
+
+  if (rackId) {
+    const rack = await prisma.rack.findUnique({
+      where: { id: rackId },
+      include: { _count: { select: { devices: true } } }
+    })
+
+    if (!rack) throw new Error('Rack not found')
+    if (!rack.isActive) throw new Error('Rack is not active')
+    if (rack._count.devices >= rack.capacity) {
+      throw new Error(`Rack ${rack.rackCode} is full (${rack.capacity}/${rack.capacity})`)
+    }
+  }
+
+  const updatedDevice = await prisma.device.update({
+    where: { id: deviceId },
+    data: {
+      rackId,
+      location: rackId ? undefined : device.location // Clear location if removing from rack
+    },
+    include: { rack: true }
+  })
+
+  // Update location field with rack code for quick reference
+  if (rackId && updatedDevice.rack) {
+    await prisma.device.update({
+      where: { id: deviceId },
+      data: { location: updatedDevice.rack.rackCode }
+    })
+  }
+
+  await logActivity({
+    action: 'ASSIGNED_TO_RACK',
+    details: rackId
+      ? `Assigned device ${device.barcode} to rack ${updatedDevice.rack?.rackCode}`
+      : `Removed device ${device.barcode} from rack ${device.rack?.rackCode}`,
+    userId: user.id,
+    metadata: { deviceId, rackId, previousRackId: device.rackId }
+  })
+
+  revalidatePath('/inventory')
+  revalidatePath('/admin/racks')
+  return updatedDevice
+}
+
+/**
+ * Move device to appropriate rack based on status
+ * This is called automatically when device status changes
+ */
+export async function autoAssignDeviceToRack(deviceId: string) {
+  const device = await prisma.device.findUnique({
+    where: { id: deviceId }
+  })
+  if (!device) return
+
+  // Map device status to rack stage
+  let targetStage: RackStage | null = null
+
+  switch (device.status) {
+    case DeviceStatus.RECEIVED:
+    case DeviceStatus.PENDING_INSPECTION:
+      targetStage = RackStage.RECEIVED
+      break
+    case DeviceStatus.WAITING_FOR_SPARES:
+    case DeviceStatus.READY_FOR_REPAIR:
+      targetStage = RackStage.WAITING_FOR_REPAIR
+      break
+    case DeviceStatus.UNDER_REPAIR:
+    case DeviceStatus.IN_PAINT_SHOP:
+      targetStage = RackStage.UNDER_REPAIR
+      break
+    case DeviceStatus.AWAITING_QC:
+    case DeviceStatus.QC_FAILED_REWORK:
+      targetStage = RackStage.AWAITING_QC
+      break
+    case DeviceStatus.READY_FOR_STOCK:
+    case DeviceStatus.QC_PASSED:
+      targetStage = RackStage.READY_FOR_DISPATCH
+      break
+    default:
+      // Device is out of system (sold, rented, scrapped) - remove from rack
+      if (device.rackId) {
+        await prisma.device.update({
+          where: { id: deviceId },
+          data: { rackId: null }
+        })
+      }
+      return
+  }
+
+  // Find an available rack for the target stage
+  const availableRack = await prisma.rack.findFirst({
+    where: {
+      stage: targetStage,
+      isActive: true
+    },
+    include: {
+      _count: { select: { devices: true } }
+    },
+    orderBy: { rackCode: 'asc' }
+  })
+
+  // Find a rack that has space
+  const racksWithSpace = await prisma.rack.findMany({
+    where: {
+      stage: targetStage,
+      isActive: true
+    },
+    include: {
+      _count: { select: { devices: true } }
+    },
+    orderBy: { rackCode: 'asc' }
+  })
+
+  const rackWithSpace = racksWithSpace.find(r => r._count.devices < r.capacity)
+
+  if (rackWithSpace && device.rackId !== rackWithSpace.id) {
+    await prisma.device.update({
+      where: { id: deviceId },
+      data: {
+        rackId: rackWithSpace.id,
+        location: rackWithSpace.rackCode
+      }
+    })
+  }
+}
+
+/**
+ * Initialize default racks (5 per stage)
+ */
+export async function initializeDefaultRacks() {
+  const user = await getCurrentUser()
+  if (!user || !['ADMIN', 'SUPERADMIN'].includes(user.role)) {
+    throw new Error('Unauthorized - Admin only')
+  }
+
+  const stages = Object.values(RackStage) as RackStage[]
+  let createdCount = 0
+
+  for (const stage of stages) {
+    const existingCount = await prisma.rack.count({ where: { stage } })
+    const toCreate = Math.max(0, 5 - existingCount)
+
+    for (let i = 0; i < toCreate; i++) {
+      const prefix = RACK_STAGE_PREFIX[stage]
+      const number = existingCount + i + 1
+      const rackCode = `${prefix}-${number.toString().padStart(3, '0')}`
+
+      await prisma.rack.create({
+        data: {
+          rackCode,
+          stage,
+          capacity: 10
+        }
+      })
+      createdCount++
+    }
+  }
+
+  await logActivity({
+    action: 'INITIALIZED_RACKS',
+    details: `Initialized ${createdCount} default racks`,
+    userId: user.id,
+    metadata: { createdCount }
+  })
+
+  revalidatePath('/admin/racks')
+  return { success: true, createdCount }
+}
+
+/**
+ * Get rack overview stats
+ */
+export async function getRackStats() {
+  const racks = await prisma.rack.findMany({
+    where: { isActive: true },
+    include: {
+      _count: { select: { devices: true } }
+    }
+  })
+
+  const stats: Record<RackStage, { total: number; used: number; capacity: number }> = {
+    RECEIVED: { total: 0, used: 0, capacity: 0 },
+    WAITING_FOR_REPAIR: { total: 0, used: 0, capacity: 0 },
+    UNDER_REPAIR: { total: 0, used: 0, capacity: 0 },
+    AWAITING_QC: { total: 0, used: 0, capacity: 0 },
+    READY_FOR_DISPATCH: { total: 0, used: 0, capacity: 0 }
+  }
+
+  for (const rack of racks) {
+    stats[rack.stage].total++
+    stats[rack.stage].used += rack._count.devices
+    stats[rack.stage].capacity += rack.capacity
+  }
+
+  return stats
 }

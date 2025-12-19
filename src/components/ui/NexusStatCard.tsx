@@ -57,7 +57,7 @@ const NexusStatCard = React.memo(function NexusStatCard({
       {/* Header: Label + Icon */}
       <div className="flex items-start justify-between mb-3">
         {/* Label - Nexus style uppercase */}
-        <span className="font-display text-[10px] md:text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">
+        <span className="font-display text-[14px] md:text-[15px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">
           {label}
         </span>
 

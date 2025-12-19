@@ -128,15 +128,17 @@ enum OutwardType {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  name      String
-  role      Role
-  active    Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete - null means not deleted
+  id             String    @id @default(cuid())
+  email          String    @unique
+  password       String
+  name           String
+  phone          String?
+  profilePicture String?   // URL or base64 encoded image
+  role           Role
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // Soft delete - null means not deleted
 
   // Relations
   createdBatches    InwardBatch[]
@@ -235,6 +237,10 @@ model Device {
   outwardRecordId String?
   outwardRecord   OutwardRecord? @relation(fields: [outwardRecordId], references: [id])
 
+  // Rack assignment
+  rackId          String?
+  rack            Rack?          @relation(fields: [rackId], references: [id])
+
   // New relations for checklist and parallel work
   inspectionChecklist InspectionChecklistItem[]
   displayRepairJobs   DisplayRepairJob[]
@@ -246,6 +252,10 @@ model Device {
   @@index([grade])
   @@index([category])
   @@index([inwardBatchId])
+  @@index([rackId])
+  @@index([ownership])
+  @@index([updatedAt])
+  @@index([createdAt])
 }
 
 model InwardBatch {
@@ -330,6 +340,8 @@ model RepairJob {
   @@index([tatDueDate])
   @@index([repairEngId])
   @@index([deviceId])
+  @@index([l2EngineerId])
+  @@index([inspectionEngId])
 }
 
 model PaintPanel {
@@ -479,6 +491,8 @@ model DisplayRepairJob {
   updatedAt       DateTime           @updatedAt
 
   @@index([deviceId])
+  @@index([status])
+  @@index([assignedToId])
 }
 
 // Battery boost jobs - assigned by L2 to Battery Technician or done by L2
@@ -504,6 +518,8 @@ model BatteryBoostJob {
   updatedAt       DateTime           @updatedAt
 
   @@index([deviceId])
+  @@index([status])
+  @@index([assignedToId])
 }
 
 // L3 repair jobs - major repairs assigned by L2 to L3 Engineer
@@ -528,4 +544,34 @@ model L3RepairJob {
   updatedAt       DateTime           @updatedAt
 
   @@index([deviceId])
+  @@index([status])
+  @@index([assignedToId])
+}
+
+// =====================================================
+// RACK MANAGEMENT MODELS
+// =====================================================
+
+enum RackStage {
+  RECEIVED           // Newly received devices
+  WAITING_FOR_REPAIR // Inspected, waiting for repair assignment
+  UNDER_REPAIR       // Currently being repaired by L2 Engineer
+  AWAITING_QC        // Ready for QC inspection
+  READY_FOR_DISPATCH // QC passed, ready to ship
+}
+
+model Rack {
+  id        String    @id @default(cuid())
+  rackCode  String    @unique   // e.g., RCV-001, WFR-002, URP-003, AQC-004, RFD-005
+  stage     RackStage
+  capacity  Int       @default(10)
+  location  String?             // Physical location description
+  isActive  Boolean   @default(true)
+
+  devices   Device[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([stage])
 }

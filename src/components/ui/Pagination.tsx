@@ -50,11 +50,11 @@ export function Pagination({
         <span className="font-medium text-foreground">{totalItems}</span> items
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center sm:justify-end">
         {/* Items per page selector */}
         {showItemsPerPage && onItemsPerPageChange && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Show</span>
+            <span className="text-sm text-muted-foreground hidden sm:inline">Show</span>
             <select
               value={itemsPerPage}
               onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
@@ -74,12 +74,12 @@ export function Pagination({
         )}
 
         {/* Page navigation */}
-        <div className="flex items-center gap-1">
-          {/* First page */}
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          {/* First page - hidden on mobile */}
           <button
             onClick={() => onPageChange(1)}
             disabled={!canGoPrevious}
-            className={buttonClass}
+            className={cn(buttonClass, 'hidden sm:block')}
             title="First page"
           >
             <ChevronsLeft size={18} className="text-muted-foreground" />
@@ -96,8 +96,8 @@ export function Pagination({
           </button>
 
           {/* Page indicator */}
-          <div className="px-3 py-1 text-sm font-medium text-foreground">
-            Page {currentPage} of {totalPages || 1}
+          <div className="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">
+            {currentPage} / {totalPages || 1}
           </div>
 
           {/* Next page */}
@@ -110,11 +110,11 @@ export function Pagination({
             <ChevronRight size={18} className="text-muted-foreground" />
           </button>
 
-          {/* Last page */}
+          {/* Last page - hidden on mobile */}
           <button
             onClick={() => onPageChange(totalPages)}
             disabled={!canGoNext}
-            className={buttonClass}
+            className={cn(buttonClass, 'hidden sm:block')}
             title="Last page"
           >
             <ChevronsRight size={18} className="text-muted-foreground" />

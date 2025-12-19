@@ -325,7 +325,76 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
 
             {/* Users Table */}
             <GlassCard className="overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+                    {filteredUsers.length === 0 ? (
+                        <div className="p-8 text-center">
+                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Users className="text-muted-foreground" size={32} />
+                            </div>
+                            <h3 className="text-lg font-semibold text-foreground">No users found</h3>
+                            <p className="text-muted-foreground mt-1">Try adjusting your search or filters</p>
+                        </div>
+                    ) : (
+                        filteredUsers.map((user) => (
+                            <div key={user.id} className="p-4 space-y-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-bold text-white shadow-md flex-shrink-0">
+                                            {user.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-foreground truncate">{user.name}</p>
+                                            <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleToggleStatus(user)}
+                                        disabled={isLoading}
+                                        className={`flex items-center gap-1 px-2 py-1 rounded-lg font-bold text-xs transition-all flex-shrink-0 ${user.active
+                                            ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/30'
+                                            : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30'
+                                            }`}
+                                    >
+                                        {user.active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                                        <span>{user.active ? 'Active' : 'Inactive'}</span>
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full border ${getRoleBadgeColor(user.role)}`}>
+                                        {user.role.replace(/_/g, ' ')}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => openPasswordModal(user)}
+                                            disabled={isLoading}
+                                            className="p-2 text-muted-foreground hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-500/20 rounded-lg transition-all"
+                                        >
+                                            <Key size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => openEditModal(user)}
+                                            disabled={isLoading}
+                                            className="p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded-lg transition-all"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(user)}
+                                            disabled={isLoading}
+                                            className="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg transition-all"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full bg-card">
                         <thead>
                             <tr className="border-b border-default bg-muted">
@@ -407,7 +476,7 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                 </div>
 
                 {filteredUsers.length === 0 && (
-                    <div className="p-12 text-center">
+                    <div className="hidden md:block p-12 text-center">
                         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                             <Users className="text-muted-foreground" size={32} />
                         </div>

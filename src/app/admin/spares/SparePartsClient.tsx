@@ -88,14 +88,14 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-foreground">Spare Parts Inventory</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">Spare Parts Inventory</h1>
                 <button
                     onClick={() => {
                         setEditingPart(null)
                         setShowForm(!showForm)
                     }}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                 >
                     <Plus size={18} />
                     Add Spare Part
@@ -126,7 +126,7 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                         {editingPart ? 'Edit Spare Part' : 'Add New Spare Part'}
                     </h2>
                     <form action={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">Part Code *</label>
                                 <input
@@ -184,7 +184,7 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                             />
                         </div>
 
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1">Current Stock</label>
                                 <input
@@ -310,7 +310,73 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
 
             {/* Spare Parts Table */}
             <div className="bg-card rounded-xl shadow-soft border border-default overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                    {spareParts.length === 0 ? (
+                        <div className="px-4 py-10 text-center text-muted-foreground">
+                            No spare parts in inventory. Add your first spare part.
+                        </div>
+                    ) : (
+                        spareParts.map(part => {
+                            const isLowStock = part.currentStock <= part.minStock
+                            return (
+                                <div key={part.id} className={`p-4 space-y-3 ${isLowStock ? 'bg-yellow-50 dark:bg-yellow-500/10' : ''}`}>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <span className="font-mono text-sm text-blue-600 dark:text-blue-400 font-semibold">
+                                                {part.partCode}
+                                            </span>
+                                            <span className="ml-2 px-2 py-0.5 bg-muted rounded text-xs text-foreground">
+                                                {part.category}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => setShowAdjustStock(part)}
+                                                className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/20 rounded transition-colors"
+                                            >
+                                                <Package size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => openEdit(part)}
+                                                className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded transition-colors"
+                                            >
+                                                <Pencil size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(part.id)}
+                                                className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded transition-colors"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-foreground">{part.description}</p>
+                                    {part.compatibleModels && (
+                                        <p className="text-xs text-muted-foreground">Compatible: {part.compatibleModels}</p>
+                                    )}
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`font-semibold ${isLowStock ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
+                                                Stock: {part.currentStock}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                                (min: {part.minStock}, max: {part.maxStock})
+                                            </span>
+                                            {isLowStock && <AlertTriangle size={14} className="text-yellow-500" />}
+                                        </div>
+                                        {part.binLocation && (
+                                            <span className="text-xs text-muted-foreground">📍 {part.binLocation}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-muted">
                             <tr>

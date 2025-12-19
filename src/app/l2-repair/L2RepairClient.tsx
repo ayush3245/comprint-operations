@@ -275,10 +275,10 @@ export default function L2RepairClient({
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-default">
+            <div className="flex gap-2 border-b border-default overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                 <button
                     onClick={() => setActiveTab('assigned')}
-                    className={`px-4 py-2 font-medium ${activeTab === 'assigned'
+                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'assigned'
                         ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
                         : 'text-muted-foreground hover:text-foreground'
                         }`}
@@ -287,7 +287,7 @@ export default function L2RepairClient({
                 </button>
                 <button
                     onClick={() => setActiveTab('available')}
-                    className={`px-4 py-2 font-medium ${activeTab === 'available'
+                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'available'
                         ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
                         : 'text-muted-foreground hover:text-foreground'
                         }`}
@@ -296,7 +296,7 @@ export default function L2RepairClient({
                 </button>
                 <button
                     onClick={() => setActiveTab('completed')}
-                    className={`px-4 py-2 font-medium ${activeTab === 'completed'
+                    className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'completed'
                         ? 'border-b-2 border-green-600 text-green-600 dark:text-green-400'
                         : 'text-muted-foreground hover:text-foreground'
                         }`}
@@ -461,7 +461,7 @@ export default function L2RepairClient({
                                             )}
 
                                             {/* Parallel Work Status */}
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                                                 {/* Display Status */}
                                                 <div className={`p-3 rounded border ${status.display.required
                                                     ? status.display.completed ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30' :
@@ -877,8 +877,8 @@ export default function L2RepairClient({
 
             {/* Spares Request Modal */}
             {showSparesModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-card rounded-lg p-4 sm:p-6 w-full max-w-md border border-default max-h-[90vh] overflow-y-auto">
                         <h3 className="text-lg font-bold mb-4 text-foreground">Request Spare Parts</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
@@ -925,8 +925,8 @@ export default function L2RepairClient({
 
             {/* L3 Modal */}
             {showL3Modal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-card rounded-lg p-4 sm:p-6 w-full max-w-md border border-default max-h-[90vh] overflow-y-auto">
                         <h3 className="text-lg font-bold mb-4 text-foreground">Send to L3 Engineer</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
@@ -971,8 +971,8 @@ export default function L2RepairClient({
 
             {/* Paint Modal */}
             {showPaintModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-card rounded-lg p-4 sm:p-6 w-full max-w-md border border-default max-h-[90vh] overflow-y-auto">
                         <h3 className="text-lg font-bold mb-4 text-foreground">Send Panels to Paint</h3>
                         {showPaintModal.recommendedPanels.length > 0 && (
                             <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-500/10 rounded border border-orange-200 dark:border-orange-500/30">
@@ -1037,8 +1037,8 @@ export default function L2RepairClient({
 
             {/* Battery Modal */}
             {showBatteryModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-card rounded-lg p-4 sm:p-6 w-full max-w-md border border-default max-h-[90vh] overflow-y-auto">
                         <h3 className="text-lg font-bold mb-4 text-foreground">Battery Boost</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()
@@ -1119,8 +1119,8 @@ export default function L2RepairClient({
 
             {/* Display Modal */}
             {showDisplayModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-card rounded-lg p-6 w-full max-w-md border border-default">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-card rounded-lg p-4 sm:p-6 w-full max-w-md border border-default max-h-[90vh] overflow-y-auto">
                         <h3 className="text-lg font-bold mb-4 text-foreground">Display Repair</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault()

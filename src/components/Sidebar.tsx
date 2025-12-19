@@ -21,7 +21,8 @@ import {
     Monitor,
     Battery,
     Cpu,
-    Box
+    Box,
+    Layers
 } from 'lucide-react'
 import { logout } from '@/lib/auth-actions'
 import { cn } from '@/lib/utils'
@@ -49,6 +50,7 @@ export default function Sidebar({ user }: SidebarProps) {
             { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['SUPERADMIN'] },
             { href: '/admin/users', label: 'User Management', icon: Users, roles: ['SUPERADMIN'] },
             { href: '/admin/spares', label: 'Spare Parts', icon: Cog, roles: ['SUPERADMIN'] },
+            { href: '/admin/racks', label: 'Rack Management', icon: Layers, roles: ['SUPERADMIN'] },
             { href: '/inward', label: 'Inward', icon: PackagePlus, roles: ['SUPERADMIN'] },
             { href: '/inspection', label: 'Inspection', icon: Search, roles: ['SUPERADMIN'] },
             { href: '/spares', label: 'Spares Requests', icon: Wrench, roles: ['SUPERADMIN'] },
@@ -67,6 +69,7 @@ export default function Sidebar({ user }: SidebarProps) {
             { href: '/inspection', label: 'Inspection', icon: Search, roles: ['INSPECTION_ENGINEER', 'ADMIN'] },
             { href: '/spares', label: 'Spares Requests', icon: Cog, roles: ['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'] },
             { href: '/admin/spares', label: 'Spare Parts', icon: Cog, roles: ['WAREHOUSE_MANAGER', 'ADMIN'] },
+            { href: '/admin/racks', label: 'Rack Management', icon: Layers, roles: ['WAREHOUSE_MANAGER', 'ADMIN'] },
             { href: '/l2-repair', label: 'L2 Repair', icon: Wrench, roles: ['L2_ENGINEER', 'ADMIN'] },
             { href: '/l3-repair', label: 'L3 Repair', icon: Cpu, roles: ['L3_ENGINEER', 'ADMIN'] },
             { href: '/display-repair', label: 'Display Repair', icon: Monitor, roles: ['DISPLAY_TECHNICIAN', 'L2_ENGINEER', 'ADMIN'] },
@@ -162,15 +165,18 @@ export default function Sidebar({ user }: SidebarProps) {
 
             {/* User Section - Theme Aware */}
             <div className="p-3 md:p-4 border-t border-gray-200 dark:border-white/10">
-                <div className="flex items-center mb-3 md:mb-4 px-2">
+                <Link
+                    href="/profile"
+                    className="flex items-center mb-3 md:mb-4 px-2 py-1.5 -mx-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group"
+                >
                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-blue-500 to-emerald-400 flex items-center justify-center font-brand font-bold text-xs md:text-sm text-white shadow-lg">
                         {getInitials(user.name)}
                     </div>
                     <div className="ml-2 md:ml-3 flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate text-gray-900 dark:text-white">{user.name}</p>
+                        <p className="text-sm font-medium truncate text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{user.name}</p>
                         <p className="text-xs text-gray-500 truncate">{user.role.replace(/_/g, ' ')}</p>
                     </div>
-                </div>
+                </Link>
                 <button
                     onClick={() => logout()}
                     className="w-full flex items-center justify-center px-3 md:px-4 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-700 dark:hover:text-red-300 active:bg-red-200 dark:active:bg-red-500/30 transition-all text-sm font-medium border border-red-200 dark:border-red-500/20 hover:border-red-300 dark:hover:border-red-500/40 hover:scale-[1.02] active:scale-[0.98]"

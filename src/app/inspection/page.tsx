@@ -32,11 +32,10 @@ export default async function InspectionPage() {
         <div className="p-6">
             <DashboardStats
                 pending={pending}
-                inProgress={inProgress}
                 completed={completed}
+                hideInProgress={true}
                 labels={{
                     pending: 'Awaiting Inspection',
-                    inProgress: 'My In Progress',
                     completed: 'My Completed'
                 }}
             />

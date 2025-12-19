@@ -1,6 +1,8 @@
 'use client'
 
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
+import dynamic from 'next/dynamic'
 import GlassCard from '@/components/ui/GlassCard'
 import NexusStatCard, { NexusAlertCard } from '@/components/ui/NexusStatCard'
 import {
@@ -20,24 +22,28 @@ import {
     Server
 } from 'lucide-react'
 import Link from 'next/link'
-import {
-    BarChart,
-    Bar,
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    LineChart,
-    Line,
-    PieChart,
-    Pie,
-    Cell
-} from 'recharts'
 import { formatDistanceToNow } from 'date-fns'
 import { useTheme } from '@/components/ThemeProvider'
+
+// Dynamic imports for Recharts - reduces initial bundle by ~200KB
+const ChartSkeleton = () => (
+    <div className="h-full w-full animate-pulse bg-muted/50 rounded-lg flex items-center justify-center">
+        <div className="text-muted-foreground text-sm">Loading chart...</div>
+    </div>
+)
+
+const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { loading: ChartSkeleton, ssr: false })
+const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
+const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { loading: ChartSkeleton, ssr: false })
+const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false })
+const PieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { loading: ChartSkeleton, ssr: false })
+const Pie = dynamic(() => import('recharts').then(mod => mod.Pie), { ssr: false })
+const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false })
 
 interface DashboardClientProps {
     user: { name: string; role: string } | null
@@ -236,21 +242,21 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
         show: { opacity: 1, y: 0 }
     }
 
-    // Chart Data Preparation
-    const repairVolumeData = [
+    // Memoized Chart Data - prevents recalculation on every render
+    const repairVolumeData = useMemo(() => [
         { name: 'Inspection', value: stats.pendingInspection },
         { name: 'Spares', value: stats.waitingForSpares },
         { name: 'Repair', value: stats.underRepair },
         { name: 'Paint', value: stats.inPaint },
         { name: 'QC', value: stats.awaitingQC },
         { name: 'Ready', value: stats.readyForStock },
-    ]
+    ], [stats])
 
-    // Grade pie chart data
-    const gradeData = [
+    // Memoized Grade pie chart data
+    const gradeData = useMemo(() => [
         { name: 'Grade A', value: analytics.gradeStats.gradeA, color: GRADE_COLORS.A },
         { name: 'Grade B', value: analytics.gradeStats.gradeB, color: GRADE_COLORS.B },
-    ].filter(d => d.value > 0)
+    ].filter(d => d.value > 0), [analytics.gradeStats])
 
     // Category icon mapping
     const categoryIcon = (cat: string) => {
@@ -521,7 +527,7 @@ export default function DashboardClient({ user, stats, activityFeed, analytics }
                                                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                                             }}
                                             labelStyle={{ color: isDark ? '#f8fafc' : '#0f172a' }}
-                                            formatter={(value: number) => [`${value} / 10 jobs`, 'Active Jobs']}
+                                            formatter={(value) => [`${value} / 10 jobs`, 'Active Jobs']}
                                         />
                                         <Bar dataKey="activeJobs" fill={chartColors.orange} radius={[0, 4, 4, 0]} barSize={20} />
                                     </BarChart>

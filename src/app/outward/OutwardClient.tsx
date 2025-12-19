@@ -353,10 +353,67 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
 
             {/* Outward History */}
             <div className="bg-card rounded-xl shadow-soft border border-default overflow-hidden">
-                <div className="px-6 py-4 border-b border-default">
+                <div className="px-4 md:px-6 py-4 border-b border-default">
                     <h2 className="text-lg font-semibold text-foreground">Dispatch History</h2>
                 </div>
-                <div className="overflow-x-auto">
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                    {outwardRecords.length === 0 ? (
+                        <div className="px-4 py-10 text-center text-muted-foreground">
+                            No dispatch records yet.
+                        </div>
+                    ) : (
+                        outwardRecords.map(record => (
+                            <div key={record.id} className="p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-mono text-sm text-primary font-semibold">{record.outwardId}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.type === 'SALES'
+                                            ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400'
+                                            : 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400'
+                                            }`}>
+                                            {record.type}
+                                        </span>
+                                        <button
+                                            onClick={() => openEditModal(record)}
+                                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div>
+                                        <span className="text-muted-foreground text-xs">Customer</span>
+                                        <p className="font-medium text-foreground">{record.customer}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground text-xs">Reference</span>
+                                        <p className="text-foreground">{record.reference}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground text-xs">Devices</span>
+                                        <p className="text-foreground">{record.devices.length} device(s)</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground text-xs">Date</span>
+                                        <p className="text-foreground">{formatDate(record.date)}</p>
+                                    </div>
+                                </div>
+                                {(record.packedBy || record.checkedBy) && (
+                                    <div className="flex gap-4 text-xs text-muted-foreground pt-1 border-t border-default">
+                                        {record.packedBy && <span>Packed: {record.packedBy.name}</span>}
+                                        {record.checkedBy && <span>Checked: {record.checkedBy.name}</span>}
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-muted">
                             <tr>

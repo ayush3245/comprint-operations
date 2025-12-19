@@ -66,7 +66,51 @@ export default function SparesClient({ requests }: Props) {
 
     return (
         <div className="bg-card rounded-xl shadow-soft border border-default overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                {requests.length === 0 ? (
+                    <div className="px-4 py-10 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                            <PackageCheck size={32} className="text-muted-foreground/50" />
+                            <span>No pending spares requests.</span>
+                        </div>
+                    </div>
+                ) : (
+                    requests.map((req) => {
+                        const isProcessing = processingId === req.id
+                        return (
+                            <div key={req.id} className="p-4 space-y-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <div className="font-medium text-foreground">{req.device.barcode}</div>
+                                        <div className="text-xs text-muted-foreground">{req.device.model}</div>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                                        {req.jobId}
+                                    </span>
+                                </div>
+                                <div className="text-sm text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-500/10 p-2 rounded">
+                                    {req.sparesRequired}
+                                </div>
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>By: {req.inspectionEng?.name || 'Unknown'}</span>
+                                    <span>{formatDate(req.createdAt)}</span>
+                                </div>
+                                <SparesIssueForm
+                                    jobId={req.id}
+                                    deviceBarcode={req.device.barcode}
+                                    defaultSpares={req.sparesRequired || ''}
+                                    isProcessing={isProcessing}
+                                    onSubmit={handleIssue}
+                                />
+                            </div>
+                        )
+                    })
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <table className="hidden md:table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-muted">
                     <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Job ID</th>
@@ -145,20 +189,20 @@ function SparesIssueForm({
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
             <input
                 type="text"
                 value={sparesValue}
                 onChange={(e) => setSparesValue(e.target.value)}
                 placeholder="Confirm Issued Spares"
-                className="px-2 py-1 bg-muted border border-input rounded-lg text-sm w-40 text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none disabled:opacity-50"
+                className="px-2 py-2 sm:py-1 bg-muted border border-input rounded-lg text-sm flex-1 sm:w-40 text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-none disabled:opacity-50"
                 required
                 disabled={isProcessing}
             />
             <button
                 type="submit"
                 disabled={isProcessing}
-                className="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-green-600 text-white px-3 py-2 sm:py-1 rounded-lg hover:bg-green-700 flex items-center justify-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isProcessing ? (
                     <>

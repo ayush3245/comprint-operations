@@ -180,22 +180,6 @@ export default function L3RepairClient({
                 <span className="text-sm text-muted-foreground">Engineer: {userName}</span>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-yellow-50 dark:bg-yellow-500/10 p-4 rounded-lg border border-yellow-200 dark:border-yellow-500/30">
-                    <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{pendingJobs.length}</div>
-                    <div className="text-sm text-yellow-600 dark:text-yellow-400">Pending</div>
-                </div>
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg border border-blue-200 dark:border-blue-500/30">
-                    <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">{myJobs.length}</div>
-                    <div className="text-sm text-blue-600 dark:text-blue-400">My Active Jobs</div>
-                </div>
-                <div className="bg-muted p-4 rounded-lg border border-default">
-                    <div className="text-2xl font-bold text-foreground">{inProgressJobs.length - myJobs.length}</div>
-                    <div className="text-sm text-muted-foreground">Others Active</div>
-                </div>
-            </div>
-
             {/* Issue Type Legend */}
             <div className="bg-card p-3 rounded-lg shadow-soft border border-default flex flex-wrap gap-2">
                 <span className="text-sm font-medium text-foreground mr-2">Issue Types:</span>
