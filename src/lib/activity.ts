@@ -49,6 +49,7 @@ export type ActivityAction =
     | 'UPDATED_RACK'
     | 'DELETED_RACK'
     | 'ASSIGNED_TO_RACK'
+    | 'INITIALIZED_RACKS'
 
 interface LogActivityParams {
     action: ActivityAction
