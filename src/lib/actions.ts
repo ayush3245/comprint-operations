@@ -3659,10 +3659,10 @@ export async function updateUserProfile(data: {
     updateData.name = data.name.trim()
   }
   if (data.phone !== undefined) {
-    updateData.phone = data.phone.trim() || null
+    updateData.phone = data.phone.trim() || undefined
   }
   if (data.profilePicture !== undefined) {
-    updateData.profilePicture = data.profilePicture || null
+    updateData.profilePicture = data.profilePicture || undefined
   }
 
   const updatedUser = await prisma.user.update({
