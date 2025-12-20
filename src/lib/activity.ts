@@ -42,6 +42,8 @@ export type ActivityAction =
     | 'ISSUED_SPARES'
     // Admin actions
     | 'MIGRATION'
+    // Profile actions
+    | 'UPDATED_PROFILE'
 
 interface LogActivityParams {
     action: ActivityAction
