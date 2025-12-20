@@ -44,6 +44,11 @@ export type ActivityAction =
     | 'MIGRATION'
     // Profile actions
     | 'UPDATED_PROFILE'
+    // Rack management actions
+    | 'CREATED_RACK'
+    | 'UPDATED_RACK'
+    | 'DELETED_RACK'
+    | 'ASSIGNED_TO_RACK'
 
 interface LogActivityParams {
     action: ActivityAction
