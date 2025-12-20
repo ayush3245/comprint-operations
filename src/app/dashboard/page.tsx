@@ -15,7 +15,7 @@ export default async function DashboardPage() {
     })
     const statusMap = new Map(deviceStatusCounts.map(s => [s.status, s._count.id]))
 
-    const pendingInspection = statusMap.get('PENDING_INSPECTION') || 0
+    const pendingInspection = statusMap.get('RECEIVED') || 0
     const underRepair = statusMap.get('UNDER_REPAIR') || 0
     const inPaint = statusMap.get('IN_PAINT_SHOP') || 0
     const awaitingQC = statusMap.get('AWAITING_QC') || 0

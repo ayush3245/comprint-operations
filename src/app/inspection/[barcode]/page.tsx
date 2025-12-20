@@ -40,8 +40,8 @@ export default async function InspectionFormPage({ params }: { params: Promise<{
         )
     }
 
-    // If device is not in PENDING_INSPECTION, show status
-    if (device.status !== 'PENDING_INSPECTION' && device.status !== 'RECEIVED') {
+    // If device is not in RECEIVED status, show status
+    if (device.status !== 'RECEIVED') {
         return (
             <div className="max-w-2xl mx-auto mt-10 p-6 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 rounded-lg text-center">
                 <AlertCircle className="mx-auto text-yellow-600 dark:text-yellow-400 mb-2" size={48} />

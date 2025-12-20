@@ -9,7 +9,6 @@ import { describe, it, expect } from 'vitest'
 
 type DeviceStatus =
     | 'RECEIVED'
-    | 'PENDING_INSPECTION'
     | 'WAITING_FOR_SPARES'
     | 'READY_FOR_REPAIR'
     | 'UNDER_REPAIR'
@@ -227,7 +226,7 @@ describe('Device Dispatch Eligibility', () => {
 
         it('should reject devices in other statuses', () => {
             const statuses: DeviceStatus[] = [
-                'RECEIVED', 'PENDING_INSPECTION', 'WAITING_FOR_SPARES',
+                'RECEIVED', 'WAITING_FOR_SPARES',
                 'READY_FOR_REPAIR', 'UNDER_REPAIR', 'IN_PAINT_SHOP',
                 'AWAITING_QC', 'STOCK_OUT_SOLD', 'STOCK_OUT_RENTAL'
             ]

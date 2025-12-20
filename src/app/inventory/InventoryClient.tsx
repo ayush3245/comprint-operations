@@ -68,7 +68,6 @@ const ownershipOptions = [
 
 const statusOptions = [
     { value: 'RECEIVED', label: 'Received' },
-    { value: 'PENDING_INSPECTION', label: 'Pending Inspection' },
     { value: 'WAITING_FOR_SPARES', label: 'Waiting for Spares' },
     { value: 'READY_FOR_REPAIR', label: 'Ready for Repair' },
     { value: 'UNDER_REPAIR', label: 'Under Repair' },
@@ -84,7 +83,6 @@ const gradeOptions = [
 
 const statusColors: Record<string, string> = {
     RECEIVED: 'bg-secondary text-secondary-foreground',
-    PENDING_INSPECTION: 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400',
     WAITING_FOR_SPARES: 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-400',
     READY_FOR_REPAIR: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400',
     UNDER_REPAIR: 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400',
@@ -179,7 +177,6 @@ export default function InventoryClient({ initialData, racks, canManageRacks }: 
     function getAllowedRackStage(deviceStatus: string): string | null {
         const statusToStage: Record<string, string> = {
             RECEIVED: 'RECEIVED',
-            PENDING_INSPECTION: 'RECEIVED',
             WAITING_FOR_SPARES: 'WAITING_FOR_REPAIR',
             READY_FOR_REPAIR: 'WAITING_FOR_REPAIR',
             UNDER_REPAIR: 'UNDER_REPAIR',

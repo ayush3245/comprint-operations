@@ -38,7 +38,6 @@ enum Ownership {
 
 enum DeviceStatus {
   RECEIVED
-  PENDING_INSPECTION
   WAITING_FOR_SPARES
   READY_FOR_REPAIR
   UNDER_REPAIR
@@ -58,7 +57,6 @@ enum InwardType {
 }
 
 enum RepairStatus {
-  PENDING_INSPECTION
   WAITING_FOR_SPARES
   READY_FOR_REPAIR
   UNDER_REPAIR
@@ -329,7 +327,7 @@ model RepairJob {
   repairEndDate   DateTime?
   tatDueDate      DateTime?
 
-  status          RepairStatus @default(PENDING_INSPECTION)
+  status          RepairStatus @default(READY_FOR_REPAIR)
   notes           String?
 
   createdAt       DateTime     @default(now())

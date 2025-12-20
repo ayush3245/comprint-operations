@@ -6,24 +6,16 @@ import DashboardStats from '@/components/DashboardStats'
 export default async function InspectionPage() {
     const user = await checkRole(['INSPECTION_ENGINEER', 'ADMIN'])
 
-    // Get inspection stats - user-specific for in-progress/completed, queue size for pending
-    const [pending, inProgress, completed] = await Promise.all([
-        // Pending: devices awaiting inspection (queue size)
+    // Get inspection stats - user-specific for completed, queue size for pending
+    const [pending, completed] = await Promise.all([
+        // Pending: devices awaiting inspection (RECEIVED status)
         prisma.device.count({
-            where: { status: { in: ['RECEIVED', 'PENDING_INSPECTION'] } }
+            where: { status: 'RECEIVED' }
         }),
-        // In Progress: repair jobs by THIS user still in inspection phase
+        // Completed: inspections completed by THIS user (repair jobs created)
         prisma.repairJob.count({
             where: {
-                inspectionEngId: user.id,
-                status: 'PENDING_INSPECTION'
-            }
-        }),
-        // Completed: inspections completed by THIS user (moved past inspection phase)
-        prisma.repairJob.count({
-            where: {
-                inspectionEngId: user.id,
-                status: { notIn: ['PENDING_INSPECTION'] }
+                inspectionEngId: user.id
             }
         })
     ])

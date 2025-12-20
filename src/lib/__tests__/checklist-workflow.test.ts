@@ -13,7 +13,7 @@ import { getChecklistForCategory, getChecklistItemCount } from '../checklist-def
 
 // Type definitions matching Prisma enums
 type DeviceCategory = 'LAPTOP' | 'DESKTOP' | 'WORKSTATION' | 'SERVER' | 'MONITOR' | 'STORAGE' | 'NETWORKING_CARD'
-type DeviceStatus = 'RECEIVED' | 'PENDING_INSPECTION' | 'WAITING_FOR_SPARES' | 'READY_FOR_REPAIR' | 'UNDER_REPAIR' | 'AWAITING_QC' | 'READY_FOR_STOCK'
+type DeviceStatus = 'RECEIVED' | 'WAITING_FOR_SPARES' | 'READY_FOR_REPAIR' | 'UNDER_REPAIR' | 'AWAITING_QC' | 'READY_FOR_STOCK'
 type ChecklistStatus = 'PENDING' | 'PASS' | 'FAIL' | 'NOT_APPLICABLE'
 type ParallelWorkStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
 type L3IssueType = 'MOTHERBOARD' | 'DOMAIN_LOCK' | 'BIOS_LOCK' | 'POWER_ON_ISSUE'

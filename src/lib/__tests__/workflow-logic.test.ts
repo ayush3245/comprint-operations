@@ -11,7 +11,6 @@ import { describe, it, expect } from 'vitest'
 // Type definitions matching Prisma enums
 type DeviceStatus =
     | 'RECEIVED'
-    | 'PENDING_INSPECTION'
     | 'WAITING_FOR_SPARES'
     | 'READY_FOR_REPAIR'
     | 'UNDER_REPAIR'
@@ -449,7 +448,6 @@ describe('Business Rules Validation', () => {
         it('should block dispatch for other statuses', () => {
             const invalidStatuses: DeviceStatus[] = [
                 'RECEIVED',
-                'PENDING_INSPECTION',
                 'UNDER_REPAIR',
                 'AWAITING_QC'
             ]

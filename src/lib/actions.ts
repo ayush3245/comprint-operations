@@ -3087,27 +3087,19 @@ export async function getUserDashboardStats(userId: string, role: Role): Promise
     }
 
     case Role.INSPECTION_ENGINEER: {
-      const [pending, inProgress, completed] = await Promise.all([
-        // Pending: devices awaiting inspection (PENDING_INSPECTION or RECEIVED)
+      const [pending, completed] = await Promise.all([
+        // Pending: devices awaiting inspection (RECEIVED status)
         prisma.device.count({
-          where: { status: { in: [DeviceStatus.RECEIVED, DeviceStatus.PENDING_INSPECTION] } }
+          where: { status: DeviceStatus.RECEIVED }
         }),
-        // In Progress: devices with repair jobs created by this inspector but still in inspection phase
+        // Completed: devices inspected by this user (repair job exists)
         prisma.repairJob.count({
           where: {
-            inspectionEngId: userId,
-            status: RepairStatus.PENDING_INSPECTION
-          }
-        }),
-        // Completed: devices inspected by this user (repair job exists past inspection)
-        prisma.repairJob.count({
-          where: {
-            inspectionEngId: userId,
-            status: { notIn: [RepairStatus.PENDING_INSPECTION] }
+            inspectionEngId: userId
           }
         })
       ])
-      return { pending, inProgress, completed }
+      return { pending, inProgress: 0, completed }
     }
 
     case Role.QC_ENGINEER: {
@@ -3934,7 +3926,6 @@ export async function autoAssignDeviceToRack(deviceId: string) {
 
   switch (device.status) {
     case DeviceStatus.RECEIVED:
-    case DeviceStatus.PENDING_INSPECTION:
       targetStage = RackStage.RECEIVED
       break
     case DeviceStatus.WAITING_FOR_SPARES:

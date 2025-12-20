@@ -9,7 +9,6 @@ import { describe, it, expect } from 'vitest'
 
 type DeviceStatus =
     | 'RECEIVED'
-    | 'PENDING_INSPECTION'
     | 'WAITING_FOR_SPARES'
     | 'READY_FOR_REPAIR'
     | 'UNDER_REPAIR'
