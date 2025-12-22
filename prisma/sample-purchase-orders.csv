@@ -1,0 +1,7 @@
+PO Number,Supplier Code,Supplier Name,Supplier Address,Supplier GSTIN,Total Devices,Item Category,Item Brand,Item Model,Item Quantity,Item Rate
+CTPO2526050001,SUP-DELL,Dell Technologies India Pvt Ltd,"Plot No. 12, KIADB Industrial Area, Whitefield, Bangalore - 560066",29AABCD1234F1ZK,2,LAPTOP,Dell,Latitude 5520,1,45000
+CTPO2526050001,SUP-DELL,Dell Technologies India Pvt Ltd,"Plot No. 12, KIADB Industrial Area, Whitefield, Bangalore - 560066",29AABCD1234F1ZK,2,LAPTOP,Dell,Latitude 5530,1,52000
+CTPO2526050002,SUP-HP,HP India Pvt Ltd,"Tower B, DLF Cyber City, Gurgaon - 122002",06AABHP5678G1ZM,2,DESKTOP,HP,ProDesk 400 G7,1,35000
+CTPO2526050002,SUP-HP,HP India Pvt Ltd,"Tower B, DLF Cyber City, Gurgaon - 122002",06AABHP5678G1ZM,2,MONITOR,HP,E24 G4,1,12000
+CTPO2526050003,SUP-LEN,Lenovo India Pvt Ltd,"Embassy Golf Links, Koramangala, Bangalore - 560071",29AABCL9012H1ZN,2,LAPTOP,Lenovo,ThinkPad T14,1,48000
+CTPO2526050003,SUP-LEN,Lenovo India Pvt Ltd,"Embassy Golf Links, Koramangala, Bangalore - 560071",29AABCL9012H1ZN,2,LAPTOP,Lenovo,ThinkPad X1 Carbon,1,78000

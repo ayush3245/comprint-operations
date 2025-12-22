@@ -19,6 +19,7 @@ enum Role {
   BATTERY_TECHNICIAN       // Battery boosting/replacement
   PAINT_SHOP_TECHNICIAN
   QC_ENGINEER
+  STORE_INCHARGE           // Can only access inward operations
 }
 
 enum DeviceCategory {
@@ -38,6 +39,7 @@ enum Ownership {
 
 enum DeviceStatus {
   RECEIVED
+  READY_FOR_INSPECTION     // After batch verification
   WAITING_FOR_SPARES
   READY_FOR_REPAIR
   UNDER_REPAIR
@@ -125,6 +127,13 @@ enum OutwardType {
   RENTAL
 }
 
+enum VerificationStatus {
+  UNVERIFIED
+  VERIFIED
+  PARTIAL
+  SKIPPED
+}
+
 model User {
   id             String    @id @default(cuid())
   email          String    @unique
@@ -155,6 +164,11 @@ model User {
   displayRepairs    DisplayRepairJob[]
   batteryBoosts     BatteryBoostJob[]
   l3Repairs         L3RepairJob[]
+
+  // Purchase Order relations
+  purchaseOrders    PurchaseOrder[]
+  verifiedBatches   InwardBatch[]   @relation("BatchVerifier")
+  overriddenBatches InwardBatch[]   @relation("BatchOverrider")
 }
 
 model Device {
@@ -261,22 +275,47 @@ model InwardBatch {
   batchId         String      @unique // Human readable ID
   type            InwardType
   date            DateTime    @default(now())
-  
+
   // Refurb fields
   poInvoiceNo     String?
   supplier        String?
-  
+
+  // Purchase Order link (for REFURB_PURCHASE)
+  purchaseOrderId   String?     @unique
+  purchaseOrder     PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+
+  // Vehicle and delivery details (for REFURB_PURCHASE)
+  vehicleNumber       String?
+  driverName          String?
+  deliveryChallanUrl  String?   // MinIO URL
+
+  // Verification
+  verificationStatus  VerificationStatus @default(UNVERIFIED)
+  verificationResult  Json?     // Store LLM response details
+  verificationAt      DateTime?
+  verifiedById        String?
+  verifiedBy          User?     @relation("BatchVerifier", fields: [verifiedById], references: [id])
+
+  // Manual override
+  overrideReason      String?
+  overriddenById      String?
+  overriddenBy        User?     @relation("BatchOverrider", fields: [overriddenById], references: [id])
+  overriddenAt        DateTime?
+
+  // Lock state - batch is locked after verification
+  isLocked            Boolean   @default(false)
+
   // Rental fields
   customer        String?
   rentalRef       String?
   emailSubject    String?
   emailThreadId   String?
-  
+
   createdById     String
   createdBy       User        @relation(fields: [createdById], references: [id])
-  
+
   devices         Device[]
-  
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -572,4 +611,72 @@ model Rack {
   updatedAt DateTime  @updatedAt
 
   @@index([stage])
+}
+
+// =====================================================
+// PURCHASE ORDER MODELS
+// =====================================================
+
+model PurchaseOrder {
+  id              String    @id @default(cuid())
+  poNumber        String    @unique
+  supplierCode    String
+  supplierName    String?
+  expectedDevices Int       // Total expected device count
+  pdfUrl          String?   // MinIO URL for PO PDF
+
+  createdById     String
+  createdBy       User      @relation(fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+
+  // Status tracking
+  isAddressed     Boolean   @default(false)
+  addressedAt     DateTime?
+  alertSent       Boolean   @default(false)  // 10-day alert sent
+
+  inwardBatch     InwardBatch?
+  expectedItems   POExpectedItem[]
+
+  @@index([isAddressed])
+  @@index([createdAt])
+}
+
+model POExpectedItem {
+  id              String    @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  category        DeviceCategory
+  brand           String
+  model           String
+  serial          String?   // Optional - may not be known upfront
+  quantity        Int       @default(1)
+
+  // Category-specific expected specs (JSON for flexibility)
+  specifications  Json?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([purchaseOrderId])
+}
+
+// =====================================================
+// FILE STORAGE MODEL (for database-based file storage)
+// =====================================================
+
+model StoredFile {
+  id          String   @id @default(cuid())
+  bucket      String   // e.g., "purchase-orders", "delivery-challans"
+  key         String   // unique key within bucket (e.g., "delivery-challans/1234567890-file.pdf")
+  fileName    String   // original file name
+  contentType String   // MIME type
+  size        Int      // file size in bytes
+  data        Bytes    // file content stored as binary
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([bucket, key])
+  @@index([bucket])
+  @@index([key])
 }

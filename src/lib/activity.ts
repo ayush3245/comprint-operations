@@ -50,6 +50,13 @@ export type ActivityAction =
     | 'DELETED_RACK'
     | 'ASSIGNED_TO_RACK'
     | 'INITIALIZED_RACKS'
+    // Purchase Order actions
+    | 'CREATED_PURCHASE_ORDER'
+    | 'UPDATED_PURCHASE_ORDER'
+    | 'DELETED_PURCHASE_ORDER'
+    // Verification actions
+    | 'VERIFIED_BATCH'
+    | 'SKIPPED_VERIFICATION'
 
 interface LogActivityParams {
     action: ActivityAction

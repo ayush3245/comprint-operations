@@ -119,13 +119,17 @@ export default function InwardDeviceList({ devices }: Props) {
         setEditingDevice(device)
         // Pre-populate form with existing values
         const data: Record<string, string> = {
+            category: device.category,
             brand: device.brand || '',
             model: device.model || ''
         }
-        const fields = categoryFields[device.category] || []
-        fields.forEach(field => {
-            const value = device[field.name as keyof Device]
-            data[field.name] = typeof value === 'string' ? value : ''
+        // Load fields for all categories so data persists when switching
+        Object.values(DeviceCategory).forEach(cat => {
+            const fields = categoryFields[cat] || []
+            fields.forEach(field => {
+                const value = device[field.name as keyof Device]
+                data[field.name] = typeof value === 'string' ? value : ''
+            })
         })
         setFormData(data)
     }
@@ -262,8 +266,19 @@ export default function InwardDeviceList({ devices }: Props) {
                         </div>
 
                         <div className="p-6 space-y-4">
-                            <div className="text-sm text-muted-foreground mb-4">
-                                Category: <span className="font-medium text-foreground">{editingDevice.category.replace('_', ' ')}</span>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1">Category</label>
+                                <select
+                                    value={formData.category || editingDevice.category}
+                                    onChange={(e) => handleInputChange('category', e.target.value)}
+                                    className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors"
+                                >
+                                    {Object.values(DeviceCategory).map((cat) => (
+                                        <option key={cat} value={cat}>
+                                            {cat.replace('_', ' ')}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -287,7 +302,7 @@ export default function InwardDeviceList({ devices }: Props) {
                                 </div>
                             </div>
 
-                            {categoryFields[editingDevice.category]?.map((field) => (
+                            {categoryFields[(formData.category || editingDevice.category) as DeviceCategory]?.map((field) => (
                                 <div key={field.name}>
                                     <label className="block text-sm font-medium text-foreground mb-1">{field.label}</label>
                                     <input

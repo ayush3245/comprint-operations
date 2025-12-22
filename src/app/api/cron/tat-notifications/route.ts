@@ -7,8 +7,12 @@ import { checkAndSendTATNotifications } from '@/lib/notifications'
 
 export async function GET(request: NextRequest) {
     // Verify cron secret if configured
+    // Supports both Vercel's Authorization header and custom x-cron-secret header
+    const authHeader = request.headers.get('authorization')
     const cronSecret = request.headers.get('x-cron-secret')
-    if (process.env.CRON_SECRET && cronSecret !== process.env.CRON_SECRET) {
+    const providedSecret = authHeader?.replace('Bearer ', '') || cronSecret
+
+    if (process.env.CRON_SECRET && providedSecret !== process.env.CRON_SECRET) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

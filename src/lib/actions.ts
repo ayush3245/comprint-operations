@@ -1,12 +1,14 @@
 'use server'
 
 import { prisma } from './db'
-import { InwardType, DeviceStatus, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus, OutwardType, ChecklistStatus, ChecklistStage, L3IssueType, ParallelWorkStatus, RackStage } from '@prisma/client'
+import { Prisma, InwardType, DeviceStatus, DeviceCategory, Role, Ownership, MovementType, Grade, QCStatus, RepairStatus, OutwardType, ChecklistStatus, ChecklistStage, L3IssueType, ParallelWorkStatus, RackStage, VerificationStatus } from '@prisma/client'
 import { getChecklistForCategory } from './checklist-definitions'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from './auth'
 import { logActivity } from './activity'
 import { notifySparesRequested, notifyQCFailed, notifyPaintReady } from './notifications'
+import { sendEmail, getRackSpaceAlertEmail, getPartialShipmentEmail, getVerificationSkippedEmail } from './email'
+import { verifyShipment, type DeviceData, type ExpectedItem, type PurchaseOrderData } from './openrouter'
 
 // --- Inward Actions ---
 
@@ -77,6 +79,11 @@ export async function updateInwardBatch(
   })
   if (!batch) throw new Error('Batch not found')
 
+  // Check if batch is locked
+  if (batch.isLocked) {
+    throw new Error('Cannot update a locked batch. Verification has already been completed.')
+  }
+
   // Parse date if provided
   const updateData: Record<string, unknown> = {}
   if (data.date) updateData.date = new Date(data.date)
@@ -140,6 +147,18 @@ export async function addDeviceToBatch(batchId: string, data: {
   serial?: string
   ownership: Ownership
 }) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Check if batch exists and is not locked
+  const batch = await prisma.inwardBatch.findUnique({
+    where: { id: batchId }
+  })
+  if (!batch) throw new Error('Batch not found')
+  if (batch.isLocked) {
+    throw new Error('Cannot add devices to a locked batch. Verification has already been completed.')
+  }
+
   // Category prefix for barcode
   const categoryPrefixes: Record<string, string> = {
     LAPTOP: 'L',
@@ -153,9 +172,6 @@ export async function addDeviceToBatch(batchId: string, data: {
   const prefix = categoryPrefixes[data.category] || data.category.substring(0, 1)
   const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
   const barcode = `${prefix}-${data.brand.substring(0, 3).toUpperCase()}-${random}`
-
-  const user = await getCurrentUser()
-  if (!user) throw new Error('Unauthorized')
 
   const device = await prisma.device.create({
     data: {
@@ -184,6 +200,7 @@ export async function addDeviceToBatch(batchId: string, data: {
 }
 
 export async function updateDevice(deviceId: string, data: {
+  category?: DeviceCategory
   brand?: string
   model?: string
   // Laptop/Desktop/Workstation fields
@@ -223,18 +240,20 @@ export async function updateDevice(deviceId: string, data: {
   // Get the device to find its batch for revalidation
   const device = await prisma.device.findUnique({
     where: { id: deviceId },
-    select: { inwardBatchId: true, barcode: true }
+    include: {
+      inwardBatch: { select: { batchId: true, isLocked: true } }
+    }
   })
 
   if (!device) throw new Error('Device not found')
 
-  // Only allow editing devices in RECEIVED status
-  const existingDevice = await prisma.device.findUnique({
-    where: { id: deviceId },
-    select: { status: true }
-  })
+  // Check if batch is locked
+  if (device.inwardBatch?.isLocked) {
+    throw new Error('Cannot update device. The batch is locked after verification.')
+  }
 
-  if (existingDevice?.status !== 'RECEIVED') {
+  // Only allow editing devices in RECEIVED status
+  if (device.status !== 'RECEIVED') {
     throw new Error('Can only edit devices in RECEIVED status')
   }
 
@@ -244,14 +263,8 @@ export async function updateDevice(deviceId: string, data: {
   })
 
   // Revalidate the batch page
-  if (device.inwardBatchId) {
-    const batch = await prisma.inwardBatch.findUnique({
-      where: { id: device.inwardBatchId },
-      select: { batchId: true }
-    })
-    if (batch) {
-      revalidatePath(`/inward/${batch.batchId}`)
-    }
+  if (device.inwardBatch) {
+    revalidatePath(`/inward/${device.inwardBatch.batchId}`)
   }
 
   return updatedDevice
@@ -299,6 +312,11 @@ export async function bulkUploadDevices(batchId: string, devices: Array<{
     where: { id: batchId }
   })
   if (!batch) throw new Error('Batch not found')
+
+  // Check if batch is locked
+  if (batch.isLocked) {
+    throw new Error('Cannot upload devices to a locked batch. Verification has already been completed.')
+  }
 
   const ownership = batch.type === 'REFURB_PURCHASE' ? Ownership.REFURB_STOCK : Ownership.RENTAL_RETURN
 
@@ -4061,4 +4079,580 @@ export async function getRackStats() {
   }
 
   return stats
+}
+
+// =====================================================
+// PURCHASE ORDER ACTIONS
+// =====================================================
+
+interface POExpectedItemInput {
+  category: DeviceCategory
+  brand: string
+  model: string
+  serial?: string
+  quantity?: number
+  specifications?: Record<string, unknown>
+}
+
+/**
+ * Create a new Purchase Order
+ */
+export async function createPurchaseOrder(data: {
+  poNumber: string
+  supplierCode: string
+  supplierName?: string
+  expectedDevices: number
+  pdfUrl?: string
+  expectedItems: POExpectedItemInput[]
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Check role permissions
+  if (!['ADMIN', 'SUPERADMIN', 'WAREHOUSE_MANAGER', 'MIS_WAREHOUSE_EXECUTIVE', 'STORE_INCHARGE'].includes(user.role)) {
+    throw new Error('Unauthorized - Insufficient permissions')
+  }
+
+  // Check if PO number already exists
+  const existing = await prisma.purchaseOrder.findUnique({
+    where: { poNumber: data.poNumber }
+  })
+  if (existing) {
+    throw new Error(`Purchase Order ${data.poNumber} already exists`)
+  }
+
+  const po = await prisma.purchaseOrder.create({
+    data: {
+      poNumber: data.poNumber,
+      supplierCode: data.supplierCode,
+      supplierName: data.supplierName,
+      expectedDevices: data.expectedDevices,
+      pdfUrl: data.pdfUrl,
+      createdById: user.id,
+      expectedItems: {
+        create: data.expectedItems.map(item => ({
+          category: item.category,
+          brand: item.brand,
+          model: item.model,
+          serial: item.serial,
+          quantity: item.quantity || 1,
+          specifications: item.specifications ? (item.specifications as Prisma.InputJsonValue) : Prisma.DbNull
+        }))
+      }
+    },
+    include: {
+      expectedItems: true,
+      createdBy: { select: { name: true } }
+    }
+  })
+
+  await logActivity({
+    action: 'CREATED_PURCHASE_ORDER',
+    details: `Created Purchase Order ${data.poNumber} with ${data.expectedDevices} expected devices`,
+    userId: user.id,
+    metadata: { poId: po.id, poNumber: data.poNumber }
+  })
+
+  revalidatePath('/purchase-orders')
+  return po
+}
+
+/**
+ * Get all Purchase Orders with filters
+ */
+export async function getPurchaseOrders(filters?: {
+  isAddressed?: boolean
+  search?: string
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const where: Record<string, unknown> = {}
+
+  if (filters?.isAddressed !== undefined) {
+    where.isAddressed = filters.isAddressed
+  }
+
+  if (filters?.search) {
+    where.OR = [
+      { poNumber: { contains: filters.search, mode: 'insensitive' } },
+      { supplierCode: { contains: filters.search, mode: 'insensitive' } },
+      { supplierName: { contains: filters.search, mode: 'insensitive' } }
+    ]
+  }
+
+  const purchaseOrders = await prisma.purchaseOrder.findMany({
+    where,
+    include: {
+      createdBy: { select: { name: true } },
+      expectedItems: true,
+      inwardBatch: { select: { batchId: true } }
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+
+  return purchaseOrders
+}
+
+/**
+ * Get a single Purchase Order by ID
+ */
+export async function getPurchaseOrderById(id: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const po = await prisma.purchaseOrder.findUnique({
+    where: { id },
+    include: {
+      createdBy: { select: { name: true } },
+      expectedItems: true,
+      inwardBatch: {
+        select: {
+          id: true,
+          batchId: true,
+          verificationStatus: true
+        }
+      }
+    }
+  })
+
+  if (!po) throw new Error('Purchase Order not found')
+  return po
+}
+
+/**
+ * Get unaddressed Purchase Orders (for inward dropdown)
+ */
+export async function getUnaddressedPurchaseOrders() {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  return prisma.purchaseOrder.findMany({
+    where: { isAddressed: false },
+    select: {
+      id: true,
+      poNumber: true,
+      supplierCode: true,
+      supplierName: true,
+      expectedDevices: true,
+      createdAt: true
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+}
+
+/**
+ * Update a Purchase Order (only if not addressed)
+ */
+export async function updatePurchaseOrder(
+  id: string,
+  data: {
+    supplierCode?: string
+    supplierName?: string
+    expectedDevices?: number
+    pdfUrl?: string
+    expectedItems?: POExpectedItemInput[]
+  }
+) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const po = await prisma.purchaseOrder.findUnique({ where: { id } })
+  if (!po) throw new Error('Purchase Order not found')
+  if (po.isAddressed) throw new Error('Cannot update an addressed Purchase Order')
+
+  // Update PO and replace expected items if provided
+  const updated = await prisma.$transaction(async (tx) => {
+    // If new expected items provided, delete old ones and create new
+    if (data.expectedItems) {
+      await tx.pOExpectedItem.deleteMany({ where: { purchaseOrderId: id } })
+      await tx.pOExpectedItem.createMany({
+        data: data.expectedItems.map(item => ({
+          purchaseOrderId: id,
+          category: item.category,
+          brand: item.brand,
+          model: item.model,
+          serial: item.serial,
+          quantity: item.quantity || 1,
+          specifications: item.specifications ? (item.specifications as Prisma.InputJsonValue) : Prisma.DbNull
+        }))
+      })
+    }
+
+    return tx.purchaseOrder.update({
+      where: { id },
+      data: {
+        supplierCode: data.supplierCode,
+        supplierName: data.supplierName,
+        expectedDevices: data.expectedDevices,
+        pdfUrl: data.pdfUrl
+      },
+      include: { expectedItems: true }
+    })
+  })
+
+  await logActivity({
+    action: 'UPDATED_PURCHASE_ORDER',
+    details: `Updated Purchase Order ${po.poNumber}`,
+    userId: user.id,
+    metadata: { poId: id }
+  })
+
+  revalidatePath('/purchase-orders')
+  revalidatePath(`/purchase-orders/${id}`)
+  return updated
+}
+
+/**
+ * Delete a Purchase Order (only if not addressed)
+ */
+export async function deletePurchaseOrder(id: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  if (!['ADMIN', 'SUPERADMIN', 'WAREHOUSE_MANAGER'].includes(user.role)) {
+    throw new Error('Unauthorized - Admin or Warehouse Manager only')
+  }
+
+  const po = await prisma.purchaseOrder.findUnique({ where: { id } })
+  if (!po) throw new Error('Purchase Order not found')
+  if (po.isAddressed) throw new Error('Cannot delete an addressed Purchase Order')
+
+  await prisma.purchaseOrder.delete({ where: { id } })
+
+  await logActivity({
+    action: 'DELETED_PURCHASE_ORDER',
+    details: `Deleted Purchase Order ${po.poNumber}`,
+    userId: user.id,
+    metadata: { poNumber: po.poNumber }
+  })
+
+  revalidatePath('/purchase-orders')
+  return { success: true }
+}
+
+// =====================================================
+// INWARD BATCH WITH PO INTEGRATION
+// =====================================================
+
+/**
+ * Check available rack space for RECEIVED stage
+ */
+export async function checkReceivedRackCapacity(requiredSlots: number) {
+  const receivedRacks = await prisma.rack.findMany({
+    where: { stage: RackStage.RECEIVED, isActive: true },
+    include: { _count: { select: { devices: true } } }
+  })
+
+  const totalCapacity = receivedRacks.reduce((sum, r) => sum + r.capacity, 0)
+  const currentUsage = receivedRacks.reduce((sum, r) => sum + r._count.devices, 0)
+  const availableSpace = totalCapacity - currentUsage
+
+  return {
+    totalCapacity,
+    currentUsage,
+    availableSpace,
+    requiredSlots,
+    hasSpace: availableSpace >= requiredSlots
+  }
+}
+
+/**
+ * Create inward batch from Purchase Order (enhanced version)
+ */
+export async function createInwardBatchFromPO(data: {
+  purchaseOrderId: string
+  vehicleNumber: string
+  driverName: string
+  deliveryChallanUrl: string
+  date?: string
+}) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Get Purchase Order
+  const po = await prisma.purchaseOrder.findUnique({
+    where: { id: data.purchaseOrderId },
+    include: { expectedItems: true }
+  })
+
+  if (!po) throw new Error('Purchase Order not found')
+  if (po.isAddressed) throw new Error('Purchase Order has already been used')
+
+  // Check rack capacity
+  const capacityCheck = await checkReceivedRackCapacity(po.expectedDevices)
+  if (!capacityCheck.hasSpace) {
+    // Send email alert to warehouse manager
+    if (process.env.WAREHOUSE_MANAGER_EMAIL) {
+      const emailContent = getRackSpaceAlertEmail({
+        requiredSlots: po.expectedDevices,
+        availableSlots: capacityCheck.availableSpace,
+        poNumber: po.poNumber
+      })
+      await sendEmail({
+        to: process.env.WAREHOUSE_MANAGER_EMAIL,
+        subject: emailContent.subject,
+        html: emailContent.html
+      })
+    }
+
+    throw new Error(
+      `Insufficient rack space. Need ${po.expectedDevices} slots, only ${capacityCheck.availableSpace} available. ` +
+      `Warehouse Manager has been notified.`
+    )
+  }
+
+  // Generate batch ID
+  const count = await prisma.inwardBatch.count()
+  const batchId = `BATCH-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`
+  const batchDate = data.date ? new Date(data.date) : new Date()
+
+  // Create batch and mark PO as addressed in transaction
+  const batch = await prisma.$transaction(async (tx) => {
+    // Create the inward batch
+    const newBatch = await tx.inwardBatch.create({
+      data: {
+        batchId,
+        type: InwardType.REFURB_PURCHASE,
+        date: batchDate,
+        poInvoiceNo: po.poNumber,
+        supplier: po.supplierCode,
+        purchaseOrderId: po.id,
+        vehicleNumber: data.vehicleNumber,
+        driverName: data.driverName,
+        deliveryChallanUrl: data.deliveryChallanUrl,
+        createdById: user.id
+      }
+    })
+
+    // Mark PO as addressed
+    await tx.purchaseOrder.update({
+      where: { id: po.id },
+      data: {
+        isAddressed: true,
+        addressedAt: new Date()
+      }
+    })
+
+    return newBatch
+  })
+
+  await logActivity({
+    action: 'CREATED_INWARD',
+    details: `Created batch ${batchId} from PO ${po.poNumber}`,
+    userId: user.id,
+    metadata: { batchId: batch.id, poNumber: po.poNumber }
+  })
+
+  revalidatePath('/inward')
+  revalidatePath('/purchase-orders')
+  return batch
+}
+
+// =====================================================
+// VERIFICATION ACTIONS
+// =====================================================
+
+/**
+ * Verify batch shipment using LLM
+ */
+export async function verifyBatchShipment(batchId: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Get batch with devices and PO
+  const batch = await prisma.inwardBatch.findUnique({
+    where: { id: batchId },
+    include: {
+      devices: true,
+      purchaseOrder: {
+        include: { expectedItems: true }
+      }
+    }
+  })
+
+  if (!batch) throw new Error('Batch not found')
+  if (batch.isLocked) throw new Error('Batch is already locked')
+  if (batch.verificationStatus !== VerificationStatus.UNVERIFIED) {
+    throw new Error('Batch has already been verified')
+  }
+
+  if (!batch.purchaseOrder) {
+    throw new Error('No Purchase Order linked to this batch')
+  }
+
+  // Format devices for verification
+  const deviceData: DeviceData[] = batch.devices.map(d => ({
+    barcode: d.barcode,
+    category: d.category,
+    brand: d.brand,
+    model: d.model,
+    serial: d.serial,
+    specifications: {
+      cpu: d.cpu,
+      ram: d.ram,
+      ssd: d.ssd
+    }
+  }))
+
+  // Format PO for verification
+  const poData: PurchaseOrderData = {
+    poNumber: batch.purchaseOrder.poNumber,
+    supplierCode: batch.purchaseOrder.supplierCode,
+    expectedDevices: batch.purchaseOrder.expectedDevices,
+    expectedItems: batch.purchaseOrder.expectedItems.map(item => ({
+      category: item.category,
+      brand: item.brand,
+      model: item.model,
+      serial: item.serial,
+      quantity: item.quantity,
+      specifications: item.specifications as Record<string, unknown> | null
+    }))
+  }
+
+  // Call LLM verification
+  const result = await verifyShipment(deviceData, poData)
+
+  // Determine verification status
+  const verificationStatus = result.status === 'VERIFIED'
+    ? VerificationStatus.VERIFIED
+    : VerificationStatus.PARTIAL
+
+  // Update batch with verification result
+  await prisma.$transaction(async (tx) => {
+    // Update batch
+    await tx.inwardBatch.update({
+      where: { id: batchId },
+      data: {
+        verificationStatus,
+        verificationResult: result as unknown as Prisma.InputJsonValue,
+        verificationAt: new Date(),
+        verifiedById: user.id,
+        isLocked: true
+      }
+    })
+
+    // Move devices to READY_FOR_INSPECTION
+    await tx.device.updateMany({
+      where: { inwardBatchId: batchId },
+      data: { status: DeviceStatus.READY_FOR_INSPECTION }
+    })
+  })
+
+  // Send email if partial shipment
+  if (verificationStatus === VerificationStatus.PARTIAL && process.env.ACCOUNTS_TEAM_EMAIL) {
+    const emailContent = getPartialShipmentEmail({
+      batchId: batch.batchId,
+      poNumber: batch.purchaseOrder.poNumber,
+      matchPercentage: result.matchPercentage,
+      missing: result.missing.map(m => ({
+        category: m.category,
+        brand: m.brand,
+        model: m.model,
+        quantity: m.quantity
+      })),
+      extra: result.extra.map(e => ({
+        barcode: e.barcode,
+        category: e.category,
+        brand: e.brand,
+        model: e.model
+      })),
+      discrepancies: result.discrepancies.map(d => ({
+        type: d.type,
+        description: d.description
+      }))
+    })
+
+    await sendEmail({
+      to: process.env.ACCOUNTS_TEAM_EMAIL,
+      subject: emailContent.subject,
+      html: emailContent.html
+    })
+  }
+
+  await logActivity({
+    action: 'VERIFIED_BATCH',
+    details: `Verified batch ${batch.batchId}: ${verificationStatus} (${result.matchPercentage}% match)`,
+    userId: user.id,
+    metadata: { batchId, status: verificationStatus, matchPercentage: result.matchPercentage }
+  })
+
+  revalidatePath(`/inward/${batch.id}`)
+  revalidatePath('/inward')
+
+  return {
+    success: true,
+    status: verificationStatus,
+    matchPercentage: result.matchPercentage,
+    result
+  }
+}
+
+/**
+ * Override/skip verification manually
+ */
+export async function overrideVerification(batchId: string, reason: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  if (!reason || reason.trim().length < 10) {
+    throw new Error('Please provide a detailed reason for skipping verification (minimum 10 characters)')
+  }
+
+  const batch = await prisma.inwardBatch.findUnique({
+    where: { id: batchId },
+    include: { purchaseOrder: true }
+  })
+
+  if (!batch) throw new Error('Batch not found')
+  if (batch.isLocked) throw new Error('Batch is already locked')
+
+  // Update batch
+  await prisma.$transaction(async (tx) => {
+    await tx.inwardBatch.update({
+      where: { id: batchId },
+      data: {
+        verificationStatus: VerificationStatus.SKIPPED,
+        overrideReason: reason.trim(),
+        overriddenById: user.id,
+        overriddenAt: new Date(),
+        isLocked: true
+      }
+    })
+
+    // Move devices to READY_FOR_INSPECTION
+    await tx.device.updateMany({
+      where: { inwardBatchId: batchId },
+      data: { status: DeviceStatus.READY_FOR_INSPECTION }
+    })
+  })
+
+  // Send notification email
+  if (process.env.WAREHOUSE_MANAGER_EMAIL) {
+    const emailContent = getVerificationSkippedEmail({
+      batchId: batch.batchId,
+      poNumber: batch.purchaseOrder?.poNumber,
+      reason: reason.trim(),
+      skippedBy: user.name || user.email,
+      skippedAt: new Date()
+    })
+
+    await sendEmail({
+      to: process.env.WAREHOUSE_MANAGER_EMAIL,
+      subject: emailContent.subject,
+      html: emailContent.html
+    })
+  }
+
+  await logActivity({
+    action: 'SKIPPED_VERIFICATION',
+    details: `Skipped verification for batch ${batch.batchId}: ${reason.trim()}`,
+    userId: user.id,
+    metadata: { batchId, reason: reason.trim() }
+  })
+
+  revalidatePath(`/inward/${batch.id}`)
+  revalidatePath('/inward')
+
+  return { success: true }
 }

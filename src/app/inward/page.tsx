@@ -5,7 +5,7 @@ import { formatDate } from '@/lib/utils'
 import { checkRole } from '@/lib/auth'
 
 export default async function InwardPage() {
-    await checkRole(['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN'])
+    await checkRole(['MIS_WAREHOUSE_EXECUTIVE', 'WAREHOUSE_MANAGER', 'ADMIN', 'STORE_INCHARGE'])
     const batches = await prisma.inwardBatch.findMany({
         include: {
             createdBy: true,
