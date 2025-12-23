@@ -43,21 +43,25 @@ A comprehensive operations management portal for end-to-end IT asset lifecycle m
 - Perform display/battery work directly without dispatch
 - Send devices to QC when complete
 - Track completed/handed-over devices (read-only)
+- Job cards display assigned technician names for dispatched work
 
 ### L3 Repair Station (Major Repairs)
 - Handle complex repairs: Motherboard, Domain Lock, BIOS Lock, Power Issues
 - Start/complete repairs with resolution tracking
 - Integration with L2 workflow
+- Role-based filtering: L3 Engineers see only their assigned jobs; Admins see all
 
 ### Display Repair
 - Screen and display-specific repairs
 - Issue tracking and capacity reporting
 - Can be performed by Display Technician or L2 directly
+- Role-based filtering: Display Technicians see only their assigned jobs; Admins see all
 
 ### Battery Boost
 - Battery maintenance and conditioning
 - Capacity measurement and notes
 - Can be performed by Battery Technician or L2 directly
+- Role-based filtering: Battery Technicians see only their assigned jobs; Admins see all
 
 ### Spares Management
 - View devices waiting for spares
@@ -108,7 +112,8 @@ A comprehensive operations management portal for end-to-end IT asset lifecycle m
 - PDF export capabilities
 - Animated UI with page transitions
 - Dark mode / light mode support with system preference detection
-- Consistent hover effects across all interactive elements
+- Consistent hover effects and cursor states across all interactive elements
+- Reusable UI components: IconButton (bordered action buttons), ToggleSwitch (status toggles)
 - Legacy data migration tool at `/admin/migrations` for fixing pre-update records
 
 ## Tech Stack
@@ -215,6 +220,9 @@ src/
 │   └── reports/            # Specialized reports
 ├── components/             # Reusable UI components
 │   ├── ui/                 # Base UI components
+│   │   ├── Button.tsx      # Primary button with variants
+│   │   ├── IconButton.tsx  # Icon-only button with borders
+│   │   └── ToggleSwitch.tsx # Toggle switch for status fields
 │   ├── BarcodeScanner.tsx  # Camera/image barcode scanning
 │   ├── DynamicDeviceForm.tsx # Category-aware device form
 │   ├── ReportedIssuesDisplay.tsx # Issue visualization

@@ -65,6 +65,11 @@ npm run seed             # Seed database
 
 **Auth**: Server-side role checks required on all protected actions (`src/lib/auth.ts`); UI checks are supplementary only
 
+**UI Components**: Reusable components in `src/components/ui/`:
+- `Button.tsx` - Primary button with variants (primary, secondary, ghost, danger, outline, success)
+- `IconButton.tsx` - Icon-only buttons with visible borders and color variants (default, primary, danger, warning, success)
+- `ToggleSwitch.tsx` - Toggle switch for boolean status fields with Active/Inactive labels
+
 ## Critical Constraints
 
 - **Never hand-edit** `src/generated/` or `generated/` (Prisma client)
