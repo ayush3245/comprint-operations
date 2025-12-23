@@ -6,6 +6,7 @@ import { createOutward, updateOutwardRecord } from '@/lib/actions'
 import { Device, InwardBatch, OutwardRecord, Role } from '@prisma/client'
 import { useToast } from '@/components/ui/Toast'
 import { Edit2, X, Loader2 } from 'lucide-react'
+import { IconButton } from '@/components/ui/IconButton'
 
 type DeviceWithBatch = Device & { inwardBatch: InwardBatch }
 type UserOption = { id: string; name: string; role: Role }
@@ -367,7 +368,12 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                         outwardRecords.map(record => (
                             <div key={record.id} className="p-4 space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-mono text-sm text-primary font-semibold">{record.outwardId}</span>
+                                    <button
+                                        onClick={() => openEditModal(record)}
+                                        className="font-mono text-sm text-primary font-semibold hover:underline cursor-pointer"
+                                    >
+                                        {record.outwardId}
+                                    </button>
                                     <div className="flex items-center gap-2">
                                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.type === 'SALES'
                                             ? 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400'
@@ -375,12 +381,13 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                             }`}>
                                             {record.type}
                                         </span>
-                                        <button
+                                        <IconButton
+                                            icon={<Edit2 size={16} />}
+                                            variant="primary"
+                                            size="sm"
                                             onClick={() => openEditModal(record)}
-                                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
+                                            title="Edit Record"
+                                        />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
@@ -439,7 +446,12 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                 outwardRecords.map(record => (
                                     <tr key={record.id} className="bg-card hover:bg-muted transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-primary">
-                                            {record.outwardId}
+                                            <button
+                                                onClick={() => openEditModal(record)}
+                                                className="hover:underline cursor-pointer"
+                                            >
+                                                {record.outwardId}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.type === 'SALES'
@@ -470,13 +482,12 @@ export default function OutwardClient({ devices, users, outwardRecords }: Outwar
                                             {formatDate(record.date)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <button
+                                            <IconButton
+                                                icon={<Edit2 size={16} />}
+                                                variant="primary"
                                                 onClick={() => openEditModal(record)}
-                                                className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
                                                 title="Edit Record"
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
+                                            />
                                         </td>
                                     </tr>
                                 ))

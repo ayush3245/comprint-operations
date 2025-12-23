@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createSparePart, updateSparePart, deleteSparePart, adjustSpareStock } from '@/lib/actions'
 import { SparePart } from '@prisma/client'
 import { Plus, Pencil, Trash2, Package, AlertTriangle } from 'lucide-react'
+import { IconButton } from '@/components/ui/IconButton'
 
 interface SparePartsClientProps {
     spareParts: SparePart[]
@@ -331,24 +332,27 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <button
+                                            <IconButton
+                                                icon={<Package size={16} />}
+                                                variant="success"
+                                                size="sm"
                                                 onClick={() => setShowAdjustStock(part)}
-                                                className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/20 rounded transition-colors"
-                                            >
-                                                <Package size={16} />
-                                            </button>
-                                            <button
+                                                title="Adjust Stock"
+                                            />
+                                            <IconButton
+                                                icon={<Pencil size={16} />}
+                                                variant="primary"
+                                                size="sm"
                                                 onClick={() => openEdit(part)}
-                                                className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded transition-colors"
-                                            >
-                                                <Pencil size={16} />
-                                            </button>
-                                            <button
+                                                title="Edit Part"
+                                            />
+                                            <IconButton
+                                                icon={<Trash2 size={16} />}
+                                                variant="danger"
+                                                size="sm"
                                                 onClick={() => handleDelete(part.id)}
-                                                className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                                title="Delete Part"
+                                            />
                                         </div>
                                     </div>
                                     <p className="text-sm text-foreground">{part.description}</p>
@@ -437,27 +441,24 @@ export default function SparePartsClient({ spareParts }: SparePartsClientProps) 
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
-                                                    <button
+                                                    <IconButton
+                                                        icon={<Package size={18} />}
+                                                        variant="success"
                                                         onClick={() => setShowAdjustStock(part)}
-                                                        className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/20 rounded transition-colors"
                                                         title="Adjust Stock"
-                                                    >
-                                                        <Package size={18} />
-                                                    </button>
-                                                    <button
+                                                    />
+                                                    <IconButton
+                                                        icon={<Pencil size={18} />}
+                                                        variant="primary"
                                                         onClick={() => openEdit(part)}
-                                                        className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded transition-colors"
                                                         title="Edit"
-                                                    >
-                                                        <Pencil size={18} />
-                                                    </button>
-                                                    <button
+                                                    />
+                                                    <IconButton
+                                                        icon={<Trash2 size={18} />}
+                                                        variant="danger"
                                                         onClick={() => handleDelete(part.id)}
-                                                        className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 rounded transition-colors"
                                                         title="Delete"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>

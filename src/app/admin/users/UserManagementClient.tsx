@@ -8,8 +8,6 @@ import {
     Edit2,
     Trash2,
     Key,
-    ToggleLeft,
-    ToggleRight,
     X,
     AlertCircle,
     CheckCircle,
@@ -29,6 +27,8 @@ import {
     resetUserPassword
 } from '@/lib/user-actions'
 import GlassCard from '@/components/ui/GlassCard'
+import { IconButton } from '@/components/ui/IconButton'
+import { ToggleSwitch } from '@/components/ui/ToggleSwitch'
 
 type UserData = {
     id: string
@@ -348,44 +348,42 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleToggleStatus(user)}
+                                    <ToggleSwitch
+                                        checked={user.active}
+                                        onChange={() => handleToggleStatus(user)}
                                         disabled={isLoading}
-                                        className={`flex items-center gap-1 px-2 py-1 rounded-lg font-bold text-xs transition-all flex-shrink-0 ${user.active
-                                            ? 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/30'
-                                            : 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30'
-                                            }`}
-                                    >
-                                        {user.active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                                        <span>{user.active ? 'Active' : 'Inactive'}</span>
-                                    </button>
+                                        size="sm"
+                                    />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full border ${getRoleBadgeColor(user.role)}`}>
                                         {user.role.replace(/_/g, ' ')}
                                     </span>
                                     <div className="flex items-center gap-1">
-                                        <button
+                                        <IconButton
+                                            icon={<Key size={16} />}
+                                            variant="warning"
+                                            size="sm"
                                             onClick={() => openPasswordModal(user)}
                                             disabled={isLoading}
-                                            className="p-2 text-muted-foreground hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-500/20 rounded-lg transition-all"
-                                        >
-                                            <Key size={16} />
-                                        </button>
-                                        <button
+                                            title="Reset Password"
+                                        />
+                                        <IconButton
+                                            icon={<Edit2 size={16} />}
+                                            variant="primary"
+                                            size="sm"
                                             onClick={() => openEditModal(user)}
                                             disabled={isLoading}
-                                            className="p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded-lg transition-all"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
+                                            title="Edit User"
+                                        />
+                                        <IconButton
+                                            icon={<Trash2 size={16} />}
+                                            variant="danger"
+                                            size="sm"
                                             onClick={() => handleDelete(user)}
                                             disabled={isLoading}
-                                            className="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg transition-all"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                            title="Delete User"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -429,44 +427,36 @@ export default function UserManagementClient({ users: initialUsers }: Props) {
                                         </span>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <button
-                                            onClick={() => handleToggleStatus(user)}
+                                        <ToggleSwitch
+                                            checked={user.active}
+                                            onChange={() => handleToggleStatus(user)}
                                             disabled={isLoading}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${user.active
-                                                ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30 dark:border-green-500/30'
-                                                : 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/30 dark:border-red-500/30'
-                                                }`}
-                                        >
-                                            {user.active ? <ToggleRight size={16} strokeWidth={2.5} /> : <ToggleLeft size={16} strokeWidth={2.5} />}
-                                            <span>{user.active ? 'Active' : 'Inactive'}</span>
-                                        </button>
+                                            size="md"
+                                        />
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button
+                                            <IconButton
+                                                icon={<Key size={18} strokeWidth={2} />}
+                                                variant="warning"
                                                 onClick={() => openPasswordModal(user)}
                                                 disabled={isLoading}
-                                                className="p-2 text-muted-foreground hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-500/20 rounded-lg transition-all"
                                                 title="Reset Password"
-                                            >
-                                                <Key size={18} strokeWidth={2} />
-                                            </button>
-                                            <button
+                                            />
+                                            <IconButton
+                                                icon={<Edit2 size={18} strokeWidth={2} />}
+                                                variant="primary"
                                                 onClick={() => openEditModal(user)}
                                                 disabled={isLoading}
-                                                className="p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 rounded-lg transition-all"
                                                 title="Edit User"
-                                            >
-                                                <Edit2 size={18} strokeWidth={2} />
-                                            </button>
-                                            <button
+                                            />
+                                            <IconButton
+                                                icon={<Trash2 size={18} strokeWidth={2} />}
+                                                variant="danger"
                                                 onClick={() => handleDelete(user)}
                                                 disabled={isLoading}
-                                                className="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/20 rounded-lg transition-all"
                                                 title="Delete User"
-                                            >
-                                                <Trash2 size={18} strokeWidth={2} />
-                                            </button>
+                                            />
                                         </div>
                                     </td>
                                 </motion.tr>

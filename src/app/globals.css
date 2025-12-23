@@ -207,6 +207,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Global button cursor - ensure all buttons have pointer cursor */
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"]:disabled {
+  cursor: not-allowed;
+}
+
 /* ========================================
    TYPOGRAPHY - Nexus Style
    ======================================== */

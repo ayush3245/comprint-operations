@@ -35,9 +35,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={isDisabled}
         className={cn(
           // Base styles
-          'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200',
+          'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 cursor-pointer',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-          'disabled:opacity-50 disabled:pointer-events-none',
+          'disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed',
           // Variants
           {
             // Primary - Indigo
