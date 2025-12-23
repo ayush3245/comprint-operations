@@ -25,30 +25,61 @@ interface L3Job {
     assignedTo: { id: string; name: string } | null
 }
 
+interface CompletedL3Job {
+    id: string
+    status: string
+    issueType: string
+    description: string | null
+    resolution: string | null
+    notes: string | null
+    startedAt: Date | null
+    completedAt: Date | null
+    device: {
+        id: string
+        barcode: string
+        brand: string
+        model: string
+        category: string
+        repairJobs: Array<{
+            l2Engineer: { name: string } | null
+        }>
+    }
+    assignedTo: { id: string; name: string } | null
+}
+
 interface L3RepairClientProps {
     jobs: L3Job[]
+    completedJobs: CompletedL3Job[]
     userId: string
     userName: string
+    userRole: string
     onStartRepair: (jobId: string) => Promise<void>
     onCompleteRepair: (jobId: string, resolution: string, notes: string) => Promise<void>
 }
 
 export default function L3RepairClient({
     jobs,
+    completedJobs,
     userId,
     userName,
+    userRole,
     onStartRepair,
     onCompleteRepair
 }: L3RepairClientProps) {
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
     const toast = useToast()
-    const [activeTab, setActiveTab] = useState<'pending' | 'in_progress'>('pending')
+    const [activeTab, setActiveTab] = useState<'pending' | 'in_progress' | 'completed'>('pending')
     const [completeModal, setCompleteModal] = useState<string | null>(null)
 
     const pendingJobs = jobs.filter(j => j.status === 'PENDING')
     const inProgressJobs = jobs.filter(j => j.status === 'IN_PROGRESS')
     const myJobs = inProgressJobs.filter(j => j.assignedTo?.id === userId)
+
+    // Admin/Superadmin see all in-progress jobs, L3 Engineers see only their own
+    const displayedInProgressJobs = ['ADMIN', 'SUPERADMIN'].includes(userRole)
+        ? inProgressJobs
+        : myJobs
 
     const handleStart = async (job: L3Job) => {
         startTransition(async () => {
@@ -211,7 +242,18 @@ export default function L3RepairClient({
                     }`}
                 >
                     <Clock size={16} className="inline mr-1" />
-                    In Progress ({inProgressJobs.length})
+                    In Progress ({displayedInProgressJobs.length})
+                </button>
+                <button
+                    onClick={() => setActiveTab('completed')}
+                    className={`px-4 py-2 font-medium ${
+                        activeTab === 'completed'
+                            ? 'border-b-2 border-green-600 text-green-600 dark:text-green-400'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    <CheckCircle size={16} className="inline mr-1" />
+                    Completed ({completedJobs.length})
                 </button>
             </div>
 
@@ -226,14 +268,66 @@ export default function L3RepairClient({
                     <JobCard key={job.id} job={job} showStart={true} />
                 ))}
 
-                {activeTab === 'in_progress' && inProgressJobs.length === 0 && (
+                {activeTab === 'in_progress' && displayedInProgressJobs.length === 0 && (
                     <div className="col-span-full text-center py-10 text-muted-foreground">
                         No jobs in progress. Pick up a pending job to get started.
                     </div>
                 )}
-                {activeTab === 'in_progress' && inProgressJobs.map(job => (
+                {activeTab === 'in_progress' && displayedInProgressJobs.map(job => (
                     <JobCard key={job.id} job={job} showStart={false} />
                 ))}
+
+                {activeTab === 'completed' && completedJobs.length === 0 && (
+                    <div className="col-span-full text-center py-10 text-muted-foreground">
+                        No completed jobs yet.
+                    </div>
+                )}
+                {activeTab === 'completed' && completedJobs.map(job => {
+                    const l2Engineer = job.device.repairJobs[0]?.l2Engineer?.name || 'Unassigned'
+                    return (
+                        <div key={job.id} className="bg-card rounded-lg shadow-soft border border-default border-l-4 border-l-green-500">
+                            <div className="p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 className="font-bold text-lg text-foreground">{job.device.barcode}</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {job.device.brand} {job.device.model} • {job.device.category}
+                                        </p>
+                                    </div>
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${getIssueTypeColor(job.issueType)}`}>
+                                        {job.issueType.replace('_', ' ')}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Resolution:</span>
+                                        <span className="font-medium text-green-600 dark:text-green-400">
+                                            {job.resolution?.replace('_', ' ') || 'N/A'}
+                                        </span>
+                                    </div>
+                                    {job.completedAt && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Completed:</span>
+                                            <span className="text-foreground">
+                                                {new Date(job.completedAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <User size={14} />
+                                        L2: {l2Engineer}
+                                    </div>
+                                    {job.notes && (
+                                        <div className="bg-muted p-2 rounded text-xs text-muted-foreground mt-2">
+                                            {job.notes}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
 
             {/* Complete Modal */}

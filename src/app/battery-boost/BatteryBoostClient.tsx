@@ -26,8 +26,31 @@ interface BatteryJob {
     assignedTo: { id: string; name: string } | null
 }
 
+interface CompletedBatteryJob {
+    id: string
+    status: string
+    initialCapacity: string | null
+    targetCapacity: string | null
+    finalCapacity: string | null
+    notes: string | null
+    startedAt: Date | null
+    completedAt: Date | null
+    device: {
+        id: string
+        barcode: string
+        brand: string
+        model: string
+        category: string
+        repairJobs: Array<{
+            l2Engineer: { name: string } | null
+        }>
+    }
+    assignedTo: { id: string; name: string } | null
+}
+
 interface BatteryBoostClientProps {
     jobs: BatteryJob[]
+    completedJobs: CompletedBatteryJob[]
     userId: string
     userName: string
     userRole: string
@@ -37,6 +60,7 @@ interface BatteryBoostClientProps {
 
 export default function BatteryBoostClient({
     jobs,
+    completedJobs,
     userId,
     userName,
     userRole,
@@ -46,13 +70,18 @@ export default function BatteryBoostClient({
     const [isPending, startTransition] = useTransition()
     const router = useRouter()
     const toast = useToast()
-    const [activeTab, setActiveTab] = useState<'pending' | 'in_progress'>('pending')
+    const [activeTab, setActiveTab] = useState<'pending' | 'in_progress' | 'completed'>('pending')
     const [completeModal, setCompleteModal] = useState<string | null>(null)
     const [selectedJob, setSelectedJob] = useState<BatteryJob | null>(null)
 
     const pendingJobs = jobs.filter(j => j.status === 'PENDING')
     const inProgressJobs = jobs.filter(j => j.status === 'IN_PROGRESS')
     const myJobs = inProgressJobs.filter(j => j.assignedTo?.id === userId)
+
+    // L2/Admin/Superadmin see all in-progress jobs, Battery Technicians see only their own
+    const displayedInProgressJobs = ['ADMIN', 'SUPERADMIN', 'L2_ENGINEER'].includes(userRole)
+        ? inProgressJobs
+        : myJobs
 
     const handleStart = async (job: BatteryJob) => {
         startTransition(async () => {
@@ -245,7 +274,18 @@ export default function BatteryBoostClient({
                         }`}
                     >
                         <Clock size={16} className="inline mr-1" />
-                        In Progress ({inProgressJobs.length})
+                        In Progress ({displayedInProgressJobs.length})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('completed')}
+                        className={`px-4 py-2 font-medium ${
+                            activeTab === 'completed'
+                                ? 'border-b-2 border-green-600 text-green-600 dark:text-green-400'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        <CheckCircle size={16} className="inline mr-1" />
+                        Completed ({completedJobs.length})
                     </button>
                 </div>
             )}
@@ -272,14 +312,77 @@ export default function BatteryBoostClient({
                     <JobCard key={job.id} job={job} showStart={true} />
                 ))}
 
-                {userRole !== 'L2_ENGINEER' && activeTab === 'in_progress' && inProgressJobs.length === 0 && (
+                {userRole !== 'L2_ENGINEER' && activeTab === 'in_progress' && displayedInProgressJobs.length === 0 && (
                     <div className="col-span-full text-center py-10 text-muted-foreground">
                         No jobs in progress. Pick up a pending job to get started.
                     </div>
                 )}
-                {userRole !== 'L2_ENGINEER' && activeTab === 'in_progress' && inProgressJobs.map(job => (
+                {userRole !== 'L2_ENGINEER' && activeTab === 'in_progress' && displayedInProgressJobs.map(job => (
                     <JobCard key={job.id} job={job} showStart={false} />
                 ))}
+
+                {userRole !== 'L2_ENGINEER' && activeTab === 'completed' && completedJobs.length === 0 && (
+                    <div className="col-span-full text-center py-10 text-muted-foreground">
+                        No completed jobs yet.
+                    </div>
+                )}
+                {userRole !== 'L2_ENGINEER' && activeTab === 'completed' && completedJobs.map(job => {
+                    const l2Engineer = job.device.repairJobs[0]?.l2Engineer?.name || 'Unassigned'
+                    return (
+                        <div key={job.id} className="bg-card rounded-lg shadow-soft border border-default border-l-4 border-l-green-500">
+                            <div className="p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 className="font-bold text-lg text-foreground">{job.device.barcode}</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {job.device.brand} {job.device.model} • {job.device.category}
+                                        </p>
+                                    </div>
+                                    <Battery size={24} className="text-green-600 dark:text-green-400" />
+                                </div>
+
+                                {/* Battery Capacity Summary */}
+                                <div className="bg-muted p-3 rounded mb-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-center">
+                                            <p className="text-xs text-muted-foreground">Initial</p>
+                                            <p className={`text-lg font-bold ${getCapacityColor(job.initialCapacity || '')}`}>
+                                                {job.initialCapacity || 'N/A'}
+                                            </p>
+                                        </div>
+                                        <TrendingUp size={24} className="text-muted-foreground" />
+                                        <div className="text-center">
+                                            <p className="text-xs text-muted-foreground">Final</p>
+                                            <p className={`text-lg font-bold ${getCapacityColor(job.finalCapacity || '')}`}>
+                                                {job.finalCapacity || 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-sm">
+                                    {job.completedAt && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Completed:</span>
+                                            <span className="text-foreground">
+                                                {new Date(job.completedAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <User size={14} />
+                                        L2: {l2Engineer}
+                                    </div>
+                                    {job.notes && (
+                                        <div className="bg-muted p-2 rounded text-xs text-muted-foreground mt-2">
+                                            {job.notes}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
 
             {/* Complete Modal */}

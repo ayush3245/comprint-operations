@@ -1,13 +1,17 @@
 import { checkRole } from '@/lib/auth'
-import { getL3RepairJobs, startL3Repair, completeL3Repair, getUserDashboardStats } from '@/lib/actions'
+import { getL3RepairJobs, getL3CompletedJobs, startL3Repair, completeL3Repair, getUserDashboardStats } from '@/lib/actions'
 import L3RepairClient from './L3RepairClient'
 import DashboardStats from '@/components/DashboardStats'
 
 export default async function L3RepairPage() {
     const user = await checkRole(['L3_ENGINEER', 'ADMIN', 'SUPERADMIN'])
 
-    const [jobs, stats] = await Promise.all([
+    // Admin/Superadmin see all completed jobs, others see only their own
+    const completedJobsParam = ['ADMIN', 'SUPERADMIN'].includes(user.role) ? undefined : user.id
+
+    const [jobs, completedJobs, stats] = await Promise.all([
         getL3RepairJobs(),
+        getL3CompletedJobs(completedJobsParam),
         getUserDashboardStats(user.id, user.role)
     ])
 
@@ -35,8 +39,10 @@ export default async function L3RepairPage() {
             />
             <L3RepairClient
                 jobs={jobs}
+                completedJobs={completedJobs}
                 userId={user.id}
                 userName={user.name}
+                userRole={user.role}
                 onStartRepair={handleStartRepair}
                 onCompleteRepair={handleCompleteRepair}
             />

@@ -1170,14 +1170,23 @@ export async function getL2AssignedDevices(l2EngineerId?: string) {
           },
           displayRepairJobs: {
             orderBy: { createdAt: 'desc' },
-            take: 1
+            take: 1,
+            include: {
+              assignedTo: { select: { name: true } }
+            }
           },
           batteryBoostJobs: {
             orderBy: { createdAt: 'desc' },
-            take: 1
+            take: 1,
+            include: {
+              assignedTo: { select: { name: true } }
+            }
           },
           l3RepairJobs: {
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            include: {
+              assignedTo: { select: { name: true } }
+            }
           },
           paintPanels: true
         }
@@ -1967,6 +1976,43 @@ export async function getDisplayRepairJobs(technicianId?: string) {
 }
 
 /**
+ * Get completed display repair jobs for display in completed tab
+ */
+export async function getDisplayRepairCompletedJobs(technicianId?: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const whereClause: { status: ParallelWorkStatus; assignedToId?: string } = {
+    status: ParallelWorkStatus.COMPLETED
+  }
+
+  // Optionally filter by technician
+  if (technicianId) {
+    whereClause.assignedToId = technicianId
+  }
+
+  return await prisma.displayRepairJob.findMany({
+    where: whereClause,
+    include: {
+      device: {
+        include: {
+          repairJobs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            include: {
+              l2Engineer: { select: { name: true } }
+            }
+          }
+        }
+      },
+      assignedTo: { select: { id: true, name: true } }
+    },
+    orderBy: { completedAt: 'desc' },
+    take: 50 // Limit for performance
+  })
+}
+
+/**
  * Display Technician starts working on a display repair
  */
 export async function startDisplayRepair(jobId: string) {
@@ -2072,6 +2118,43 @@ export async function getBatteryBoostJobs(technicianId?: string) {
       assignedTo: { select: { id: true, name: true } }
     },
     orderBy: { createdAt: 'asc' }
+  })
+}
+
+/**
+ * Get completed battery boost jobs for display in completed tab
+ */
+export async function getBatteryBoostCompletedJobs(technicianId?: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const whereClause: { status: ParallelWorkStatus; assignedToId?: string } = {
+    status: ParallelWorkStatus.COMPLETED
+  }
+
+  // Optionally filter by technician
+  if (technicianId) {
+    whereClause.assignedToId = technicianId
+  }
+
+  return await prisma.batteryBoostJob.findMany({
+    where: whereClause,
+    include: {
+      device: {
+        include: {
+          repairJobs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            include: {
+              l2Engineer: { select: { name: true } }
+            }
+          }
+        }
+      },
+      assignedTo: { select: { id: true, name: true } }
+    },
+    orderBy: { completedAt: 'desc' },
+    take: 50 // Limit for performance
   })
 }
 
@@ -2182,6 +2265,43 @@ export async function getL3RepairJobs(engineerId?: string) {
       assignedTo: { select: { id: true, name: true } }
     },
     orderBy: { createdAt: 'asc' }
+  })
+}
+
+/**
+ * Get completed L3 repair jobs for display in completed tab
+ */
+export async function getL3CompletedJobs(engineerId?: string) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const whereClause: { status: ParallelWorkStatus; assignedToId?: string } = {
+    status: ParallelWorkStatus.COMPLETED
+  }
+
+  // Optionally filter by engineer
+  if (engineerId) {
+    whereClause.assignedToId = engineerId
+  }
+
+  return await prisma.l3RepairJob.findMany({
+    where: whereClause,
+    include: {
+      device: {
+        include: {
+          repairJobs: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            include: {
+              l2Engineer: { select: { name: true } }
+            }
+          }
+        }
+      },
+      assignedTo: { select: { id: true, name: true } }
+    },
+    orderBy: { completedAt: 'desc' },
+    take: 50 // Limit for performance
   })
 }
 

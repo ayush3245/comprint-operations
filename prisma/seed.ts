@@ -366,7 +366,7 @@ async function seedPurchaseOrders() {
                     fileName: `${po.poNumber}.pdf`,
                     contentType: 'application/pdf',
                     size: pdfBytes.length,
-                    data: pdfBytes
+                    data: new Uint8Array(pdfBytes)
                 }
             })
 

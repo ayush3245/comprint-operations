@@ -32,6 +32,7 @@ interface ParallelJob {
     issueType?: string
     notes?: string | null
     completedByL2?: boolean
+    assignedTo?: { name: string } | null
 }
 
 interface PaintPanel {
@@ -220,21 +221,24 @@ export default function L2RepairClient({
                 completed: device.displayRepairCompleted,
                 pending: displayJob?.status === 'PENDING',
                 inProgress: displayJob?.status === 'IN_PROGRESS',
-                readyToCollect: displayJob?.status === 'COMPLETED' && !device.displayRepairCompleted
+                readyToCollect: displayJob?.status === 'COMPLETED' && !device.displayRepairCompleted,
+                assignedToName: displayJob?.assignedTo?.name
             },
             battery: {
                 required: device.batteryBoostRequired,
                 completed: device.batteryBoostCompleted,
                 pending: batteryJob?.status === 'PENDING',
                 inProgress: batteryJob?.status === 'IN_PROGRESS',
-                readyToCollect: batteryJob?.status === 'COMPLETED' && !device.batteryBoostCompleted
+                readyToCollect: batteryJob?.status === 'COMPLETED' && !device.batteryBoostCompleted,
+                assignedToName: batteryJob?.assignedTo?.name
             },
             l3: {
                 required: device.l3RepairRequired,
                 completed: device.l3RepairCompleted,
                 pending: l3Jobs.some(j => j.status === 'PENDING'),
                 inProgress: l3Jobs.some(j => j.status === 'IN_PROGRESS'),
-                readyToCollect: l3Jobs.every(j => j.status === 'COMPLETED') && l3Jobs.length > 0 && !device.l3RepairCompleted
+                readyToCollect: l3Jobs.every(j => j.status === 'COMPLETED') && l3Jobs.length > 0 && !device.l3RepairCompleted,
+                assignedToName: l3Jobs.find(j => j.status === 'IN_PROGRESS')?.assignedTo?.name || l3Jobs[0]?.assignedTo?.name
             },
             paint: {
                 required: device.paintRequired,
@@ -472,7 +476,12 @@ export default function L2RepairClient({
                                                         <span className="font-medium text-sm text-foreground">Display</span>
                                                     </div>
                                                     {status.display.completed ? (
-                                                        <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
+                                                        <div>
+                                                            <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
+                                                            {status.display.assignedToName && (
+                                                                <p className="text-xs text-muted-foreground mt-0.5">by {status.display.assignedToName}</p>
+                                                            )}
+                                                        </div>
                                                     ) : status.display.readyToCollect ? (
                                                         <button
                                                             onClick={() => {
@@ -493,9 +502,14 @@ export default function L2RepairClient({
                                                             Collect
                                                         </button>
                                                     ) : status.display.required ? (
-                                                        <span className="text-xs text-blue-600 dark:text-blue-400">
-                                                            {status.display.inProgress ? 'In Progress' : status.display.pending ? 'Pending' : 'Sent'}
-                                                        </span>
+                                                        <div>
+                                                            <span className="text-xs text-blue-600 dark:text-blue-400">
+                                                                {status.display.inProgress ? 'In Progress' : status.display.pending ? 'Pending' : 'Sent'}
+                                                            </span>
+                                                            {status.display.inProgress && status.display.assignedToName && (
+                                                                <p className="text-xs text-muted-foreground mt-0.5">by {status.display.assignedToName}</p>
+                                                            )}
+                                                        </div>
                                                     ) : (
                                                         <button
                                                             onClick={() => setShowDisplayModal(device.id)}
@@ -517,7 +531,12 @@ export default function L2RepairClient({
                                                         <span className="font-medium text-sm text-foreground">Battery</span>
                                                     </div>
                                                     {status.battery.completed ? (
-                                                        <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
+                                                        <div>
+                                                            <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
+                                                            {status.battery.assignedToName && (
+                                                                <p className="text-xs text-muted-foreground mt-0.5">by {status.battery.assignedToName}</p>
+                                                            )}
+                                                        </div>
                                                     ) : status.battery.readyToCollect ? (
                                                         <button
                                                             onClick={() => {
@@ -538,9 +557,14 @@ export default function L2RepairClient({
                                                             Collect
                                                         </button>
                                                     ) : status.battery.required ? (
-                                                        <span className="text-xs text-blue-600 dark:text-blue-400">
-                                                            {status.battery.inProgress ? 'In Progress' : status.battery.pending ? 'Pending' : 'Sent'}
-                                                        </span>
+                                                        <div>
+                                                            <span className="text-xs text-blue-600 dark:text-blue-400">
+                                                                {status.battery.inProgress ? 'In Progress' : status.battery.pending ? 'Pending' : 'Sent'}
+                                                            </span>
+                                                            {status.battery.inProgress && status.battery.assignedToName && (
+                                                                <p className="text-xs text-muted-foreground mt-0.5">by {status.battery.assignedToName}</p>
+                                                            )}
+                                                        </div>
                                                     ) : (
                                                         <button
                                                             onClick={() => setShowBatteryModal(device.id)}
@@ -562,7 +586,12 @@ export default function L2RepairClient({
                                                         <span className="font-medium text-sm text-foreground">L3 Repair</span>
                                                     </div>
                                                     {status.l3.completed ? (
-                                                        <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
+                                                        <div>
+                                                            <span className="text-xs text-green-600 dark:text-green-400">Completed</span>
+                                                            {status.l3.assignedToName && (
+                                                                <p className="text-xs text-muted-foreground mt-0.5">by {status.l3.assignedToName}</p>
+                                                            )}
+                                                        </div>
                                                     ) : status.l3.readyToCollect ? (
                                                         <button
                                                             onClick={() => {
@@ -583,9 +612,14 @@ export default function L2RepairClient({
                                                             Collect
                                                         </button>
                                                     ) : status.l3.required ? (
-                                                        <span className="text-xs text-blue-600 dark:text-blue-400">
-                                                            {status.l3.inProgress ? 'In Progress' : status.l3.pending ? 'Pending' : 'Sent'}
-                                                        </span>
+                                                        <div>
+                                                            <span className="text-xs text-blue-600 dark:text-blue-400">
+                                                                {status.l3.inProgress ? 'In Progress' : status.l3.pending ? 'Pending' : 'Sent'}
+                                                            </span>
+                                                            {status.l3.inProgress && status.l3.assignedToName && (
+                                                                <p className="text-xs text-muted-foreground mt-0.5">by {status.l3.assignedToName}</p>
+                                                            )}
+                                                        </div>
                                                     ) : (
                                                         <button
                                                             onClick={() => setShowL3Modal(device.id)}

@@ -1,13 +1,17 @@
 import { checkRole } from '@/lib/auth'
-import { getBatteryBoostJobs, startBatteryBoost, completeBatteryBoost, getUserDashboardStats } from '@/lib/actions'
+import { getBatteryBoostJobs, getBatteryBoostCompletedJobs, startBatteryBoost, completeBatteryBoost, getUserDashboardStats } from '@/lib/actions'
 import BatteryBoostClient from './BatteryBoostClient'
 import DashboardStats from '@/components/DashboardStats'
 
 export default async function BatteryBoostPage() {
     const user = await checkRole(['BATTERY_TECHNICIAN', 'L2_ENGINEER', 'ADMIN', 'SUPERADMIN'])
 
-    const [jobs, stats] = await Promise.all([
+    // Admin/Superadmin see all completed jobs, others see only their own
+    const completedJobsParam = ['ADMIN', 'SUPERADMIN'].includes(user.role) ? undefined : user.id
+
+    const [jobs, completedJobs, stats] = await Promise.all([
         getBatteryBoostJobs(),
+        getBatteryBoostCompletedJobs(completedJobsParam),
         getUserDashboardStats(user.id, user.role)
     ])
 
@@ -35,6 +39,7 @@ export default async function BatteryBoostPage() {
             />
             <BatteryBoostClient
                 jobs={jobs}
+                completedJobs={completedJobs}
                 userId={user.id}
                 userName={user.name}
                 userRole={user.role}
